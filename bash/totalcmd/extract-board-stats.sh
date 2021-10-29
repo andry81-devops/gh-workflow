@@ -18,16 +18,14 @@ curl "${topic_query_url}" > "$TEMP_DIR/query.txt" || exit $?
 replies=$(sed -rn 's/.*class="posts"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 views=$(sed -rn 's/.*class="views"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 
-[[ -n "$replies" && -n "$views" ]] && (( last_replies < replies || last_views < views )) && {
-  cat << EOF > $traffic_totalcmd_board_stats_json
-{
-  "timestamp" : "$(date --utc +%FT%TZ)",
-  "replies" : $replies,
-  "views" : $views
-}
-EOF
-exit $?
-}
+[[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && 
+  echo "$0: warning: nothing is changed, no new totalcmd board replies/views."
+  exit 255
+} >&2
 
-echo "$0: warning: nothing is changed, no new totalcmd board replies/views."
-exit 255
+echo "\
+{
+  \"timestamp\" : \"$(date --utc +%FT%TZ)\",
+  \"replies\" : $replies,
+  \"views\" : $views
+}" > $traffic_totalcmd_board_stats_json
