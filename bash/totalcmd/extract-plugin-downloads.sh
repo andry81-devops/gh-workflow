@@ -2,7 +2,7 @@
 
 [[ -z "$traffic_totalcmd_dl_json" ]] && traffic_totalcmd_dl_json='traffic/totalcmd_dl.json'
 [[ -z "$plugin_path" ]] && {
-  echo "$0: error: \`plugin_path\` variable is not defined."
+  echo "$0: error: \`$plugin_path\` variable is not defined."
   exit 255
 } >&2
 
@@ -27,5 +27,5 @@ EOF
 exit $?
 }
 
-echo "$0: warning: \`plugin_path\` nothing is changed, no new downloads."
+echo "$0: warning: \`$plugin_path\` nothing is changed, no new downloads."
 exit 255
