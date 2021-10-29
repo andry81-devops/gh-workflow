@@ -17,15 +17,14 @@ curl "http://totalcmd.net/${plugin_path}.html" > "$TEMP_DIR/query.txt" || exit $
 
 downloads=$(sed -rn 's/.*Downloaded:[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 
-[[ -n "$downloads" ]] && (( last_downloads < downloads )) && {
-  cat << EOF > $traffic_totalcmd_dl_json
-{
-  "timestamp" : "$(date --utc +%FT%TZ)",
-  "downloads" : $downloads
-}
-EOF
-exit $?
-}
+[[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
+  echo "$0: warning: \`$plugin_path\` nothing is changed, no new downloads."
+  exit 255
+} >&2
 
-echo "$0: warning: \`$plugin_path\` nothing is changed, no new downloads."
-exit 255
+echo "\
+{
+  \"timestamp\" : \"$(date --utc +%FT%TZ)\",
+  \"downloads\" : $downloads
+}" > $traffic_totalcmd_dl_json
+
