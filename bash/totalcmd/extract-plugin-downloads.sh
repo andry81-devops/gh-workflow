@@ -27,4 +27,5 @@ EOF
 exit $?
 }
 
+echo "$0: warning: \`plugin_path\` nothing is changed, no new downloads."
 exit 255

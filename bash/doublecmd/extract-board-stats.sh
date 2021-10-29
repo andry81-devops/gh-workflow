@@ -29,4 +29,5 @@ EOF
 exit $?
 }
 
+echo "$0: warning: nothing is changed, no new doublecmd board replies/views."
 exit 255
