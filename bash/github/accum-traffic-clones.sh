@@ -72,7 +72,7 @@ done
   \"clones\" : ["
 
   for (( i=0; i < ${#clones_timestamp[@]}; i++)); do
-    (( i )) && echo ','
+    (( i )) && echo -n ','
     echo ''
 
     echo -n "\
