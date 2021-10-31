@@ -32,8 +32,8 @@ echo "\
   \"downloads\" : $downloads
 }" > $traffic_downloads_json
 
-timestamp_date_time_utc_=${timestamp_date_time_utc//:/-}
-timestamp_date_utc=${timestamp_date_time_utc_/%T*}
+timestamp_date_time_utc=${current_date_time_utc//:/-}
+timestamp_date_utc=${timestamp_date_time_utc/%T*}
 timestamp_year_utc=${timestamp_date_utc/%-*}
 
 timestamp_year_dir="$traffic_downloads_by_year_dir/$timestamp_year_utc"
