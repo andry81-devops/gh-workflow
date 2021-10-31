@@ -1,7 +1,17 @@
 #!/bin/bash
 
-[[ -z "$traffic_clones_json" ]] && traffic_clones_json='traffic/clones.json'
-[[ -z "$traffic_clones_accum_json" ]] && traffic_clones_accum_json='traffic/clones-accum.json'
+[[ -z "$traffic_clones_dir" ]] && traffic_clones_dir='traffic/clones'
+[[ -z "$traffic_clones_by_year_dir" ]] && traffic_clones_by_year_dir="$traffic_clones_dir/by_year"
+[[ -z "$traffic_clones_json" ]] && traffic_clones_json="$traffic_clones_dir/latest.json"
+[[ -z "$traffic_clones_accum_json" ]] && traffic_clones_accum_json="$traffic_clones_dir/latest-accum.json"
+
+current_date_time_utc=$(date --utc +%FT%TZ)
+
+current_date_time_utc_=${current_date_time_utc_//:/-}
+current_date_utc=${current_date_time_utc_/%T*}
+current_year_utc=${current_date_utc/%-*}
+
+current_year_dir="$traffic_clones_by_year_dir/$current_year_utc"
 
 clones_accum_timestamp=()
 clones_accum_count=()
@@ -80,10 +90,12 @@ done
   exit 255
 } >&2
 
+mkdir -p "$current_year_dir"
+
 {
   echo -n "\
 {
-  \"timestamp\" : \"$(date --utc +%FT%TZ)\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"count_outdated\" : $count_outdated_next,
   \"uniques_outdated\" : $uniques_outdated_next,
   \"count\" : $count_next,
@@ -102,8 +114,10 @@ done
     }"
   done
 
-  (( i )) && echo -n '  '
+  (( i )) && echo -e -n "\n  "
 
   echo ']
 }'
-} > $traffic_clones_accum_json
+} > $traffic_clones_accum_json || exit $?
+
+cp -f "$traffic_clones_accum_json" "$current_year_dir/$current_date_utc.json"
