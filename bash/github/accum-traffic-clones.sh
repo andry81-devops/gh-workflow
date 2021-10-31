@@ -9,12 +9,20 @@ clones_accum_uniques=()
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $traffic_clones_accum_json)"
 
+clones_timestamp_prev_seq=""
+clones_count_prev_seq=""
+clones_unique_prev_seq=""
+
 for i in $(jq '.clones|keys|.[]' $traffic_clones_accum_json); do
   IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".clones[$i].timestamp,.clones[$i].count,.clones[$i].uniques" $traffic_clones_accum_json)"
 
   clones_accum_timestamp[${#clones_accum_timestamp[@]}]="$timestamp"
   clones_accum_count[${#clones_accum_count[@]}]=$count
   clones_accum_uniques[${#clones_accum_uniques[@]}]=$uniques
+
+  clones_timestamp_prev_seq="$clones_timestamp_prev_seq|$timestamp"
+  clones_count_prev_seq="$clones_count_prev_seq|$count"
+  clones_uniques_prev_seq="$clones_uniques_prev_seq|$uniques"
 done
 
 first_clones_timestamp=""
@@ -22,6 +30,10 @@ first_clones_timestamp=""
 clones_timestamp=()
 clones_count=()
 clones_uniques=()
+
+clones_timestamp_next_seq=""
+clones_count_next_seq=""
+clones_unique_next_seq=""
 
 for i in $(jq '.clones|keys|.[]' $traffic_clones_json); do
   IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".clones[$i].timestamp,.clones[$i].count,.clones[$i].uniques" $traffic_clones_json)"
@@ -31,6 +43,10 @@ for i in $(jq '.clones|keys|.[]' $traffic_clones_json); do
   clones_timestamp[${#clones_timestamp[@]}]="$timestamp"
   clones_count[${#clones_count[@]}]=$count
   clones_uniques[${#clones_uniques[@]}]=$uniques
+
+  clones_timestamp_next_seq="$clones_timestamp_next_seq|$timestamp"
+  clones_count_next_seq="$clones_count_next_seq|$count"
+  clones_uniques_next_seq="$clones_uniques_next_seq|$uniques"
 done
 
 # accumulate statistic
@@ -56,7 +72,10 @@ done
 (( uniques_next += uniques_outdated_next ))
 
 (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
-   count_prev == count_next && uniques_prev == uniques_next )) && {
+   count_prev == count_next && uniques_prev == uniques_next )) && [[ \
+   "$clones_timestamp_next_seq" == "$clones_timestamp_prev_seq" && \
+   "$clones_count_next_seq" == "$clones_count_prev_seq" && \
+   "$clones_uniques_next_seq" == "$clones_uniques_prev_seq" ]] && {
   echo "$0: warning: nothing is changed, no new clones."
   exit 255
 } >&2
