@@ -28,4 +28,4 @@ echo "\
   \"timestamp\" : \"$(date --utc +%FT%TZ)\",
   \"replies\" : $replies,
   \"views\" : $views
-}" > $traffic_doublecmd_board_stats_json
+}" > "$traffic_doublecmd_board_stats_json"
