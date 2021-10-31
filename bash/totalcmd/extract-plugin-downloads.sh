@@ -30,7 +30,7 @@ echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads
-}" > $traffic_downloads_json
+}" > "$traffic_downloads_json"
 
 timestamp_date_time_utc=${current_date_time_utc//:/-}
 timestamp_date_utc=${timestamp_date_time_utc/%T*}
