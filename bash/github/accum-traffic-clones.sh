@@ -7,12 +7,6 @@
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-current_date_time_utc_=${current_date_time_utc//:/-}
-current_date_utc=${current_date_time_utc_/%T*}
-current_year_utc=${current_date_utc/%-*}
-
-current_year_dir="$traffic_clones_by_year_dir/$current_year_utc"
-
 clones_accum_timestamp=()
 clones_accum_count=()
 clones_accum_uniques=()
@@ -57,6 +51,21 @@ for i in $(jq '.clones|keys|.[]' $traffic_clones_json); do
   clones_timestamp_next_seq="$clones_timestamp_next_seq|$timestamp"
   clones_count_next_seq="$clones_count_next_seq|$count"
   clones_uniques_next_seq="$clones_uniques_next_seq|$uniques"
+
+  timestamp_date_time_utc=${timestamp//:/-}
+  timestamp_date_utc=${timestamp_date_time_utc/%T*}
+  timestamp_year_utc=${timestamp_date_utc/%-*}
+
+  timestamp_year_dir="$traffic_clones_by_year_dir/$timestamp_year_utc"
+
+  [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+
+  echo "\
+{
+  \"timestamp\" : \"$timestamp\",
+  \"count\" : $count,
+  \"uniques\" : $uniques
+}" > "$timestamp_year_dir/$timestamp_date_utc.json"
 done
 
 # accumulate statistic
@@ -90,8 +99,6 @@ done
   exit 255
 } >&2
 
-mkdir -p "$current_year_dir"
-
 {
   echo -n "\
 {
@@ -119,5 +126,3 @@ mkdir -p "$current_year_dir"
   echo ']
 }'
 } > $traffic_clones_accum_json || exit $?
-
-cp -f "$traffic_clones_accum_json" "$current_year_dir/$current_date_utc.json"
