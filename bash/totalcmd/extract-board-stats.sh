@@ -18,7 +18,7 @@ curl "${topic_query_url}" > "$TEMP_DIR/query.txt" || exit $?
 replies=$(sed -rn 's/.*class="posts"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 views=$(sed -rn 's/.*class="views"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 
-[[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && 
+[[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
   echo "$0: warning: nothing is changed, no new totalcmd board replies/views."
   exit 255
 } >&2
