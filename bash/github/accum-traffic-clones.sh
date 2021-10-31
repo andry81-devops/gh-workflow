@@ -7,7 +7,7 @@
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-current_date_time_utc_=${current_date_time_utc_//:/-}
+current_date_time_utc_=${current_date_time_utc//:/-}
 current_date_utc=${current_date_time_utc_/%T*}
 current_year_utc=${current_date_utc/%-*}
 
