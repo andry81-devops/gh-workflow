@@ -1,13 +1,17 @@
 #!/bin/bash
 
-[[ -z "$traffic_totalcmd_dl_json" ]] && traffic_totalcmd_dl_json='traffic/totalcmd_dl.json'
+[[ -z "$traffic_downloads_dir" ]] && traffic_downloads_dir='traffic/downloads/plugin'
+[[ -z "$traffic_downloads_by_year_dir" ]] && traffic_downloads_by_year_dir="$traffic_downloads_dir/by_year"
+[[ -z "$traffic_downloads_json" ]] && traffic_downloads_json="$traffic_downloads_dir/latest.json"
 [[ -z "$plugin_path" ]] && {
   echo "$0: error: \`$plugin_path\` variable is not defined."
   exit 255
 } >&2
 
+current_date_time_utc=$(date --utc +%FT%TZ)
+
 # exit with non 0 code if nothing is changed
-IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $traffic_totalcmd_dl_json)"
+IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $traffic_downloads_json)"
 
 TEMP_DIR=$(mktemp -d)
 
@@ -24,7 +28,20 @@ downloads=$(sed -rn 's/.*Downloaded:[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.tx
 
 echo "\
 {
-  \"timestamp\" : \"$(date --utc +%FT%TZ)\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads
-}" > $traffic_totalcmd_dl_json
+}" > $traffic_downloads_json
 
+timestamp_date_time_utc_=${timestamp_date_time_utc//:/-}
+timestamp_date_utc=${timestamp_date_time_utc_/%T*}
+timestamp_year_utc=${timestamp_date_utc/%-*}
+
+timestamp_year_dir="$traffic_downloads_by_year_dir/$timestamp_year_utc"
+
+[[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+
+echo "\
+{
+  \"timestamp\" : \"$current_date_time_utc\",
+  \"downloads\" : $downloads
+}" > "$timestamp_year_dir/$timestamp_date_utc.json"
