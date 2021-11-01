@@ -1,8 +1,20 @@
 #!/bin/bash
 
+function print_error()
+{
+  [[ -n "$write_error_to_file" ]] && echo "$*" >> "$write_error_to_file"
+  echo "$*" >&2
+}
+
+function print_warning()
+{
+  [[ -n "$write_warning_to_file" ]] && echo "$*" >> "$write_warning_to_file"
+  echo "$*" >&2
+}
+
 [[ -z "$traffic_totalcmd_board_stats_json" ]] && traffic_totalcmd_board_stats_json='traffic/totalcmd_board_stats.json'
 [[ -z "$topic_query_url" ]] && {
-  echo "$0: error: \`topic_query_url\` variable is not defined."
+  print_error "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
 } >&2
 
@@ -19,7 +31,7 @@ replies=$(sed -rn 's/.*class="posts"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.tx
 views=$(sed -rn 's/.*class="views"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
-  echo "$0: warning: nothing is changed, no new totalcmd board replies/views."
+  print_warning "$0: warning: nothing is changed, no new totalcmd board replies/views."
   exit 255
 } >&2
 
