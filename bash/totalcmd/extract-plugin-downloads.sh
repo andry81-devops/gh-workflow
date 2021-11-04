@@ -1,10 +1,22 @@
 #!/bin/bash
 
+function print_error()
+{
+  [[ -n "$write_error_to_file" ]] && echo "$*" >> "$write_error_to_file"
+  echo "$*" >&2
+}
+
+function print_warning()
+{
+  [[ -n "$write_warning_to_file" ]] && echo "$*" >> "$write_warning_to_file"
+  echo "$*" >&2
+}
+
 [[ -z "$traffic_downloads_dir" ]] && traffic_downloads_dir='traffic/downloads/plugin'
 [[ -z "$traffic_downloads_by_year_dir" ]] && traffic_downloads_by_year_dir="$traffic_downloads_dir/by_year"
 [[ -z "$traffic_downloads_json" ]] && traffic_downloads_json="$traffic_downloads_dir/latest.json"
 [[ -z "$plugin_path" ]] && {
-  echo "$0: error: \`$plugin_path\` variable is not defined."
+  print_error "$0: error: \`$plugin_path\` variable is not defined."
   exit 255
 } >&2
 
@@ -22,7 +34,7 @@ curl "http://totalcmd.net/${plugin_path}.html" > "$TEMP_DIR/query.txt" || exit $
 downloads=$(sed -rn 's/.*Downloaded:[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt")
 
 [[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
-  echo "$0: warning: \`$plugin_path\` nothing is changed, no new downloads."
+  print_warning "$0: warning: \`$plugin_path\` nothing is changed, no new downloads."
   exit 255
 } >&2
 
