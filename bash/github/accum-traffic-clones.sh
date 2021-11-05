@@ -1,5 +1,17 @@
 #!/bin/bash
 
+function print_error()
+{
+  [[ -n "$write_error_to_file" ]] && echo "$*" >> "$write_error_to_file"
+  echo "$*" >&2
+}
+
+function print_warning()
+{
+  [[ -n "$write_warning_to_file" ]] && echo "$*" >> "$write_warning_to_file"
+  echo "$*" >&2
+}
+
 [[ -z "$traffic_clones_dir" ]] && traffic_clones_dir='traffic/clones'
 [[ -z "$traffic_clones_by_year_dir" ]] && traffic_clones_by_year_dir="$traffic_clones_dir/by_year"
 [[ -z "$traffic_clones_json" ]] && traffic_clones_json="$traffic_clones_dir/latest.json"
@@ -95,7 +107,7 @@ done
    "$clones_timestamp_next_seq" == "$clones_timestamp_prev_seq" && \
    "$clones_count_next_seq" == "$clones_count_prev_seq" && \
    "$clones_uniques_next_seq" == "$clones_uniques_prev_seq" ]] && {
-  echo "$0: warning: nothing is changed, no new clones."
+  print_warning "$0: warning: nothing is changed, no new clones."
   exit 255
 } >&2
 
