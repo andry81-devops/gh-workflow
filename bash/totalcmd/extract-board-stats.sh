@@ -12,11 +12,15 @@ function print_warning()
   echo "$*" >&2
 }
 
-[[ -z "$traffic_totalcmd_board_stats_json" ]] && traffic_totalcmd_board_stats_json='traffic/totalcmd_board_stats.json'
+[[ -z "$traffic_totalcmd_board_stats_dir" ]] && traffic_totalcmd_board_stats_dir='traffic/board/totalcmd'
+[[ -z "$traffic_totalcmd_board_stats_by_year_dir" ]] && traffic_totalcmd_board_stats_by_year_dir="$traffic_totalcmd_board_stats_dir/by_year"
+[[ -z "$traffic_totalcmd_board_stats_json" ]] && traffic_totalcmd_board_stats_json="$traffic_totalcmd_board_stats_dir/latest.json"
 [[ -z "$topic_query_url" ]] && {
   print_error "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
 } >&2
+
+current_date_time_utc=$(date --utc +%FT%TZ)
 
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_replies last_views <<< "$(jq -c -r ".replies,.views" $traffic_totalcmd_board_stats_json)"
@@ -37,7 +41,22 @@ views=$(sed -rn 's/.*class="views"[^0-9]*([0-9.]+).*/\1/p' "$TEMP_DIR/query.txt"
 
 echo "\
 {
-  \"timestamp\" : \"$(date --utc +%FT%TZ)\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"replies\" : $replies,
   \"views\" : $views
 }" > "$traffic_totalcmd_board_stats_json"
+
+timestamp_date_time_utc=${current_date_time_utc//:/-}
+timestamp_date_utc=${timestamp_date_time_utc/%T*}
+timestamp_year_utc=${timestamp_date_utc/%-*}
+
+timestamp_year_dir="$traffic_totalcmd_board_stats_by_year_dir/$timestamp_year_utc"
+
+[[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+
+echo "\
+{
+  \"timestamp\" : \"$current_date_time_utc\",
+  \"replies\" : $replies,
+  \"views\" : $views
+}" > "$timestamp_year_dir/$timestamp_date_utc.json"
