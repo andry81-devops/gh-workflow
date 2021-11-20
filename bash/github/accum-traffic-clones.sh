@@ -41,6 +41,17 @@ for i in $(jq '.clones|keys|.[]' $traffic_clones_accum_json); do
   clones_uniques_prev_seq="$clones_uniques_prev_seq|$uniques"
 done
 
+# CAUTION:
+#   Sometimes the json data file comes empty for some reason.
+#   We must check that special case to avoid invalid accumulation!
+#
+IFS=$'\n' read -r -d '' count uniques clones_length <<< $(jq '.count,.uniques,.clones|length' $traffic_clones_json)
+
+(( ! count && ! uniques && ! clones_length )) && {
+  print_error "$0: error: json data is invalid or empty."
+  exit 255
+} >&2
+
 first_clones_timestamp=""
 
 clones_timestamp=()
