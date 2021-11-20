@@ -41,6 +41,17 @@ for i in $(jq '.views|keys|.[]' $traffic_views_accum_json); do
   views_uniques_prev_seq="$views_uniques_prev_seq|$uniques"
 done
 
+# CAUTION:
+#   Sometimes the json data file comes empty for some reason.
+#   We must check that special case to avoid invalid accumulation!
+#
+IFS=$'\n' read -r -d '' count uniques views_length <<< $(jq '.count,.uniques,.views|length' $traffic_views_json)
+
+(( ! count && ! uniques && ! views_length )) && {
+  print_error "$0: error: json data is invalid or empty."
+  exit 255
+} >&2
+
 first_views_timestamp=""
 
 views_timestamp=()
