@@ -20,10 +20,12 @@ function print_warning()
   print_error "$0: error: \`stats_dir\` variable must be defined."
   exit 255
 } >&2
+
 [[ -z "$stats_list_key" ]] && {
   print_error "$0: error: \`stats_list_key\` variable must be defined."
   exit 255
 } >&2
+
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"

@@ -53,7 +53,7 @@ TEMP_DIR=$(mktemp -d)
 
 trap "rm -rf \"$TEMP_DIR\"" EXIT HUP INT QUIT
 
-curl "$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
+curl $curl_flags "$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
 
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
