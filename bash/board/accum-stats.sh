@@ -59,6 +59,9 @@ replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
 
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
+  echo "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+  echo "replies: \`$replies\`"
+  echo "views: \`$views\`"
   print_warning "$0: warning: nothing is changed, no new \`$board_name\` board replies/views."
   exit 255
 } >&2
