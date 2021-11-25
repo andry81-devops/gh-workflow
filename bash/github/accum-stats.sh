@@ -126,9 +126,7 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   # calculate min/max
   if [[ -f "$year_date_json" ]]; then
     IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
-      "$(jq -c -r ".$stats_list_key[$i].count,.$stats_list_key[$i].uniques,
-          .$stats_list_key[$i].count_minmax[0],.$stats_list_key[$i].count_minmax[1],
-          .$stats_list_key[$i].uniques_minmax[0],.$stats_list_key[$i].uniques_minmax[1]" "$year_date_json")"
+      "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
 
     [[ -z "$count_min_saved" || "$count_min_saved" == 'null' ]] && count_min_saved=$count_saved
     [[ -z "$count_max_saved" || "$count_max_saved" == 'null' ]] && count_max_saved=$count_saved
