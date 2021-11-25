@@ -53,6 +53,8 @@ eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || exit $?
 downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/query.txt")
 
 [[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
+  echo "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+  echo "downloads: \`$downloads\`"
   print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
   exit 255
 } >&2
