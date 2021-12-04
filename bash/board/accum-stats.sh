@@ -6,13 +6,13 @@
 
 function print_error()
 {
-  [[ -n "$write_error_to_file" ]] && echo "$*" >> "$write_error_to_file"
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
   echo "$*" >&2
 }
 
 function print_warning()
 {
-  [[ -n "$write_warning_to_file" ]] && echo "$*" >> "$write_warning_to_file"
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
   echo "$*" >&2
 }
 
