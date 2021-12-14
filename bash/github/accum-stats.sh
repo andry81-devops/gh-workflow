@@ -32,6 +32,9 @@ function print_warning()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+current_date_time_utc=${current_date_time_utc//:/-}
+current_date_utc=${current_date_time_utc/%T*}
+
 stats_accum_timestamp=()
 stats_accum_count=()
 stats_accum_uniques=()
@@ -81,6 +84,54 @@ IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$s
   exit 255
 } >&2
 
+# CAUTION:
+#   The GitHub has an issue with the `latest.json` file residual (no effect) changes related to the statistic interpolation issue,
+#   when the first record (or set of records from beginning) related to not current day does change (decrease) or remove but nothing else is changed.
+#   That triggers a consequences like a repository commit with residual changes after script exit. To avoid that we must detect residual changes in the
+#   `latest.json` file and return non zero return code with a warning.
+#
+has_not_residual_changes=0
+has_residual_changes=0
+
+for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
+  IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
+
+  timestamp_date_time_utc=${timestamp//:/-}
+  timestamp_date_utc=${timestamp_date_time_utc/%T*}
+
+  # changes at current day is always not residual
+  if [[ "$timestamp_date_utc" == "$current_date_utc" ]]; then
+    has_not_residual_changes=1
+    break
+  fi
+
+  timestamp_year_utc=${timestamp_date_utc/%-*}
+
+  timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
+  year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
+
+  if [[ -f "$year_date_json" ]]; then
+    IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
+      "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+  else
+    has_not_residual_changes=1
+    break
+  fi
+
+  if (( count > count_saved || uniques > uniques_saved )); then
+    has_not_residual_changes=1
+    break
+  elif (( count < count_saved || uniques < uniques_saved )); then
+    has_residual_changes=1
+  fi
+done
+
+# treat equality as not residual change
+if (( has_residual_changes && ! has_not_residual_changes )); then
+  print_warning "$0: warning: json data has only residual changes which has no effect and ignored."
+  exit 255
+fi
+
 first_stats_timestamp=""
 
 stats_timestamp=()
@@ -123,6 +174,13 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   uniques_min=$uniques
   uniques_max=$uniques
 
+  count_saved=""
+  uniques_saved=""
+  count_min_saved=""
+  count_max_saved=""
+  uniques_min_saved=""
+  uniques_max_saved=""
+
   # calculate min/max
   if [[ -f "$year_date_json" ]]; then
     IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
@@ -144,6 +202,9 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   stats_uniques_min[${#stats_uniques_min[@]}]=$uniques_min
   stats_uniques_max[${#stats_uniques_max[@]}]=$uniques_max
 
+  if [[ -z "$count_saved" || -z "$uniques_saved" || -z "$count_min_saved" || -z "$count_max_saved" || -z "$uniques_min_saved" || -z "$uniques_max_saved" ]] || \
+     (( count != count_saved || uniques != uniques_saved || count_min != count_min_saved || count_max != count_max_saved || \
+        uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
   echo "\
 {
   \"timestamp\" : \"$timestamp\",
@@ -152,6 +213,7 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   \"uniques\" : $uniques,
   \"uniques_minmax\" : [ $uniques_min, $uniques_max ]
 }" > "$year_date_json"
+  fi
 done
 
 # accumulate statistic
