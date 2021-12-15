@@ -6,14 +6,19 @@
 
 function print_error()
 {
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
   echo "$*" >&2
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
 }
 
 function print_warning()
 {
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
   echo "$*" >&2
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
+}
+
+function set_env_var()
+{
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
 }
 
 [[ -z "$stats_dir" ]] && {
@@ -132,6 +137,12 @@ if (( has_residual_changes && ! has_not_residual_changes )); then
   exit 255
 fi
 
+# stats per script execution (output)
+stats_count_inc=0
+stats_uniques_inc=0
+stats_count_dec=0
+stats_uniques_dec=0
+
 first_stats_timestamp=""
 
 stats_timestamp=()
@@ -174,12 +185,12 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   uniques_min=$uniques
   uniques_max=$uniques
 
-  count_saved=""
-  uniques_saved=""
-  count_min_saved=""
-  count_max_saved=""
-  uniques_min_saved=""
-  uniques_max_saved=""
+  count_saved=0
+  uniques_saved=0
+  count_min_saved=0
+  count_max_saved=0
+  uniques_min_saved=0
+  uniques_max_saved=0
 
   # calculate min/max
   if [[ -f "$year_date_json" ]]; then
@@ -202,8 +213,13 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   stats_uniques_min[${#stats_uniques_min[@]}]=$uniques_min
   stats_uniques_max[${#stats_uniques_max[@]}]=$uniques_max
 
-  if [[ -z "$count_saved" || -z "$uniques_saved" || -z "$count_min_saved" || -z "$count_max_saved" || -z "$uniques_min_saved" || -z "$uniques_max_saved" ]] || \
-     (( count != count_saved || uniques != uniques_saved || count_min != count_min_saved || count_max != count_max_saved || \
+  (( count > count_saved )) && (( stats_count_inc+=count-count_saved ))
+  (( uniques > uniques_saved )) && (( stats_uniques_inc+=uniques-uniques_saved ))
+
+  (( count < count_saved )) && (( stats_count_dec+=count_saved-count ))
+  (( uniques < uniques_saved )) && (( stats_uniques_dec+=uniques_saved-uniques ))
+
+  if (( count != count_saved || uniques != uniques_saved || count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
   echo "\
 {
@@ -283,3 +299,9 @@ done
   echo ']
 }'
 } > $stats_accum_json || exit $?
+
+# return output variables
+set_env_var STATS_COUNT_INC   "$stats_count_inc"
+set_env_var STATS_UNIQUES_INC "$stats_uniques_inc"
+set_env_var STATS_COUNT_DEC   "$stats_count_dec"
+set_env_var STATS_UNIQUES_DEC "$stats_uniques_dec"

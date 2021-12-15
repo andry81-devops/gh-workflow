@@ -6,14 +6,14 @@
 
 function print_error()
 {
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
   echo "$*" >&2
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
 }
 
 function print_warning()
 {
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
   echo "$*" >&2
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
 }
 
 [[ -z "$stats_dir" ]] && {
