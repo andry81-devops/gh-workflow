@@ -16,6 +16,11 @@ function print_warning()
   [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
 }
 
+function set_env_var()
+{
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
+}
+
 [[ -z "$stats_dir" ]] && {
   print_error "$0: error: \`stats_dir\` variable is not defined."
   exit 255
@@ -78,3 +83,8 @@ echo "\
   \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads
 }" > "$timestamp_year_dir/$timestamp_date_utc.json"
+
+(( stats_downloads_diff=downloads-last_downloads ))
+
+# return output variables
+set_env_var STATS_DOWNLOADS_DIFF  "$stats_downloads_diff"

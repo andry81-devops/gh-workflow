@@ -16,6 +16,17 @@ function print_warning()
   [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
 }
 
+function print_notice()
+{
+  echo "$*"
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::notice ::$*"
+}
+
+function set_env_var()
+{
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
+}
+
 [[ -z "$stats_dir" ]] && {
   print_error "$0: error: \`stats_dir\` variable is not defined."
   exit 255
@@ -59,9 +70,9 @@ replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
 
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
-  echo "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-  echo "replies: \`$replies\`"
-  echo "views: \`$views\`"
+  print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+  print_notice "replies: $replies"
+  print_notice "views: $views"
   print_warning "$0: warning: nothing is changed, no new \`$board_name\` board replies/views."
   exit 255
 } >&2
@@ -87,3 +98,10 @@ echo "\
   \"replies\" : $replies,
   \"views\" : $views
 }" > "$timestamp_year_dir/$timestamp_date_utc.json"
+
+(( stats_replies_diff=replies-last_replies ))
+(( stats_views_diff=views-last_views ))
+
+# return output variables
+set_env_var STATS_REPLIES_DIFF  "$stats_replies_diff"
+set_env_var STATS_VIEWS_DIFF    "$stats_views_diff"
