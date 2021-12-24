@@ -52,8 +52,8 @@ stats_unique_prev_seq=""
 
 # CAUTION:
 #   Statistic can has values interpolation from, for example, per hour basis to day basis, which means the edge values can fluctuate to lower levels.
-#   To prevent save up lower levels of outdated values we must to calculate the range of fluctuation for all values and save maximal values instead of
-#   interpolated values for edge values.
+#   To prevent save up lower levels of outdated values we must to calculate the min and max values per day fluctuation for all days and save the maximum instead of
+#   an interpolated value for all being removed records (after 14'th day).
 #
 stats_accum_count_max=()
 stats_accum_uniques_max=()
@@ -91,7 +91,7 @@ IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$s
 
 # CAUTION:
 #   The GitHub has an issue with the `latest.json` file residual (no effect) changes related to the statistic interpolation issue,
-#   when the first record (or set of records from beginning) related to not current day does change (decrease) or remove but nothing else is changed.
+#   when the first record (or set of records from beginning) related to not current day does change (decrease) or remove but nothing else does change.
 #   That triggers a consequences like a repository commit with residual changes after script exit. To avoid that we must detect residual changes in the
 #   `latest.json` file and return non zero return code with a warning.
 #
