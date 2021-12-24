@@ -1,0 +1,6 @@
+2021.12.24:
+* new: `README.md` readme file
+* new: `changelog.txt` changelog file
+* new: `userlog.txt` userlog file
+* new: `license.txt` license file
+* changed: bash/github/accum-stats.sh: comments update
