@@ -1,4 +1,7 @@
 2021.12.24:
+* changed: remove obsolete files
+
+2021.12.24:
 * new: `README.md` readme file
 * new: `changelog.txt` changelog file
 * new: `userlog.txt` userlog file
