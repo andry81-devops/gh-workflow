@@ -1,4 +1,7 @@
 2021.12.24:
+* refactor: bash/github/accum-stats.sh: code cleanup
+
+2021.12.24:
 * new: .github/res/Release.md.in: tagged release readme template
 
 2021.12.24:

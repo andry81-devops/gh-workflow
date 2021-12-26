@@ -40,44 +40,6 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 current_date_time_utc=${current_date_time_utc//:/-}
 current_date_utc=${current_date_time_utc/%T*}
 
-stats_accum_timestamp=()
-stats_accum_count=()
-stats_accum_uniques=()
-
-IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
-
-stats_timestamp_prev_seq=""
-stats_count_prev_seq=""
-stats_unique_prev_seq=""
-
-# CAUTION:
-#   Statistic can has values interpolation from, for example, per hour basis to day basis, which means the edge values can fluctuate to lower levels.
-#   To prevent save up lower levels of outdated values we must to calculate the min and max values per day fluctuation for all days and save the maximum instead of
-#   an interpolated value for all being removed records (after 14'th day).
-#
-stats_accum_count_max=()
-stats_accum_uniques_max=()
-
-for i in $(jq ".$stats_list_key|keys|.[]" $stats_accum_json); do
-  IFS=$'\n' read -r -d '' timestamp count uniques count_max uniques_max <<< \
-    "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques,
-        .$stats_list_key[$i].count_minmax[1],.$stats_list_key[$i].uniques_minmax[1]" $stats_accum_json)"
-
-  stats_accum_timestamp[${#stats_accum_timestamp[@]}]="$timestamp"
-  stats_accum_count[${#stats_accum_count[@]}]=$count
-  stats_accum_uniques[${#stats_accum_uniques[@]}]=$uniques
-
-  [[ -z "$count_max" || "$count_max" == 'null' ]] && count_max=$count
-  [[ -z "$uniques_max" || "$uniques_max" == 'null' ]] && uniques_max=$uniques
-
-  stats_accum_count_max[${#stats_accum_count_max[@]}]=$count_max
-  stats_accum_uniques_max[${#stats_accum_uniques_max[@]}]=$uniques_max
-
-  stats_timestamp_prev_seq="$stats_timestamp_prev_seq|$timestamp"
-  stats_count_prev_seq="$stats_count_prev_seq|$count"
-  stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques"
-done
-
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
 #   We must check that special case to avoid invalid accumulation!
@@ -136,6 +98,44 @@ if (( has_residual_changes && ! has_not_residual_changes )); then
   print_warning "$0: warning: json data has only residual changes which has no effect and ignored."
   exit 255
 fi
+
+stats_accum_timestamp=()
+stats_accum_count=()
+stats_accum_uniques=()
+
+IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
+
+stats_timestamp_prev_seq=""
+stats_count_prev_seq=""
+stats_unique_prev_seq=""
+
+# CAUTION:
+#   Statistic can has values interpolation from, for example, per hour basis to day basis, which means the edge values can fluctuate to lower levels.
+#   To prevent save up lower levels of outdated values we must to calculate the min and max values per day fluctuation for all days and save the maximum instead of
+#   an interpolated value for all being removed records (after 14'th day).
+#
+stats_accum_count_max=()
+stats_accum_uniques_max=()
+
+for i in $(jq ".$stats_list_key|keys|.[]" $stats_accum_json); do
+  IFS=$'\n' read -r -d '' timestamp count uniques count_max uniques_max <<< \
+    "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques,
+        .$stats_list_key[$i].count_minmax[1],.$stats_list_key[$i].uniques_minmax[1]" $stats_accum_json)"
+
+  stats_accum_timestamp[${#stats_accum_timestamp[@]}]="$timestamp"
+  stats_accum_count[${#stats_accum_count[@]}]=$count
+  stats_accum_uniques[${#stats_accum_uniques[@]}]=$uniques
+
+  [[ -z "$count_max" || "$count_max" == 'null' ]] && count_max=$count
+  [[ -z "$uniques_max" || "$uniques_max" == 'null' ]] && uniques_max=$uniques
+
+  stats_accum_count_max[${#stats_accum_count_max[@]}]=$count_max
+  stats_accum_uniques_max[${#stats_accum_uniques_max[@]}]=$uniques_max
+
+  stats_timestamp_prev_seq="$stats_timestamp_prev_seq|$timestamp"
+  stats_count_prev_seq="$stats_count_prev_seq|$count"
+  stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques"
+done
 
 # stats per script execution (output)
 stats_count_inc=0
