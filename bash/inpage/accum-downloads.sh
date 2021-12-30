@@ -16,6 +16,12 @@ function print_warning()
   [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
 }
 
+function print_notice()
+{
+  echo "$*"
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::notice ::$*"
+}
+
 function set_env_var()
 {
   [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
@@ -57,9 +63,10 @@ eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || exit $?
 
 downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/query.txt")
 
+print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+print_notice "downloads: prev | next: $last_downloads | $downloads"
+
 [[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
-  echo "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-  echo "downloads: \`$downloads\`"
   print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
   exit 255
 } >&2
