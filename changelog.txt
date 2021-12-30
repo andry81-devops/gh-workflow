@@ -1,4 +1,7 @@
 2021.12.30:
+* new: accum-stats.sh, accum-downloads.sh: create `COMMIT_MESSAGE_SUFFIX` variable and print statistics change into GitHub pipeline
+
+2021.12.30:
 * changed: accum-stats.sh, accum-downloads.sh: always print script main execution parameters, even if has no error or warning
 
 2021.12.24:

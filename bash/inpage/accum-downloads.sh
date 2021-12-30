@@ -63,8 +63,10 @@ eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || exit $?
 
 downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/query.txt")
 
+(( stats_downloads_diff=downloads-last_downloads ))
+
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-print_notice "downloads: prev | next: $last_downloads | $downloads"
+print_notice "downloads: prev / next / diff: $last_downloads / $downloads / $stats_downloads_diff"
 
 [[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
   print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
@@ -91,7 +93,7 @@ echo "\
   \"downloads\" : $downloads
 }" > "$timestamp_year_dir/$timestamp_date_utc.json"
 
-(( stats_downloads_diff=downloads-last_downloads ))
-
 # return output variables
 set_env_var STATS_DOWNLOADS_DIFF  "$stats_downloads_diff"
+
+set_env_var COMMIT_MESSAGE_SUFFIX " | dl: $stats_downloads_diff"

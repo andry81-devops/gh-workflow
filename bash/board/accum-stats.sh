@@ -69,9 +69,12 @@ eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
 
+(( stats_replies_diff=replies-last_replies ))
+(( stats_views_diff=views-last_views ))
+
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-print_notice "replies: prev | next: $last_replies | $replies"
-print_notice "views: prev | next: $last_views | $views"
+print_notice "replies: prev / next / diff: $last_replies / $replies / $stats_replies_diff"
+print_notice "views: prev / next / diff: $last_views / $views / $stats_views_diff"
 
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
   print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
@@ -100,9 +103,8 @@ echo "\
   \"views\" : $views
 }" > "$timestamp_year_dir/$timestamp_date_utc.json"
 
-(( stats_replies_diff=replies-last_replies ))
-(( stats_views_diff=views-last_views ))
-
 # return output variables
-set_env_var STATS_REPLIES_DIFF  "$stats_replies_diff"
-set_env_var STATS_VIEWS_DIFF    "$stats_views_diff"
+set_env_var STATS_REPLIES_DIFF    "$stats_replies_diff"
+set_env_var STATS_VIEWS_DIFF      "$stats_views_diff"
+
+set_env_var COMMIT_MESSAGE_SUFFIX " | re vi: $stats_replies_diff $stats_views_diff"

@@ -48,7 +48,7 @@ current_date_utc=${current_date_time_utc/%T*}
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
-print_notice "prev accum: outdated-all outdated-unq | all unq: $count_outdated_prev $uniques_outdated_prev | $count_prev $uniques_prev"
+print_notice "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -271,7 +271,9 @@ done
 (( count_next += count_outdated_next ))
 (( uniques_next += uniques_outdated_next ))
 
-print_notice "next accum: outdated-all outdated-unq | all unq: $count_outdated_next $uniques_outdated_next | $count_next $uniques_next"
+print_notice "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
+
+print_notice "diff: unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uniques_dec -$stats_count_dec"
 
 (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
    count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -313,7 +315,9 @@ print_notice "next accum: outdated-all outdated-unq | all unq: $count_outdated_n
 } > $stats_accum_json || exit $?
 
 # return output variables
-set_env_var STATS_COUNT_INC   "$stats_count_inc"
-set_env_var STATS_UNIQUES_INC "$stats_uniques_inc"
-set_env_var STATS_COUNT_DEC   "$stats_count_dec"
-set_env_var STATS_UNIQUES_DEC "$stats_uniques_dec"
+set_env_var STATS_COUNT_INC       "$stats_count_inc"
+set_env_var STATS_UNIQUES_INC     "$stats_uniques_inc"
+set_env_var STATS_COUNT_DEC       "$stats_count_dec"
+set_env_var STATS_UNIQUES_DEC     "$stats_uniques_dec"
+
+set_env_var COMMIT_MESSAGE_SUFFIX " | unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uniques_dec -$stats_count_dec"
