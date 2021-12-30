@@ -16,6 +16,12 @@ function print_warning()
   [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
 }
 
+function print_notice()
+{
+  echo "$*"
+  [[ -n "$GITHUB_ACTIONS" ]] && echo "::notice ::$*"
+}
+
 function set_env_var()
 {
   [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
@@ -40,11 +46,17 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 current_date_time_utc=${current_date_time_utc//:/-}
 current_date_utc=${current_date_time_utc/%T*}
 
+IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
+
+print_notice "prev accum: outdated-all outdated-unq | all unq: $count_outdated_prev $uniques_outdated_prev | $count_prev $uniques_prev"
+
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
 #   We must check that special case to avoid invalid accumulation!
 #
 IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$stats_list_key|length" $stats_json)
+
+print_notice "next 14d: all unq: $count $uniques"
 
 (( ! count && ! uniques && ! stats_length )) && {
   print_error "$0: error: json data is invalid or empty."
@@ -102,8 +114,6 @@ fi
 stats_accum_timestamp=()
 stats_accum_count=()
 stats_accum_uniques=()
-
-IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
 stats_timestamp_prev_seq=""
 stats_count_prev_seq=""
@@ -260,6 +270,8 @@ done
 
 (( count_next += count_outdated_next ))
 (( uniques_next += uniques_outdated_next ))
+
+print_notice "next accum: outdated-all outdated-unq | all unq: $count_outdated_next $uniques_outdated_next | $count_next $uniques_next"
 
 (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
    count_prev == count_next && uniques_prev == uniques_next )) && [[ \

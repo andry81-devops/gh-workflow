@@ -69,11 +69,12 @@ eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
 
+print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+print_notice "replies: prev | next: $last_replies | $replies"
+print_notice "views: prev | next: $last_views | $views"
+
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
-  print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-  print_notice "replies: $replies"
-  print_notice "views: $views"
-  print_warning "$0: warning: nothing is changed, no new \`$board_name\` board replies/views."
+  print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
   exit 255
 } >&2
 

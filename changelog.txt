@@ -1,3 +1,6 @@
+2021.12.30:
+* changed: accum-stats.sh, accum-downloads.sh: always print script main execution parameters, even if has no error or warning
+
 2021.12.24:
 * refactor: bash/github/accum-stats.sh: code cleanup
 
