@@ -30,22 +30,22 @@ function set_env_var()
 [[ -z "$stats_dir" ]] && {
   print_error "$0: error: \`stats_dir\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$stat_entity_path" ]] && {
   print_error "$0: error: \`stat_entity_path\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$query_url" ]] && {
   print_error "$0: error: \`query_url\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$downloads_sed_regexp" ]] && {
   print_error "$0: error: \`downloads_sed_regexp\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
@@ -71,7 +71,7 @@ print_notice "downloads: prev / next / diff: $last_downloads / $downloads / $sta
 [[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
   print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
   exit 255
-} >&2
+}
 
 echo "\
 {

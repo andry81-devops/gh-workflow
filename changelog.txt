@@ -1,4 +1,7 @@
 2021.12.31:
+* changed: accum-stats.sh, accum-downloads.sh: code cleanup
+
+2021.12.31:
 * new: bash/github: `print-*.sh` scripts to directly call from GitHub pipeline for multiline messages (line per annotation)
 
 2021.12.30:

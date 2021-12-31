@@ -30,27 +30,27 @@ function set_env_var()
 [[ -z "$stats_dir" ]] && {
   print_error "$0: error: \`stats_dir\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$board_name" ]] && {
   print_error "$0: error: \`board_name\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$topic_query_url" ]] && {
   print_error "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$replies_sed_regexp" ]] && {
   print_error "$0: error: \`replies_sed_regexp\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$views_sed_regexp" ]] && {
   print_error "$0: error: \`views_sed_regexp\` variable is not defined."
   exit 255
-} >&2
+}
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
@@ -79,7 +79,7 @@ print_notice "views: prev / next / diff: $last_views / $views / $stats_views_dif
 [[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
   print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
   exit 255
-} >&2
+}
 
 echo "\
 {

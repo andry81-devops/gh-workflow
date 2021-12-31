@@ -30,12 +30,12 @@ function set_env_var()
 [[ -z "$stats_dir" ]] && {
   print_error "$0: error: \`stats_dir\` variable must be defined."
   exit 255
-} >&2
+}
 
 [[ -z "$stats_list_key" ]] && {
   print_error "$0: error: \`stats_list_key\` variable must be defined."
   exit 255
-} >&2
+}
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
@@ -61,7 +61,7 @@ print_notice "next 14d: all unq: $count $uniques"
 (( ! count && ! uniques && ! stats_length )) && {
   print_error "$0: error: json data is invalid or empty."
   exit 255
-} >&2
+}
 
 # CAUTION:
 #   The GitHub has an issue with the `latest.json` file residual (no effect) changes related to the statistic interpolation issue,
@@ -282,7 +282,7 @@ print_notice "diff: unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uni
    "$stats_uniques_next_seq" == "$stats_uniques_prev_seq" ]] && {
   print_warning "$0: warning: nothing is changed, no new statistic."
   exit 255
-} >&2
+}
 
 {
   echo -n "\
