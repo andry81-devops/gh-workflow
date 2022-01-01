@@ -11,8 +11,11 @@ function print_error()
 {
   local arg
   for arg in "$@"; do
-    echo "$arg" >&2
-    [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$arg"
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      echo "::error ::$arg" >&2
+    else
+      echo "$arg" >&2
+    fi
   done
 }
 
