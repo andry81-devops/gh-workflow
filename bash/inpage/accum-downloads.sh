@@ -4,23 +4,14 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
-function print_error()
-{
-  echo "$*" >&2
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::error ::$*"
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
 }
 
-function print_warning()
-{
-  echo "$*" >&2
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::warning ::$*"
-}
-
-function print_notice()
-{
-  echo "$*"
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "::notice ::$*"
-}
+source "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
+source "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
+source "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 function set_env_var()
 {
