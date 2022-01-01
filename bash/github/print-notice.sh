@@ -11,8 +11,11 @@ function print_notice()
 {
   local arg
   for arg in "$@"; do
-    echo "$arg"
-    [[ -n "$GITHUB_ACTIONS" ]] && echo "::notice ::$arg"
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      echo "::notice ::$arg"
+    else
+      echo "$arg"
+    fi
   done
 }
 
