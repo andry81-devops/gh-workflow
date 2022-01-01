@@ -23,6 +23,16 @@ function set_env_var()
   exit 255
 }
 
+[[ ! -d "$stats_dir" ]] && {
+  print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
+  exit 255
+}
+
+[[ -n "$stats_json" && ! -f "$stats_json" ]] && {
+  print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
+  exit 255
+}
+
 [[ -z "$board_name" ]] && {
   print_error "$0: error: \`board_name\` variable is not defined."
   exit 255
