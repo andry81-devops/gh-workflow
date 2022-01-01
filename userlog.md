@@ -3,6 +3,9 @@
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81/gh-workflow/blob/master/changelog.txt) file in a directory
 
 ## 2022.01.01:
+* new: bash: use `GH_WORKFLOW_ROOT` variable to include `gh-workflow` shell scripts as dependencies
+
+## 2022.01.01:
 * changed: bash/github/print-*.sh: avoid output duplication, always print warnings/errors into stderr including GitHub pipeline
 
 ## 2021.12.31:
