@@ -1,3 +1,6 @@
+2022.01.05:
+* changed: .github/res/*.md.in: moved releases common readme templates into standalone repository
+
 2022.01.01:
 * fixed: bash: missed `stats_dir` and `stats_json` variables check in respective scripts
 
