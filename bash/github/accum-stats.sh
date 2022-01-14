@@ -44,7 +44,6 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-current_date_time_utc=${current_date_time_utc//:/-}
 current_date_utc=${current_date_time_utc/%T*}
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
@@ -76,8 +75,7 @@ has_residual_changes=0
 for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
 
-  timestamp_date_time_utc=${timestamp//:/-}
-  timestamp_date_utc=${timestamp_date_time_utc/%T*}
+  timestamp_date_utc=${timestamp/%T*}
 
   # changes at current day is always not residual
   if [[ "$timestamp_date_utc" == "$current_date_utc" ]]; then
@@ -148,11 +146,11 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_accum_json); do
   stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques"
 done
 
-# stats per script execution (output)
-stats_count_inc=0
-stats_uniques_inc=0
-stats_count_dec=0
-stats_uniques_dec=0
+# stats between previos/next script execution (dependent to the pipeline scheduler times)
+stats_prev_exec_count_inc=0
+stats_prev_exec_uniques_inc=0
+stats_prev_exec_count_dec=0
+stats_prev_exec_uniques_dec=0
 
 first_stats_timestamp=""
 
@@ -182,8 +180,7 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   stats_count_next_seq="$stats_count_next_seq|$count"
   stats_uniques_next_seq="$stats_uniques_next_seq|$uniques"
 
-  timestamp_date_time_utc=${timestamp//:/-}
-  timestamp_date_utc=${timestamp_date_time_utc/%T*}
+  timestamp_date_utc=${timestamp/%T*}
   timestamp_year_utc=${timestamp_date_utc/%-*}
 
   timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
@@ -196,8 +193,17 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   uniques_min=$uniques
   uniques_max=$uniques
 
+  count_inc=0
+  count_dec=0
+  uniques_inc=0
+  uniques_dec=0
+
   count_saved=0
   uniques_saved=0
+  count_prev_day_inc_saved=0
+  count_prev_day_dec_saved=0
+  uniques_prev_day_inc_saved=0
+  uniques_prev_day_dec_saved=0
   count_min_saved=0
   count_max_saved=0
   uniques_min_saved=0
@@ -205,9 +211,13 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
 
   # calculate min/max
   if [[ -f "$year_date_json" ]]; then
-    IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
-      "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+    IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
+      "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
 
+    [[ -z "$count_prev_day_inc_saved" || "$count_prev_day_inc_saved" == 'null' ]] && count_prev_day_inc_saved=0
+    [[ -z "$count_prev_day_dec_saved" || "$count_prev_day_dec_saved" == 'null' ]] && count_prev_day_dec_saved=0
+    [[ -z "$uniques_prev_day_inc_saved" || "$uniques_prev_day_inc_saved" == 'null' ]] && uniques_prev_day_inc_saved=0
+    [[ -z "$uniques_prev_day_dec_saved" || "$uniques_prev_day_dec_saved" == 'null' ]] && uniques_prev_day_dec_saved=0
     [[ -z "$count_min_saved" || "$count_min_saved" == 'null' ]] && count_min_saved=$count_saved
     [[ -z "$count_max_saved" || "$count_max_saved" == 'null' ]] && count_max_saved=$count_saved
     [[ -z "$uniques_min_saved" || "$uniques_min_saved" == 'null' ]] && uniques_min_saved=$uniques_saved
@@ -224,24 +234,95 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   stats_uniques_min[${#stats_uniques_min[@]}]=$uniques_min
   stats_uniques_max[${#stats_uniques_max[@]}]=$uniques_max
 
-  (( count > count_saved )) && (( stats_count_inc+=count-count_saved ))
-  (( uniques > uniques_saved )) && (( stats_uniques_inc+=uniques-uniques_saved ))
+  (( count > count_saved )) && (( count_inc=count-count_saved ))
+  (( uniques > uniques_saved )) && (( uniques_inc=uniques-uniques_saved ))
 
-  (( count < count_saved )) && (( stats_count_dec+=count_saved-count ))
-  (( uniques < uniques_saved )) && (( stats_uniques_dec+=uniques_saved-uniques ))
+  (( count < count_saved )) && (( count_dec=count_saved-count ))
+  (( uniques < uniques_saved )) && (( uniques_dec=uniques_saved-uniques ))
 
-  if (( count != count_saved || uniques != uniques_saved || count_min != count_min_saved || count_max != count_max_saved || \
+  (( stats_prev_exec_count_inc+=count_inc ))
+  (( stats_prev_exec_uniques_inc+=uniques_inc ))
+
+  (( stats_prev_exec_count_dec+=count_dec ))
+  (( stats_prev_exec_uniques_dec+=uniques_dec ))
+
+  if (( count != count_saved || uniques != uniques_saved || \
+        count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
   echo "\
 {
   \"timestamp\" : \"$timestamp\",
   \"count\" : $count,
   \"count_minmax\" : [ $count_min, $count_max ],
+  \"count_prev_day_inc\" : $count_prev_day_inc_saved,
+  \"count_prev_day_dec\" : $count_prev_day_dec_saved,
   \"uniques\" : $uniques,
-  \"uniques_minmax\" : [ $uniques_min, $uniques_max ]
+  \"uniques_minmax\" : [ $uniques_min, $uniques_max ],
+  \"uniques_prev_day_inc\" : $uniques_prev_day_inc_saved,
+  \"uniques_prev_day_dec\" : $uniques_prev_day_dec_saved
 }" > "$year_date_json"
   fi
 done
+
+# stats between last change in previous/next day (independent to the pipeline scheduler times)
+stats_prev_day_count_inc=0
+stats_prev_day_uniques_inc=0
+stats_prev_day_count_dec=0
+stats_prev_day_uniques_dec=0
+
+timestamp=$current_date_time_utc
+count_saved=0
+uniques_saved=0
+count_prev_day_inc_saved=0
+count_prev_day_dec_saved=0
+uniques_prev_day_inc_saved=0
+uniques_prev_day_dec_saved=0
+count_min_saved=0
+count_max_saved=0
+uniques_min_saved=0
+uniques_max_saved=0
+
+timestamp_date_utc=$current_date_utc
+timestamp_year_utc=${current_date_utc/%-*}
+timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
+year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
+
+if [[ -f "$year_date_json" ]]; then
+  IFS=$'\n' read -r -d '' timestamp count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
+    "$(jq -c -r ".timestamp,.count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+
+  [[ -z "$count_prev_day_inc_saved" || "$count_prev_day_inc_saved" == 'null' ]] && count_prev_day_inc_saved=0
+  [[ -z "$count_prev_day_dec_saved" || "$count_prev_day_dec_saved" == 'null' ]] && count_prev_day_dec_saved=0
+  [[ -z "$uniques_prev_day_inc_saved" || "$uniques_prev_day_inc_saved" == 'null' ]] && uniques_prev_day_inc_saved=0
+  [[ -z "$uniques_prev_day_dec_saved" || "$uniques_prev_day_dec_saved" == 'null' ]] && uniques_prev_day_dec_saved=0
+  [[ -z "$count_min_saved" || "$count_min_saved" == 'null' ]] && count_min_saved=$count_saved
+  [[ -z "$count_max_saved" || "$count_max_saved" == 'null' ]] && count_max_saved=$count_saved
+  [[ -z "$uniques_min_saved" || "$uniques_min_saved" == 'null' ]] && uniques_min_saved=$uniques_saved
+  [[ -z "$uniques_max_saved" || "$uniques_max_saved" == 'null' ]] && uniques_max_saved=$uniques_saved
+fi
+
+(( stats_prev_day_count_inc+=count_prev_day_inc_saved+stats_prev_exec_count_inc ))
+(( stats_prev_day_uniques_inc+=uniques_prev_day_inc_saved+stats_prev_exec_uniques_inc ))
+
+(( stats_prev_day_count_dec+=count_prev_day_dec_saved+stats_prev_exec_count_dec ))
+(( stats_prev_day_uniques_dec+=uniques_prev_day_dec_saved+stats_prev_exec_uniques_dec ))
+
+if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exec_count_dec || stats_prev_exec_uniques_dec )); then
+  [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+
+  echo "\
+{
+  \"timestamp\" : \"$timestamp\",
+  \"count\" : $count_saved,
+  \"count_minmax\" : [ $count_min_saved, $count_max_saved ],
+  \"count_prev_day_inc\" : $stats_prev_day_count_inc,
+  \"count_prev_day_dec\" : $stats_prev_day_count_dec,
+  \"uniques\" : $uniques_saved,
+  \"uniques_minmax\" : [ $uniques_min_saved, $uniques_max_saved ],
+  \"uniques_prev_day_inc\" : $stats_prev_day_uniques_inc,
+  \"uniques_prev_day_dec\" : $stats_prev_day_uniques_dec
+}" > "$year_date_json"
+fi
 
 # accumulate statistic
 count_outdated_next=$count_outdated_prev
@@ -274,7 +355,9 @@ done
 
 print_notice "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
 
-print_notice "diff: unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uniques_dec -$stats_count_dec"
+print_notice "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
+
+print_notice "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
    count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -316,9 +399,23 @@ print_notice "diff: unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uni
 } > $stats_accum_json || exit $?
 
 # return output variables
-set_env_var STATS_COUNT_INC       "$stats_count_inc"
-set_env_var STATS_UNIQUES_INC     "$stats_uniques_inc"
-set_env_var STATS_COUNT_DEC       "$stats_count_dec"
-set_env_var STATS_UNIQUES_DEC     "$stats_uniques_dec"
 
-set_env_var COMMIT_MESSAGE_SUFFIX " | unq all: +$stats_uniques_inc +$stats_count_inc / -$stats_uniques_dec -$stats_count_dec"
+# CAUTION:
+#   We must explicitly state the statistic calculation time in the script, because
+#   the time taken from a script and the time set to commit changes ARE DIFFERENT
+#   and may be shifted to the next day.
+#
+set_env_var STATS_DATE_UTC                "$current_date_utc"
+set_env_var STATS_DATE_TIME_UTC           "$current_date_time_utc"
+
+set_env_var STATS_PREV_EXEC_COUNT_INC     "$stats_prev_exec_count_inc"
+set_env_var STATS_PREV_EXEC_UNIQUES_INC   "$stats_prev_exec_uniques_inc"
+set_env_var STATS_PREV_EXEC_COUNT_DEC     "$stats_prev_exec_count_dec"
+set_env_var STATS_PREV_EXEC_UNIQUES_DEC   "$stats_prev_exec_uniques_dec"
+
+set_env_var STATS_PREV_DAY_COUNT_INC      "$stats_prev_day_count_inc"
+set_env_var STATS_PREV_DAY_UNIQUES_INC    "$stats_prev_day_uniques_inc"
+set_env_var STATS_PREV_DAY_COUNT_DEC      "$stats_prev_day_count_dec"
+set_env_var STATS_PREV_DAY_UNIQUES_DEC    "$stats_prev_day_uniques_dec"
+
+set_env_var COMMIT_MESSAGE_SUFFIX         " | unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"

@@ -53,6 +53,8 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+current_date_utc=${current_date_time_utc/%T*}
+
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $stats_json)"
 
@@ -95,6 +97,15 @@ echo "\
 }" > "$timestamp_year_dir/$timestamp_date_utc.json"
 
 # return output variables
-set_env_var STATS_DOWNLOADS_DIFF  "$stats_downloads_diff"
 
-set_env_var COMMIT_MESSAGE_SUFFIX " | dl: $stats_downloads_diff"
+# CAUTION:
+#   We must explicitly state the statistic calculation time in the script, because
+#   the time taken from a script and the time set to commit changes ARE DIFFERENT
+#   and may be shifted to the next day.
+#
+set_env_var STATS_DATE_UTC          "$current_date_utc"
+set_env_var STATS_DATE_TIME_UTC     "$current_date_time_utc"
+
+set_env_var STATS_DOWNLOADS_DIFF    "$stats_downloads_diff"
+
+set_env_var COMMIT_MESSAGE_SUFFIX   " | dl: $stats_downloads_diff"
