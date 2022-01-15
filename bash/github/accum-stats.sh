@@ -44,6 +44,8 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+print_notice "current date/time: $current_date_time_utc"
+
 current_date_utc=${current_date_time_utc/%T*}
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
@@ -56,7 +58,7 @@ print_notice "prev accum: outdated-all outdated-unq / all unq: $count_outdated_p
 #
 IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$stats_list_key|length" $stats_json)
 
-print_notice "next 14d: all unq: $count $uniques"
+print_notice "last 14d: all unq: $count $uniques"
 
 (( ! count && ! uniques && ! stats_length )) && {
   print_error "$0: error: json data is invalid or empty."

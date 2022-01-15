@@ -53,6 +53,8 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+print_notice "current date/time: $current_date_time_utc"
+
 current_date_utc=${current_date_time_utc/%T*}
 
 # exit with non 0 code if nothing is changed
