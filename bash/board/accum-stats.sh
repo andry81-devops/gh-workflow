@@ -74,18 +74,53 @@ eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
 
-(( stats_replies_diff=replies-last_replies ))
-(( stats_views_diff=views-last_views ))
+# stats between previos/next script execution (dependent to the pipeline scheduler times)
+stats_prev_exec_replies_inc=0
+stats_prev_exec_views_inc=0
+
+if [[ -n "$replies" ]]; then
+  (( last_replies < replies )) && (( stats_prev_exec_replies_inc=replies-last_replies ))
+fi
+if [[ -n "$views" ]]; then
+  (( last_views < views )) && (( stats_prev_exec_views_inc=views-last_views ))
+fi
 
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-print_notice "replies: prev / next / diff: $last_replies / $replies / $stats_replies_diff"
-print_notice "views: prev / next / diff: $last_views / $views / $stats_views_diff"
 
-[[ -z "$replies" || -z "$views" ]] || (( last_replies >= replies && last_views >= views )) && {
-  print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
-  exit 255
-}
+print_notice "prev json prev / next / diff: re vi: $last_replies $last_views / ${replies:-'-'} ${views:-'-'} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
+[[ -z "$replies" ]] && replies=0
+[[ -z "$views" ]] && views=0
+
+# stats between last change in previous/next day (independent to the pipeline scheduler times)
+stats_prev_day_replies_inc=0
+stats_prev_day_views_inc=0
+
+timestamp=$current_date_time_utc
+replies_saved=0
+views_saved=0
+replies_prev_day_inc_saved=0
+views_prev_day_inc_saved=0
+
+timestamp_date_utc=${current_date_time_utc/%T*}
+timestamp_year_utc=${timestamp_date_utc/%-*}
+timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
+year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
+
+if [[ -f "$year_date_json" ]]; then
+  IFS=$'\n' read -r -d '' timestamp replies_saved views_saved replies_prev_day_inc_saved views_prev_day_inc_saved <<< \
+    "$(jq -c -r ".timestamp,.replies,.views,.replies_prev_day_inc,.views_prev_day_inc" $year_date_json)"
+
+  [[ -z "$replies_prev_day_inc_saved" || "$replies_prev_day_inc_saved" == 'null' ]] && replies_prev_day_inc_saved=0
+  [[ -z "$views_prev_day_inc_saved" || "$views_prev_day_inc_saved" == 'null' ]] && views_prev_day_inc_saved=0
+fi
+
+(( stats_prev_day_replies_inc+=replies_prev_day_inc_saved+stats_prev_exec_replies_inc ))
+(( stats_prev_day_views_inc+=views_prev_day_inc_saved+stats_prev_exec_views_inc ))
+
+print_notice "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+
+# always unconditionally update latest json to use it locally
 echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
@@ -93,20 +128,28 @@ echo "\
   \"views\" : $views
 }" > "$stats_json"
 
-timestamp_date_time_utc=${current_date_time_utc//:/-}
-timestamp_date_utc=${timestamp_date_time_utc/%T*}
-timestamp_year_utc=${timestamp_date_utc/%-*}
+if (( replies != replies_saved || views != views_saved || stats_prev_exec_replies_inc || stats_prev_exec_views_inc )); then
+  [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
-timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
-
-[[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
-
-echo "\
+  echo "\
 {
-  \"timestamp\" : \"$current_date_time_utc\",
+  \"timestamp\" : \"$timestamp\",
   \"replies\" : $replies,
-  \"views\" : $views
-}" > "$timestamp_year_dir/$timestamp_date_utc.json"
+  \"replies_prev_day_inc\" : $stats_prev_day_replies_inc,
+  \"views\" : $views,
+  \"views_prev_day_inc\" : $stats_prev_day_views_inc
+}" > "$year_date_json"
+fi
+
+# continue if at least one is valid
+if (( replies < last_replies || views < last_views )); then
+  print_warning "$0: warning: replies or views is decremented for \`$board_name\`."
+fi
+
+if (( last_replies >= replies && last_views >= views )); then
+  print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
+  exit 255
+fi
 
 # return output variables
 
@@ -115,10 +158,13 @@ echo "\
 #   the time taken from a script and the time set to commit changes ARE DIFFERENT
 #   and may be shifted to the next day.
 #
-set_env_var STATS_DATE_UTC          "$current_date_utc"
-set_env_var STATS_DATE_TIME_UTC     "$current_date_time_utc"
+set_env_var STATS_DATE_UTC                  "$current_date_utc"
+set_env_var STATS_DATE_TIME_UTC             "$current_date_time_utc"
 
-set_env_var STATS_REPLIES_DIFF      "$stats_replies_diff"
-set_env_var STATS_VIEWS_DIFF        "$stats_views_diff"
+set_env_var STATS_PREV_EXEC_REPLIES_INC     "$stats_prev_exec_replies_inc"
+set_env_var STATS_PREV_EXEC_VIEWS_INC       "$stats_prev_exec_views_inc"
 
-set_env_var COMMIT_MESSAGE_SUFFIX   " | re vi: $stats_replies_diff $stats_views_diff"
+set_env_var STATS_PREV_DAY_REPLIES_INC      "$stats_prev_day_replies_inc"
+set_env_var STATS_PREV_DAY_VIEWS_INC        "$stats_prev_day_views_inc"
+
+set_env_var COMMIT_MESSAGE_SUFFIX           " | re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"

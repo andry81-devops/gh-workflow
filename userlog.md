@@ -2,9 +2,14 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.01.16:
+* new: bash: board/accum-stats.sh, inpage/accum-downloads.sh: `STATS_PREV_EXEC_*` and `STATS_PREV_DAY_*` variables to represent the script previous execution/day difference
+* changed: bash: board/accum-stats.sh, inpage/accum-downloads.sh: calculate difference in the `COMMIT_MESSAGE_SUFFIX` variable between current json file and the last change from the previous day instead of from the previous json file (independently to the pipeline scheduler times)
+
 ## 2022.01.14:
 * new: bash/*/accum-*.sh: `STATS_DATE_UTC` and `STATS_DATE_TIME_UTC` variables to represent the script execution times
-* changed: bash/*/accum-*.sh: calculate difference in the `COMMIT_MESSAGE_SUFFIX` variable between current json file and the last change from the previous day instead of from the previous json file (independently to the pipeline scheduler times)
+* new: bash/github/accum-stats.sh: `STATS_PREV_EXEC_*` and `STATS_PREV_DAY_*` variables to represent the script previous execution/day difference
+* changed: bash/github/accum-stats.sh: calculate difference in the `COMMIT_MESSAGE_SUFFIX` variable between current json file and the last change from the previous day instead of from the previous json file (independently to the pipeline scheduler times)
 
 ## 2022.01.01:
 * fixed: bash: missed `stats_dir` and `stats_json` variables check in respective scripts
