@@ -68,35 +68,69 @@ eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || exit $?
 
 downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/query.txt")
 
-(( stats_downloads_diff=downloads-last_downloads ))
+# stats between previos/next script execution (dependent to the pipeline scheduler times)
+stats_prev_exec_downloads_inc=0
+
+if [[ -n "$downloads" ]]; then
+  (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
+fi
 
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
-print_notice "downloads: prev / next / diff: $last_downloads / $downloads / $stats_downloads_diff"
 
-[[ -z "$downloads" ]] || (( last_downloads >= downloads )) && {
-  print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
-  exit 255
-}
+print_notice "prev json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
 
+[[ -z "$downloads" ]] && downloads=0
+
+# stats between last change in previous/next day (independent to the pipeline scheduler times)
+stats_prev_day_downloads_inc=0
+
+timestamp=$current_date_time_utc
+downloads_saved=0
+downloads_prev_day_inc_saved=0
+
+timestamp_date_utc=${current_date_time_utc/%T*}
+timestamp_year_utc=${timestamp_date_utc/%-*}
+timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
+year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
+
+if [[ -f "$year_date_json" ]]; then
+  IFS=$'\n' read -r -d '' timestamp downloads_saved downloads_prev_day_inc_saved <<< \
+    "$(jq -c -r ".timestamp,.downloads,.downloads_prev_day_inc" $year_date_json)"
+
+  [[ -z "$downloads_prev_day_inc_saved" || "$downloads_prev_day_inc_saved" == 'null' ]] && downloads_prev_day_inc_saved=0
+fi
+
+(( stats_prev_day_downloads_inc+=downloads_prev_day_inc_saved+stats_prev_exec_downloads_inc ))
+
+print_notice "prev day diff: dl: +$stats_prev_day_downloads_inc"
+
+# always unconditionally update latest json to use it locally
 echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads
 }" > "$stats_json"
 
-timestamp_date_time_utc=${current_date_time_utc//:/-}
-timestamp_date_utc=${timestamp_date_time_utc/%T*}
-timestamp_year_utc=${timestamp_date_utc/%-*}
+if (( downloads != downloads_saved || stats_prev_exec_downloads_inc )); then
+  [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
-timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
-
-[[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
-
-echo "\
+  echo "\
 {
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"downloads\" : $downloads
-}" > "$timestamp_year_dir/$timestamp_date_utc.json"
+  \"timestamp\" : \"$timestamp\",
+  \"downloads\" : $downloads,
+  \"downloads_prev_day_inc\" : $stats_prev_day_downloads_inc
+}" > "$year_date_json"
+fi
+
+# continue if at least one is valid
+if (( downloads < last_downloads )); then
+  print_warning "$0: warning: downloads is decremented for \`$stat_entity_path\`."
+fi
+
+if (( last_downloads >= downloads )); then
+  print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
+  exit 255
+fi
 
 # return output variables
 
@@ -105,9 +139,11 @@ echo "\
 #   the time taken from a script and the time set to commit changes ARE DIFFERENT
 #   and may be shifted to the next day.
 #
-set_env_var STATS_DATE_UTC          "$current_date_utc"
-set_env_var STATS_DATE_TIME_UTC     "$current_date_time_utc"
+set_env_var STATS_DATE_UTC                  "$current_date_utc"
+set_env_var STATS_DATE_TIME_UTC             "$current_date_time_utc"
 
-set_env_var STATS_DOWNLOADS_DIFF    "$stats_downloads_diff"
+set_env_var STATS_PREV_EXEC_DOWNLOADS_INC   "$stats_prev_exec_downloads_inc"
 
-set_env_var COMMIT_MESSAGE_SUFFIX   " | dl: $stats_downloads_diff"
+set_env_var STATS_PREV_DAY_DOWNLOADS_INC    "$stats_prev_day_downloads_inc"
+
+set_env_var COMMIT_MESSAGE_SUFFIX           " | dl: +$stats_prev_day_downloads_inc"
