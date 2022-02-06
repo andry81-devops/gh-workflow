@@ -272,7 +272,6 @@ stats_prev_day_uniques_inc=0
 stats_prev_day_count_dec=0
 stats_prev_day_uniques_dec=0
 
-timestamp=$current_date_time_utc
 count_saved=0
 uniques_saved=0
 count_prev_day_inc_saved=0
@@ -290,8 +289,8 @@ timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' timestamp count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
-    "$(jq -c -r ".timestamp,.count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+  IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
+    "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
 
   [[ -z "$count_prev_day_inc_saved" || "$count_prev_day_inc_saved" == 'null' ]] && count_prev_day_inc_saved=0
   [[ -z "$count_prev_day_dec_saved" || "$count_prev_day_dec_saved" == 'null' ]] && count_prev_day_dec_saved=0
@@ -312,9 +311,10 @@ fi
 if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exec_count_dec || stats_prev_exec_uniques_dec )); then
   [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
-  echo "\
+  if (( stats_prev_day_count_inc != count_prev_day_inc_saved || stats_prev_day_count_dec != count_prev_day_dec_saved )); then
+    echo "\
 {
-  \"timestamp\" : \"$timestamp\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"count\" : $count_saved,
   \"count_minmax\" : [ $count_min_saved, $count_max_saved ],
   \"count_prev_day_inc\" : $stats_prev_day_count_inc,
@@ -324,6 +324,7 @@ if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exe
   \"uniques_prev_day_inc\" : $stats_prev_day_uniques_inc,
   \"uniques_prev_day_dec\" : $stats_prev_day_uniques_dec
 }" > "$year_date_json"
+  fi
 fi
 
 # accumulate statistic
@@ -361,14 +362,14 @@ print_notice "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_pre
 
 print_notice "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
-(( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
-   count_prev == count_next && uniques_prev == uniques_next )) && [[ \
-   "$stats_timestamp_next_seq" == "$stats_timestamp_prev_seq" && \
-   "$stats_count_next_seq" == "$stats_count_prev_seq" && \
-   "$stats_uniques_next_seq" == "$stats_uniques_prev_seq" ]] && {
+if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
+      count_prev == count_next && uniques_prev == uniques_next )) && [[ \
+      "$stats_timestamp_next_seq" == "$stats_timestamp_prev_seq" && \
+      "$stats_count_next_seq" == "$stats_count_prev_seq" && \
+      "$stats_uniques_next_seq" == "$stats_uniques_prev_seq" ]]; then
   print_warning "$0: warning: nothing is changed, no new statistic."
   exit 255
-}
+fi
 
 {
   echo -n "\
