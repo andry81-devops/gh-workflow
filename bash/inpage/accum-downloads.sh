@@ -84,7 +84,6 @@ print_notice "prev json prev / next / diff: dl: $last_downloads / ${downloads:-'
 # stats between last change in previous/next day (independent to the pipeline scheduler times)
 stats_prev_day_downloads_inc=0
 
-timestamp=$current_date_time_utc
 downloads_saved=0
 downloads_prev_day_inc_saved=0
 
@@ -94,8 +93,8 @@ timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' timestamp downloads_saved downloads_prev_day_inc_saved <<< \
-    "$(jq -c -r ".timestamp,.downloads,.downloads_prev_day_inc" $year_date_json)"
+  IFS=$'\n' read -r -d '' downloads_saved downloads_prev_day_inc_saved <<< \
+    "$(jq -c -r ".downloads,.downloads_prev_day_inc" $year_date_json)"
 
   [[ -z "$downloads_prev_day_inc_saved" || "$downloads_prev_day_inc_saved" == 'null' ]] && downloads_prev_day_inc_saved=0
 fi
@@ -104,19 +103,18 @@ fi
 
 print_notice "prev day diff: dl: +$stats_prev_day_downloads_inc"
 
-# always unconditionally update latest json to use it locally
-echo "\
+if (( downloads != downloads_saved )); then
+  echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads
 }" > "$stats_json"
 
-if (( downloads != downloads_saved || stats_prev_exec_downloads_inc )); then
   [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
   echo "\
 {
-  \"timestamp\" : \"$timestamp\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"downloads\" : $downloads,
   \"downloads_prev_day_inc\" : $stats_prev_day_downloads_inc
 }" > "$year_date_json"

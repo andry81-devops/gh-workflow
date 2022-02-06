@@ -96,7 +96,6 @@ print_notice "prev json prev / next / diff: re vi: $last_replies $last_views / $
 stats_prev_day_replies_inc=0
 stats_prev_day_views_inc=0
 
-timestamp=$current_date_time_utc
 replies_saved=0
 views_saved=0
 replies_prev_day_inc_saved=0
@@ -108,8 +107,8 @@ timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' timestamp replies_saved views_saved replies_prev_day_inc_saved views_prev_day_inc_saved <<< \
-    "$(jq -c -r ".timestamp,.replies,.views,.replies_prev_day_inc,.views_prev_day_inc" $year_date_json)"
+  IFS=$'\n' read -r -d '' replies_saved views_saved replies_prev_day_inc_saved views_prev_day_inc_saved <<< \
+    "$(jq -c -r ".replies,.views,.replies_prev_day_inc,.views_prev_day_inc" $year_date_json)"
 
   [[ -z "$replies_prev_day_inc_saved" || "$replies_prev_day_inc_saved" == 'null' ]] && replies_prev_day_inc_saved=0
   [[ -z "$views_prev_day_inc_saved" || "$views_prev_day_inc_saved" == 'null' ]] && views_prev_day_inc_saved=0
@@ -120,20 +119,19 @@ fi
 
 print_notice "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
 
-# always unconditionally update latest json to use it locally
-echo "\
+if (( replies != replies_saved || views != views_saved )); then
+  echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"replies\" : $replies,
   \"views\" : $views
 }" > "$stats_json"
 
-if (( replies != replies_saved || views != views_saved || stats_prev_exec_replies_inc || stats_prev_exec_views_inc )); then
   [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
   echo "\
 {
-  \"timestamp\" : \"$timestamp\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"replies\" : $replies,
   \"replies_prev_day_inc\" : $stats_prev_day_replies_inc,
   \"views\" : $views,
