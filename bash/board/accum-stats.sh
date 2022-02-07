@@ -65,6 +65,12 @@ current_date_utc=${current_date_time_utc/%T*}
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_replies last_views <<< "$(jq -c -r ".replies,.views" $stats_json)"
 
+# CAUTION:
+#   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+#
+[[ -z "$last_replies" || "$last_replies" == 'null' ]] && last_replies=0
+[[ -z "$last_views" || "$last_views" == 'null' ]] && last_views=0
+
 TEMP_DIR=$(mktemp -d)
 
 trap "rm -rf \"$TEMP_DIR\"" EXIT HUP INT QUIT
@@ -110,6 +116,11 @@ if [[ -f "$year_date_json" ]]; then
   IFS=$'\n' read -r -d '' replies_saved views_saved replies_prev_day_inc_saved views_prev_day_inc_saved <<< \
     "$(jq -c -r ".replies,.views,.replies_prev_day_inc,.views_prev_day_inc" $year_date_json)"
 
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$replies_saved" || "$replies_saved" == 'null' ]] && replies_saved=0
+  [[ -z "$views_saved" || "$views_saved" == 'null' ]] && views_saved=0
   [[ -z "$replies_prev_day_inc_saved" || "$replies_prev_day_inc_saved" == 'null' ]] && replies_prev_day_inc_saved=0
   [[ -z "$views_prev_day_inc_saved" || "$views_prev_day_inc_saved" == 'null' ]] && views_prev_day_inc_saved=0
 fi
