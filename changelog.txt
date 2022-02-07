@@ -1,3 +1,7 @@
+2022.02.07:
+* fixed: bash/*/accum-*.sh: basic protection from invalid values spread after read an invalid json file
+* fixed: bash/github/accum-stats.sh: code cleanup
+
 2022.02.06:
 * fixed: bash: board/accum-stats.sh, inpage/accum-downloads.sh: exit with error if nothing is changed
 * fixed: bash/github/accum-stats.sh: missed to check by_year json changes and if changed then change the timestamp

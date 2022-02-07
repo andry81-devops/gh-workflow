@@ -50,6 +50,14 @@ current_date_utc=${current_date_time_utc/%T*}
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
+# CAUTION:
+#   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+#
+[[ -z "$count_outdated_prev" || "$count_outdated_prev" == 'null' ]] && count_outdated_prev=0
+[[ -z "$uniques_outdated_prev" || "$uniques_outdated_prev" == 'null' ]] && uniques_outdated_prev=0
+[[ -z "$count_prev" || "$count_prev" == 'null' ]] && count_prev=0
+[[ -z "$uniques_prev" || "$uniques_prev" == 'null' ]] && uniques_prev=0
+
 print_notice "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
 
 # CAUTION:
@@ -58,9 +66,16 @@ print_notice "prev accum: outdated-all outdated-unq / all unq: $count_outdated_p
 #
 IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$stats_list_key|length" $stats_json)
 
+# CAUTION:
+#   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+#
+[[ -z "$count" || "$count" == 'null' ]] && count=0
+[[ -z "$uniques" || "$uniques" == 'null' ]] && uniques=0
+[[ -z "$stats_length" || "$stats_length" == 'null' ]] && stats_length=0
+
 print_notice "last 14d: all unq: $count $uniques"
 
-(( ! count && ! uniques && ! stats_length )) && {
+(( !count && !uniques && !stats_length )) && {
   print_error "$0: error: json data is invalid or empty."
   exit 255
 }
@@ -75,7 +90,18 @@ has_not_residual_changes=0
 has_residual_changes=0
 
 for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$i" || "$i" == 'null' ]] && break
+
   IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
+
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$count" || "$count" == 'null' ]] && count=0
+  [[ -z "$uniques" || "$uniques" == 'null' ]] && uniques=0
 
   timestamp_date_utc=${timestamp/%T*}
 
@@ -93,6 +119,16 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
   if [[ -f "$year_date_json" ]]; then
     IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
       "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+
+    # CAUTION:
+    #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+    #
+    [[ -z "$count_saved" || "$count_saved" == 'null' ]] && count_saved=0
+    [[ -z "$uniques_saved" || "$uniques_saved" == 'null' ]] && uniques_saved=0
+    [[ -z "$count_min_saved" || "$count_min_saved" == 'null' ]] && count_min_saved=$count_saved
+    [[ -z "$count_max_saved" || "$count_max_saved" == 'null' ]] && count_max_saved=$count_saved
+    [[ -z "$uniques_min_saved" || "$uniques_min_saved" == 'null' ]] && uniques_min_saved=$uniques_saved
+    [[ -z "$uniques_max_saved" || "$uniques_max_saved" == 'null' ]] && uniques_max_saved=$uniques_saved
   else
     has_not_residual_changes=1
     break
@@ -129,9 +165,20 @@ stats_accum_count_max=()
 stats_accum_uniques_max=()
 
 for i in $(jq ".$stats_list_key|keys|.[]" $stats_accum_json); do
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$i" || "$i" == 'null' ]] && break
+
   IFS=$'\n' read -r -d '' timestamp count uniques count_max uniques_max <<< \
     "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques,
         .$stats_list_key[$i].count_minmax[1],.$stats_list_key[$i].uniques_minmax[1]" $stats_accum_json)"
+
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$count" || "$count" == 'null' ]] && count=0
+  [[ -z "$uniques" || "$uniques" == 'null' ]] && uniques=0
 
   stats_accum_timestamp[${#stats_accum_timestamp[@]}]="$timestamp"
   stats_accum_count[${#stats_accum_count[@]}]=$count
@@ -170,7 +217,18 @@ stats_uniques_min=()
 stats_uniques_max=()
 
 for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$i" || "$i" == 'null' ]] && break
+
   IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
+
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$count" || "$count" == 'null' ]] && count=0
+  [[ -z "$uniques" || "$uniques" == 'null' ]] && uniques=0
 
   (( ! i )) && first_stats_timestamp="$timestamp"
 
@@ -216,6 +274,11 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
     IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
       "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
 
+    # CAUTION:
+    #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+    #
+    [[ -z "$count_saved" || "$count_saved" == 'null' ]] && count_saved=0
+    [[ -z "$uniques_saved" || "$uniques_saved" == 'null' ]] && uniques_saved=0
     [[ -z "$count_prev_day_inc_saved" || "$count_prev_day_inc_saved" == 'null' ]] && count_prev_day_inc_saved=0
     [[ -z "$count_prev_day_dec_saved" || "$count_prev_day_dec_saved" == 'null' ]] && count_prev_day_dec_saved=0
     [[ -z "$uniques_prev_day_inc_saved" || "$uniques_prev_day_inc_saved" == 'null' ]] && uniques_prev_day_inc_saved=0
@@ -292,6 +355,11 @@ if [[ -f "$year_date_json" ]]; then
   IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
     "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
 
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$count_saved" || "$count_saved" == 'null' ]] && count_saved=0
+  [[ -z "$uniques_saved" || "$uniques_saved" == 'null' ]] && uniques_saved=0
   [[ -z "$count_prev_day_inc_saved" || "$count_prev_day_inc_saved" == 'null' ]] && count_prev_day_inc_saved=0
   [[ -z "$count_prev_day_dec_saved" || "$count_prev_day_dec_saved" == 'null' ]] && count_prev_day_dec_saved=0
   [[ -z "$uniques_prev_day_inc_saved" || "$uniques_prev_day_inc_saved" == 'null' ]] && uniques_prev_day_inc_saved=0
@@ -308,11 +376,15 @@ fi
 (( stats_prev_day_count_dec+=count_prev_day_dec_saved+stats_prev_exec_count_dec ))
 (( stats_prev_day_uniques_dec+=uniques_prev_day_dec_saved+stats_prev_exec_uniques_dec ))
 
+# CAUTION:
+#   The changes over the current day can unexist, but nonetheless they can exist for all previous days
+#   because upstream may update any of previous day at the current day, so we must detect changes irrespective
+#   to previously saved values.
+#
 if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exec_count_dec || stats_prev_exec_uniques_dec )); then
   [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
 
-  if (( stats_prev_day_count_inc != count_prev_day_inc_saved || stats_prev_day_count_dec != count_prev_day_dec_saved )); then
-    echo "\
+  echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"count\" : $count_saved,
@@ -324,7 +396,6 @@ if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exe
   \"uniques_prev_day_inc\" : $stats_prev_day_uniques_inc,
   \"uniques_prev_day_dec\" : $stats_prev_day_uniques_dec
 }" > "$year_date_json"
-  fi
 fi
 
 # accumulate statistic

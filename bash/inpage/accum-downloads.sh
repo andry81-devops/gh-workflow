@@ -60,6 +60,11 @@ current_date_utc=${current_date_time_utc/%T*}
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $stats_json)"
 
+# CAUTION:
+#   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+#
+[[ -z "$last_downloads" || "$last_downloads" == 'null' ]] && last_downloads=0
+
 TEMP_DIR=$(mktemp -d)
 
 trap "rm -rf \"$TEMP_DIR\"" EXIT HUP INT QUIT
@@ -96,6 +101,10 @@ if [[ -f "$year_date_json" ]]; then
   IFS=$'\n' read -r -d '' downloads_saved downloads_prev_day_inc_saved <<< \
     "$(jq -c -r ".downloads,.downloads_prev_day_inc" $year_date_json)"
 
+  # CAUTION:
+  #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
+  #
+  [[ -z "$downloads_saved" || "$downloads_saved" == 'null' ]] && downloads_saved=0
   [[ -z "$downloads_prev_day_inc_saved" || "$downloads_prev_day_inc_saved" == 'null' ]] && downloads_prev_day_inc_saved=0
 fi
 
