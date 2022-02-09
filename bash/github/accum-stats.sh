@@ -316,7 +316,7 @@ for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
   echo "\
 {
-  \"timestamp\" : \"$timestamp\",
+  \"timestamp\" : \"$current_date_time_utc\",
   \"count\" : $count,
   \"count_minmax\" : [ $count_min, $count_max ],
   \"count_prev_day_inc\" : $count_prev_day_inc_saved,
