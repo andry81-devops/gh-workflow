@@ -77,6 +77,18 @@ print_notice "last 14d: all unq: $count $uniques"
 
 (( !count && !uniques && !stats_length )) && {
   print_error "$0: error: json data is invalid or empty."
+
+  # try to request json generic response fields to print them as a notice
+  IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)
+
+  [[ "$json_message" == 'null' ]] && json_message=''
+  [[ "$json_url" == 'null' ]] && json_url=''
+  [[ "$json_documentation_url" == 'null' ]] && json_documentation_url=''
+
+  [[ -n "$json_message" ]] && print_notice "json generic response: message: \`$json_message\`"
+  [[ -n "$json_url" ]] && print_notice "json generic response: url: \`$json_url\`"
+  [[ -n "$json_documentation_url" ]] && print_notice "json generic response: documentation_url: \`$json_documentation_url\`"
+
   exit 255
 }
 
