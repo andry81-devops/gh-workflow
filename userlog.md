@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.02.09:
+* fixed: bash/github/accum-stats.sh: missed to save by_year json using the current timestamp instead of github json timestamp
+
 ## 2022.02.07:
 * fixed: bash/*/accum-*.sh: basic protection from invalid values spread after read an invalid json file
 * fixed: bash/github/accum-stats.sh: code cleanup
