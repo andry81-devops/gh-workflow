@@ -1,4 +1,7 @@
 2022.02.17:
+* changed: README.md: readme update
+
+2022.02.17:
 * new: bash/github/accum-rate-limit.sh: accumulate rate limits bash script
 
 2022.02.17:

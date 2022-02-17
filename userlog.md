@@ -1,6 +1,6 @@
 > :information_source: this log lists user most visible changes
 
-> :warning: to find all changes use [changelog.txt](https://github.com/andry81/gh-workflow/blob/master/changelog.txt) file in a directory
+> :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
 ## 2022.02.17:
 * new: bash/github/accum-rate-limit.sh: accumulate rate limits bash script
