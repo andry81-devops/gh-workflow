@@ -1,3 +1,6 @@
+2022.02.17:
+* changed: bash/github/accum-stats.sh: moved residual changes check at the end to collect and print into pipeline all intermediate data before exit with a warning
+
 2022.02.09:
 * fixed: bash/github/accum-stats.sh: print generic json fields in case of empty or invalid json file
 
