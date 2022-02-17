@@ -1,4 +1,7 @@
 2022.02.17:
+* new: bash/github/accum-rate-limit.sh: accumulate rate limits bash script
+
+2022.02.17:
 * changed: bash/github/accum-stats.sh: moved residual changes check at the end to collect and print into pipeline all intermediate data before exit with a warning
 
 2022.02.09:
