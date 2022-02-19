@@ -93,7 +93,7 @@ fi
 
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-print_notice "prev json prev / next / diff: re vi: $last_replies $last_views / ${replies:-'-'} ${views:-'-'} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
+print_notice "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-'-'} ${views:-'-'} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
 [[ -z "$replies" ]] && replies=0
 [[ -z "$views" ]] && views=0

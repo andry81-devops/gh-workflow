@@ -82,7 +82,7 @@ fi
 
 print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-print_notice "prev json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
+print_notice "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
 
 [[ -z "$downloads" ]] && downloads=0
 
