@@ -1,3 +1,7 @@
+2022.02.19:
+* new: bash/github/accum-rate-limit.sh: added `commit_message_insert_time` input parameter and `COMMIT_MESSAGE_DATE_TIME_PREFIX` output variable to use in a commit message
+* changed: bash: board, inpage: accum-*.sh: code cleanup
+
 2022.02.17:
 * changed: README.md: readme update
 

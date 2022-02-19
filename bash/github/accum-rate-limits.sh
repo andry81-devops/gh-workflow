@@ -36,6 +36,7 @@ function set_env_var()
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
+[[ -z "$commit_message_insert_time" ]] && commit_message_insert_time=false
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
@@ -221,6 +222,12 @@ if (( !has_changes )); then
   exit 255
 fi
 
+commit_message_date_time_prefix="$current_date_utc"
+
+if (( !commit_message_insert_time )); then
+  commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
+fi
+
 # return output variables
 
 # CAUTION:
@@ -236,4 +243,5 @@ set_env_var STATS_PREV_EXEC_RATE_USED_INC     "$stats_prev_exec_rate_used_inc"
 set_env_var STATS_PREV_EXEC_RATE_LIMIT_DEC    "$stats_prev_exec_rate_limit_dec"
 set_env_var STATS_PREV_EXEC_RATE_USED_DEC     "$stats_prev_exec_rate_used_dec"
 
+set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX   "$commit_message_date_time_prefix"
 set_env_var COMMIT_MESSAGE_SUFFIX             " | limit used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"

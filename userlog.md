@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.02.19:
+* new: bash/github/accum-rate-limit.sh: added `commit_message_insert_time` input parameter and `COMMIT_MESSAGE_DATE_TIME_PREFIX` output variable to use in a commit message
+
 ## 2022.02.17:
 * new: bash/github/accum-rate-limit.sh: accumulate rate limits bash script
 
