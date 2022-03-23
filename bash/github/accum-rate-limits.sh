@@ -9,38 +9,17 @@
   exit 255
 }
 
-source "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
-
-function set_env_var()
-{
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
-}
-
-[[ -z "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` variable must be defined."
-  exit 255
-}
-
-[[ ! -d "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
-  exit 255
-}
-
-[[ -n "$stats_json" && ! -f "$stats_json" ]] && {
-  print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
-  exit 255
-}
+source "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || exit $?
+source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
-[[ -z "$commit_message_insert_time" ]] && commit_message_insert_time=false
+[[ -z "$commit_message_insert_time" ]] && commit_message_insert_time=0
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-print_notice "current date/time: $current_date_time_utc"
+print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -97,7 +76,7 @@ IFS=$'\n' read -r -d '' \
 [[ -z "$stats_prev_exec_rate_limit" || "$stats_prev_exec_rate_limit" == 'null' ]] && stats_prev_exec_rate_limit=0
 [[ -z "$stats_prev_exec_rate_used" || "$stats_prev_exec_rate_used" == 'null' ]] && stats_prev_exec_rate_used=0
 
-print_notice "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
+print_notice_and_changelog_text_bullet_ln "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -158,7 +137,7 @@ IFS=$'\n' read -r -d '' \
 [[ -z "$rate_limit" || "$rate_limit" == 'null' ]] && rate_limit=0
 [[ -z "$rate_used" || "$rate_used" == 'null' ]] && rate_used=0
 
-print_notice "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
+print_notice_and_changelog_text_bullet_ln "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
 
 timestamp_date_utc=$current_date_utc
 timestamp_year_utc=${current_date_utc/%-*}
@@ -195,13 +174,13 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used > stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used ))
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
-print_notice "prev json diff: rate.limit rate.used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+print_notice_and_changelog_text_bullet_ln "prev json diff: rate.limit rate.used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
-      !core_limit || !search_limit || !graphql_limit || !integration_manifest_limit || \
-      !source_import_limit || !code_scanning_upload_limit || !actions_runner_registration_limit || !scim_limit || \
-      !rate_limit )); then
-  print_error "$0: error: json data is invalid or empty or format is changed."
+      ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
+      ! source_import_limit || ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || \
+      ! rate_limit )); then
+  print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
 
   # try to request json generic response fields to print them as a notice
   IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)
@@ -210,23 +189,27 @@ if (( resources_length != 8 || \
   [[ "$json_url" == 'null' ]] && json_url=''
   [[ "$json_documentation_url" == 'null' ]] && json_documentation_url=''
 
-  [[ -n "$json_message" ]] && print_notice "json generic response: message: \`$json_message\`"
-  [[ -n "$json_url" ]] && print_notice "json generic response: url: \`$json_url\`"
-  [[ -n "$json_documentation_url" ]] && print_notice "json generic response: documentation_url: \`$json_documentation_url\`"
+  [[ -n "$json_message" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+  [[ -n "$json_url" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+  [[ -n "$json_documentation_url" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
-  exit 255
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 fi
 
-if (( !has_changes )); then
-  print_warning "$0: warning: nothing is changed, no new statistic."
-  exit 255
+if (( ! has_changes )); then
+  print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
+
+  (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
 
 commit_message_date_time_prefix="$current_date_utc"
 
-if (( !commit_message_insert_time )); then
+if (( ! commit_message_insert_time )); then
   commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
 fi
+
+# update changelog file
+prepend_changelog_file
 
 # return output variables
 
@@ -245,3 +228,5 @@ set_env_var STATS_PREV_EXEC_RATE_USED_DEC     "$stats_prev_exec_rate_used_dec"
 
 set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX   "$commit_message_date_time_prefix"
 set_env_var COMMIT_MESSAGE_SUFFIX             " | limit used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+
+set_return 0

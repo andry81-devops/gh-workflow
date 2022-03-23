@@ -2,6 +2,12 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.03.24:
+* fixed: bash: scripts execution
+* new: bash/github: `init-basic-workflow.sh`, `init-stats-workflow.sh` initialization scripts
+* new: bash/github: `set-env-from-args.sh` script to set environment variables from arguments
+* new: bash: changelog file support through `CONTINUE_ON_INVALID_INPUT`, `CONTINUE_ON_EMPTY_CHANGES`, `CONTINUE_ON_RESIDUAL_CHANGES`, `ENABLE_GENERATE_CHANGELOG_FILE`, `changelog_dir`, `changelog_txt` variables
+
 ## 2022.02.19:
 * new: bash/github/accum-rate-limit.sh: added `commit_message_insert_time` input parameter and `COMMIT_MESSAGE_DATE_TIME_PREFIX` output variable to use in a commit message
 

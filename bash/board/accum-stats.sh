@@ -9,29 +9,8 @@
   exit 255
 }
 
-source "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
-
-function set_env_var()
-{
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
-}
-
-[[ -z "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` variable is not defined."
-  exit 255
-}
-
-[[ ! -d "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
-  exit 255
-}
-
-[[ -n "$stats_json" && ! -f "$stats_json" ]] && {
-  print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
-  exit 255
-}
+source "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || exit $?
+source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
 
 [[ -z "$board_name" ]] && {
   print_error "$0: error: \`board_name\` variable is not defined."
@@ -58,7 +37,7 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-print_notice "current date/time: $current_date_time_utc"
+print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -91,9 +70,9 @@ if [[ -n "$views" ]]; then
   (( last_views < views )) && (( stats_prev_exec_views_inc=views-last_views ))
 fi
 
-print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-print_notice "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-'-'} ${views:-'-'} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
+print_notice_and_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-'-'} ${views:-'-'} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
 [[ -z "$replies" ]] && replies=0
 [[ -z "$views" ]] && views=0
@@ -128,7 +107,7 @@ fi
 (( stats_prev_day_replies_inc+=replies_prev_day_inc_saved+stats_prev_exec_replies_inc ))
 (( stats_prev_day_views_inc+=views_prev_day_inc_saved+stats_prev_exec_views_inc ))
 
-print_notice "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+print_notice_and_changelog_text_bullet_ln "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
 
 if (( replies != replies_saved || views != views_saved )); then
   echo "\
@@ -152,13 +131,17 @@ fi
 
 # continue if at least one is valid
 if (( replies < last_replies || views < last_views )); then
-  print_warning "$0: warning: replies or views is decremented for \`$board_name\`."
+  print_warning_and_changelog_text_bullet_ln "$0: warning: replies or views is decremented for \`$board_name\`." "replies or views is decremented for \`$board_name\`"
 fi
 
 if (( last_replies >= replies && last_views >= views )); then
-  print_warning "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views."
-  exit 255
+  print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views." "nothing is changed for \`$board_name\`, no new board replies/views"
+
+  (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
+
+# update changelog file
+prepend_changelog_file
 
 # return output variables
 
@@ -177,3 +160,5 @@ set_env_var STATS_PREV_DAY_REPLIES_INC      "$stats_prev_day_replies_inc"
 set_env_var STATS_PREV_DAY_VIEWS_INC        "$stats_prev_day_views_inc"
 
 set_env_var COMMIT_MESSAGE_SUFFIX           " | re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+
+set_return 0
