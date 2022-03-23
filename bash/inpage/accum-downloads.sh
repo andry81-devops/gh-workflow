@@ -9,29 +9,8 @@
   exit 255
 }
 
-source "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
-
-function set_env_var()
-{
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
-}
-
-[[ -z "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` variable is not defined."
-  exit 255
-}
-
-[[ ! -d "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
-  exit 255
-}
-
-[[ -n "$stats_json" && ! -f "$stats_json" ]] && {
-  print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
-  exit 255
-}
+source "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || exit $?
+source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
 
 [[ -z "$stat_entity_path" ]] && {
   print_error "$0: error: \`stat_entity_path\` variable is not defined."
@@ -53,7 +32,7 @@ function set_env_var()
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-print_notice "current date/time: $current_date_time_utc"
+print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -80,9 +59,9 @@ if [[ -n "$downloads" ]]; then
   (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
 fi
 
-print_notice "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-print_notice "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
+print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
 
 [[ -z "$downloads" ]] && downloads=0
 
@@ -110,7 +89,7 @@ fi
 
 (( stats_prev_day_downloads_inc+=downloads_prev_day_inc_saved+stats_prev_exec_downloads_inc ))
 
-print_notice "prev day diff: dl: +$stats_prev_day_downloads_inc"
+print_notice_and_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
 
 if (( downloads != downloads_saved )); then
   echo "\
@@ -131,13 +110,17 @@ fi
 
 # continue if at least one is valid
 if (( downloads < last_downloads )); then
-  print_warning "$0: warning: downloads is decremented for \`$stat_entity_path\`."
+  print_warning_and_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
 fi
 
 if (( last_downloads >= downloads )); then
-  print_warning "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads."
-  exit 255
+  print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
+
+  (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
+
+# update changelog file
+prepend_changelog_file
 
 # return output variables
 
@@ -154,3 +137,5 @@ set_env_var STATS_PREV_EXEC_DOWNLOADS_INC   "$stats_prev_exec_downloads_inc"
 set_env_var STATS_PREV_DAY_DOWNLOADS_INC    "$stats_prev_day_downloads_inc"
 
 set_env_var COMMIT_MESSAGE_SUFFIX           " | dl: +$stats_prev_day_downloads_inc"
+
+set_return 0
