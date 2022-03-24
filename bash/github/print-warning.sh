@@ -7,34 +7,48 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
-function print_warning()
+function gh_print_warning()
 {
   local arg
-  for arg in "$@"; do
-    if [[ -n "$GITHUB_ACTIONS" ]]; then
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    for arg in "$@"; do
       echo "::warning ::$arg" >&2
-    else
+    done
+  else
+    for arg in "$@"; do
       echo "$arg" >&2
-    fi
-  done
+    done
+  fi
+}
+
+function gh_write_warning_to_changelog_text_bullet_ln()
+{
+  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+
+  local changelog_msg="$1"
+
+  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* warning: ${changelog_msg}"$'\r\n'
 }
 
 # format: <message> | <warning_message> <changelog_message>
-function print_warning_and_changelog_text_bullet_ln()
+function gh_print_warning_and_changelog_text_bullet_ln()
 {
   local warning_msg="$1"
-  local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE && ${#@} < 2 )) && changelog_msg="$warning_msg"
+  gh_print_warning "$warning_msg"
 
-  print_warning "$warning_msg"
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE )) && CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* warning: ${changelog_msg}\r\n"
+    (( ${#@} < 2 )) && changelog_msg="$warning_msg"
+
+    gh_write_warning_to_changelog_text_bullet_ln "$changelog_msg"
+  fi
 }
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  print_warning "$@"
+  gh_print_warning "$@"
 fi
 
 fi

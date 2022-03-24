@@ -9,8 +9,12 @@
   exit 255
 }
 
-source "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || exit $?
-source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_include
+
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
@@ -19,7 +23,7 @@ source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -49,34 +53,19 @@ IFS=$'\n' read -r -d '' \
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
 #
-[[ -z "$stats_prev_exec_core_limit" || "$stats_prev_exec_core_limit" == 'null' ]] && stats_prev_exec_core_limit=0
-[[ -z "$stats_prev_exec_core_used" || "$stats_prev_exec_core_used" == 'null' ]] && stats_prev_exec_core_used=0
+jq_fix_null \
+  replies_saved:0 views_saved:0 replies_prev_day_inc_saved:0 views_prev_day_inc_saved:0 \
+  stats_prev_exec_core_limit:0 stats_prev_exec_core_used:0 \
+  stats_prev_exec_search_limit:0 stats_prev_exec_search_used:0 \
+  stats_prev_exec_graphql_limit:0 stats_prev_exec_graphql_used:0 \
+  stats_prev_exec_integration_manifest_limit:0 stats_prev_exec_integration_manifest_used:0 \
+  stats_prev_exec_source_import_limit:0 stats_prev_exec_source_import_used:0 \
+  stats_prev_exec_code_scanning_upload_limit:0 stats_prev_exec_code_scanning_upload_used:0 \
+  stats_prev_exec_actions_runner_registration_limit:0 stats_prev_exec_actions_runner_registration_used:0 \
+  stats_prev_exec_scim_limit:0 stats_prev_exec_scim_used:0 \
+  stats_prev_exec_rate_limit:0 stats_prev_exec_rate_used:0
 
-[[ -z "$stats_prev_exec_search_limit" || "$stats_prev_exec_search_limit" == 'null' ]] && stats_prev_exec_search_limit=0
-[[ -z "$stats_prev_exec_search_used" || "$stats_prev_exec_search_used" == 'null' ]] && stats_prev_exec_search_used=0
-
-[[ -z "$stats_prev_exec_graphql_limit" || "$stats_prev_exec_graphql_limit" == 'null' ]] && stats_prev_exec_graphql_limit=0
-[[ -z "$stats_prev_exec_graphql_used" || "$stats_prev_exec_graphql_used" == 'null' ]] && stats_prev_exec_graphql_used=0
-
-[[ -z "$stats_prev_exec_integration_manifest_limit" || "$stats_prev_exec_integration_manifest_limit" == 'null' ]] && stats_prev_exec_integration_manifest_limit=0
-[[ -z "$stats_prev_exec_integration_manifest_used" || "stats_prev_exec_$integration_manifest_used" == 'null' ]] && stats_prev_exec_integration_manifest_used=0
-
-[[ -z "$stats_prev_exec_source_import_limit" || "$stats_prev_exec_source_import_limit" == 'null' ]] && stats_prev_exec_source_import_limit=0
-[[ -z "$stats_prev_exec_source_import_used" || "$stats_prev_exec_source_import_used" == 'null' ]] && stats_prev_exec_source_import_used=0
-
-[[ -z "$stats_prev_exec_code_scanning_upload_limit" || "$stats_prev_exec_code_scanning_upload_limit" == 'null' ]] && stats_prev_exec_code_scanning_upload_limit=0
-[[ -z "$stats_prev_exec_code_scanning_upload_used" || "$stats_prev_exec_code_scanning_upload_used" == 'null' ]] && stats_prev_exec_code_scanning_upload_used=0
-
-[[ -z "$stats_prev_exec_actions_runner_registration_limit" || "$stats_prev_exec_actions_runner_registration_limit" == 'null' ]] && stats_prev_exec_actions_runner_registration_limit=0
-[[ -z "$stats_prev_exec_actions_runner_registration_used" || "$stats_prev_exec_actions_runner_registration_used" == 'null' ]] && stats_prev_exec_actions_runner_registration_used=0
-
-[[ -z "$stats_prev_exec_scim_limit" || "$stats_prev_exec_scim_limit" == 'null' ]] && stats_prev_exec_scim_limit=0
-[[ -z "$stats_prev_exec_scim_used" || "$stats_prev_exec_scim_used" == 'null' ]] && stats_prev_exec_scim_used=0
-
-[[ -z "$stats_prev_exec_rate_limit" || "$stats_prev_exec_rate_limit" == 'null' ]] && stats_prev_exec_rate_limit=0
-[[ -z "$stats_prev_exec_rate_used" || "$stats_prev_exec_rate_used" == 'null' ]] && stats_prev_exec_rate_used=0
-
-print_notice_and_changelog_text_bullet_ln "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
+gh_print_notice "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -108,36 +97,22 @@ IFS=$'\n' read -r -d '' \
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
 #
-[[ -z "$resources_length" || "$resources_length" == 'null' ]] && resources_length=0
+jq_fix_null \
+  resources_length:0 \
+  core_limit:0 core_used:0 \
+  search_limit:0 search_used:0  \
+  graphql_limit:0 graphql_used:0 \
+  integration_manifest_limit:0 integration_manifest_used:0 \
+  source_import_limit:0 source_import_used:0 \
+  code_scanning_upload_limit:0 code_scanning_upload_used:0 \
+  actions_runner_registration_limit:0 actions_runner_registration_used:0 \
+  scim_limit:0 scim_used:0 \
+  rate_limit:0 rate_used:0
 
-[[ -z "$core_limit" || "$core_limit" == 'null' ]] && core_limit=0
-[[ -z "$core_used" || "$core_used" == 'null' ]] && core_used=0
+gh_print_notice "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
 
-[[ -z "$search_limit" || "$search_limit" == 'null' ]] && search_limit=0
-[[ -z "$search_used" || "$search_used" == 'null' ]] && search_used=0
-
-[[ -z "$graphql_limit" || "$graphql_limit" == 'null' ]] && graphql_limit=0
-[[ -z "$graphql_used" || "$graphql_used" == 'null' ]] && graphql_used=0
-
-[[ -z "$integration_manifest_limit" || "$integration_manifest_limit" == 'null' ]] && integration_manifest_limit=0
-[[ -z "$integration_manifest_used" || "$integration_manifest_used" == 'null' ]] && integration_manifest_used=0
-
-[[ -z "$source_import_limit" || "$source_import_limit" == 'null' ]] && source_import_limit=0
-[[ -z "$source_import_used" || "$source_import_used" == 'null' ]] && source_import_used=0
-
-[[ -z "$code_scanning_upload_limit" || "$code_scanning_upload_limit" == 'null' ]] && code_scanning_upload_limit=0
-[[ -z "$code_scanning_upload_used" || "$code_scanning_upload_used" == 'null' ]] && code_scanning_upload_used=0
-
-[[ -z "$actions_runner_registration_limit" || "$actions_runner_registration_limit" == 'null' ]] && actions_runner_registration_limit=0
-[[ -z "$actions_runner_registration_used" || "$actions_runner_registration_used" == 'null' ]] && actions_runner_registration_used=0
-
-[[ -z "$scim_limit" || "$scim_limit" == 'null' ]] && scim_limit=0
-[[ -z "$scim_used" || "$scim_used" == 'null' ]] && scim_used=0
-
-[[ -z "$rate_limit" || "$rate_limit" == 'null' ]] && rate_limit=0
-[[ -z "$rate_used" || "$rate_used" == 'null' ]] && rate_used=0
-
-print_notice_and_changelog_text_bullet_ln "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
+gh_write_notice_to_changelog_text_bullet_ln \
+  "prev // next: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used // $core_limit $core_used / $rate_limit $rate_used"
 
 timestamp_date_utc=$current_date_utc
 timestamp_year_utc=${current_date_utc/%-*}
@@ -174,30 +149,31 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used > stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used ))
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
-print_notice_and_changelog_text_bullet_ln "prev json diff: rate.limit rate.used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+gh_print_notice_and_changelog_text_bullet_ln "prev json diff: rate.limit rate.used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
       ! source_import_limit || ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || \
       ! rate_limit )); then
-  print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
+  gh_print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
 
   # try to request json generic response fields to print them as a notice
   IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)
 
-  [[ "$json_message" == 'null' ]] && json_message=''
-  [[ "$json_url" == 'null' ]] && json_url=''
-  [[ "$json_documentation_url" == 'null' ]] && json_documentation_url=''
+  jq_fix_null \
+    json_message \
+    json_url \
+    json_documentation_url
 
-  [[ -n "$json_message" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
-  [[ -n "$json_url" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
-  [[ -n "$json_documentation_url" ]] && print_notice_and_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
+  [[ -n "$json_message" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+  [[ -n "$json_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+  [[ -n "$json_documentation_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 fi
 
 if (( ! has_changes )); then
-  print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
+  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
@@ -209,7 +185,7 @@ if (( ! commit_message_insert_time )); then
 fi
 
 # update changelog file
-prepend_changelog_file
+gh_prepend_changelog_file
 
 # return output variables
 
@@ -218,15 +194,15 @@ prepend_changelog_file
 #   the time taken from a script and the time set to commit changes ARE DIFFERENT
 #   and may be shifted to the next day.
 #
-set_env_var STATS_DATE_UTC                    "$current_date_utc"
-set_env_var STATS_DATE_TIME_UTC               "$current_date_time_utc"
+gh_set_env_var STATS_DATE_UTC                     "$current_date_utc"
+gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
-set_env_var STATS_PREV_EXEC_RATE_LIMIT_INC    "$stats_prev_exec_rate_limit_inc"
-set_env_var STATS_PREV_EXEC_RATE_USED_INC     "$stats_prev_exec_rate_used_inc"
-set_env_var STATS_PREV_EXEC_RATE_LIMIT_DEC    "$stats_prev_exec_rate_limit_dec"
-set_env_var STATS_PREV_EXEC_RATE_USED_DEC     "$stats_prev_exec_rate_used_dec"
+gh_set_env_var STATS_PREV_EXEC_RATE_LIMIT_INC     "$stats_prev_exec_rate_limit_inc"
+gh_set_env_var STATS_PREV_EXEC_RATE_USED_INC      "$stats_prev_exec_rate_used_inc"
+gh_set_env_var STATS_PREV_EXEC_RATE_LIMIT_DEC     "$stats_prev_exec_rate_limit_dec"
+gh_set_env_var STATS_PREV_EXEC_RATE_USED_DEC      "$stats_prev_exec_rate_used_dec"
 
-set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX   "$commit_message_date_time_prefix"
-set_env_var COMMIT_MESSAGE_SUFFIX             " | limit used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | limit used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
-set_return 0
+tkl_set_return

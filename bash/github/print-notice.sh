@@ -7,47 +7,73 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
-function print_notice()
+function gh_print_notice()
 {
   local arg
-  for arg in "$@"; do
-    if [[ -n "$GITHUB_ACTIONS" ]]; then
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    for arg in "$@"; do
       echo "::notice ::$arg"
-    else
+    done
+  else
+    for arg in "$@"; do
       echo "$arg"
-    fi
-  done
+    done
+  fi
+}
+
+function gh_write_notice_to_changelog_text_ln()
+{
+  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+
+  local changelog_msg="$1"
+
+  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}${changelog_msg}"$'\r\n'
+}
+
+function gh_write_notice_to_changelog_text_bullet_ln()
+{
+  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+
+  local changelog_msg="$1"
+
+  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* notice: ${changelog_msg}"$'\r\n'
 }
 
 # format: <message> | <notice_message> <changelog_message>
-function print_notice_and_changelog_text_ln()
+function gh_print_notice_and_changelog_text_ln()
 {
   local notice_msg="$1"
-  local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE && ${#@} < 2 )) && changelog_msg="$notice_msg"
+  gh_print_notice "$notice_msg"
 
-  print_notice "$notice_msg"
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE )) && CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}${changelog_msg}\r\n"
+    (( ${#@} < 2 )) && changelog_msg="$notice_msg"
+
+    gh_write_notice_to_changelog_text_ln "$changelog_msg"
+  fi
 }
 
 # format: <message> | <notice_message> <changelog_message>
-function print_notice_and_changelog_text_bullet_ln()
+function gh_print_notice_and_changelog_text_bullet_ln()
 {
   local notice_msg="$1"
-  local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE && ${#@} < 2 )) && changelog_msg="$notice_msg"
+  gh_print_notice "$notice_msg"
 
-  print_notice "$notice_msg"
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE )) && CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* notice: ${changelog_msg}\r\n"
+    (( ${#@} < 2 )) && changelog_msg="$notice_msg"
+
+    gh_write_notice_to_changelog_text_bullet_ln "$changelog_msg"
+  fi
 }
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  print_notice "$@"
+  gh_print_notice "$@"
 fi
 
 fi

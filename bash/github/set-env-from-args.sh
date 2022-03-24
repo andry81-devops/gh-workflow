@@ -7,19 +7,29 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
-function set_env_from_args()
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
+}
+
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+
+function gh_set_env_from_args()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return
 
-  local i
-  for (( i=1; i <= ${#@}; i++ )); do
-    eval "echo \"\$$i\"" >> $GITHUB_ENV
+  local arg
+  for arg in "$@"; do
+    echo "$arg" >> $GITHUB_ENV
   done
 }
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  set_env_from_args "$@"
+  gh_set_env_from_args "$@"
 fi
+
+tkl_set_return
 
 fi
