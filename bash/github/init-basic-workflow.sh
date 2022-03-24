@@ -34,37 +34,40 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
-source "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
-source "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
-
-function set_return()
-{
-  [[ "${1#[0-9]}" != "$1" ]] && return $1
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
 }
 
-function set_env_var()
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-error.sh" || tkl_abort_include
+
+
+CHANGELOG_BUF_STR=''
+
+function gh_set_env_var()
 {
   [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
 }
 
-function prepend_changelog_file()
+function gh_prepend_changelog_file()
 {
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
   [[ -z "$CHANGELOG_BUF_STR" ]] && return 0
 
   if [[ -f "$changelog_txt" ]]; then
-    local changelog_file="${CHANGELOG_BUF_STR}\r\n$(< "$changelog_txt")"
+    local changelog_file="${CHANGELOG_BUF_STR}"$'\r\n'"$(< "$changelog_txt")"
   else
     local changelog_file="${CHANGELOG_BUF_STR}"
   fi
 
-  echo -ne "$changelog_file" > "$changelog_txt"
+  echo -n "$changelog_file" > "$changelog_txt"
 
   CHANGELOG_BUF_STR=''
 }
-
-CHANGELOG_BUF_STR=''
 
 [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
 [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
@@ -73,13 +76,13 @@ CHANGELOG_BUF_STR=''
 
 if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
   [[ -z "$changelog_dir" ]] && {
-    print_error "$0: error: \`changelog_dir\` variable must be defined."
+    gh_print_error "$0: error: \`changelog_dir\` variable must be defined."
     exit 255
   }
 
   [[ -z "$changelog_txt" ]] && changelog_txt="$changelog_dir/changelog.txt"
 fi
 
-set_return 0
+tkl_set_return
 
 fi

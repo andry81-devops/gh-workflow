@@ -9,21 +9,25 @@
   exit 255
 }
 
-source "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || exit $?
-source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || tkl_abort_include
+tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_include
+
 
 [[ -z "$stat_entity_path" ]] && {
-  print_error "$0: error: \`stat_entity_path\` variable is not defined."
+  gh_print_error "$0: error: \`stat_entity_path\` variable is not defined."
   exit 255
 }
 
 [[ -z "$query_url" ]] && {
-  print_error "$0: error: \`query_url\` variable is not defined."
+  gh_print_error "$0: error: \`query_url\` variable is not defined."
   exit 255
 }
 
 [[ -z "$downloads_sed_regexp" ]] && {
-  print_error "$0: error: \`downloads_sed_regexp\` variable is not defined."
+  gh_print_error "$0: error: \`downloads_sed_regexp\` variable is not defined."
   exit 255
 }
 
@@ -32,7 +36,7 @@ source "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || exit $?
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
-print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -42,7 +46,8 @@ IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $stats_json)
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
 #
-[[ -z "$last_downloads" || "$last_downloads" == 'null' ]] && last_downloads=0
+jq_fix_null \
+  last_downloads:0
 
 TEMP_DIR=$(mktemp -d)
 
@@ -59,9 +64,9 @@ if [[ -n "$downloads" ]]; then
   (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
 fi
 
-print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
+gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
 
 [[ -z "$downloads" ]] && downloads=0
 
@@ -83,13 +88,14 @@ if [[ -f "$year_date_json" ]]; then
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
-  [[ -z "$downloads_saved" || "$downloads_saved" == 'null' ]] && downloads_saved=0
-  [[ -z "$downloads_prev_day_inc_saved" || "$downloads_prev_day_inc_saved" == 'null' ]] && downloads_prev_day_inc_saved=0
+  jq_fix_null \
+    downloads_saved:0 \
+    downloads_prev_day_inc_saved:0
 fi
 
 (( stats_prev_day_downloads_inc+=downloads_prev_day_inc_saved+stats_prev_exec_downloads_inc ))
 
-print_notice_and_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
+gh_print_notice_and_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
 
 if (( downloads != downloads_saved )); then
   echo "\
@@ -110,17 +116,17 @@ fi
 
 # continue if at least one is valid
 if (( downloads < last_downloads )); then
-  print_warning_and_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
+  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
 fi
 
 if (( last_downloads >= downloads )); then
-  print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
+  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
 
 # update changelog file
-prepend_changelog_file
+gh_prepend_changelog_file
 
 # return output variables
 
@@ -129,13 +135,13 @@ prepend_changelog_file
 #   the time taken from a script and the time set to commit changes ARE DIFFERENT
 #   and may be shifted to the next day.
 #
-set_env_var STATS_DATE_UTC                  "$current_date_utc"
-set_env_var STATS_DATE_TIME_UTC             "$current_date_time_utc"
+gh_set_env_var STATS_DATE_UTC                     "$current_date_utc"
+gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
-set_env_var STATS_PREV_EXEC_DOWNLOADS_INC   "$stats_prev_exec_downloads_inc"
+gh_set_env_var STATS_PREV_EXEC_DOWNLOADS_INC      "$stats_prev_exec_downloads_inc"
 
-set_env_var STATS_PREV_DAY_DOWNLOADS_INC    "$stats_prev_day_downloads_inc"
+gh_set_env_var STATS_PREV_DAY_DOWNLOADS_INC       "$stats_prev_day_downloads_inc"
 
-set_env_var COMMIT_MESSAGE_SUFFIX           " | dl: +$stats_prev_day_downloads_inc"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | dl: +$stats_prev_day_downloads_inc"
 
-set_return 0
+tkl_set_return

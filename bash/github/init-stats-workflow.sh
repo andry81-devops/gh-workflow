@@ -7,21 +7,29 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
+}
+
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+
 [[ -z "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` variable must be defined."
+  gh_print_error "$0: error: \`stats_dir\` variable must be defined."
   exit 255
 }
 
 [[ ! -d "$stats_dir" ]] && {
-  print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
+  gh_print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
   exit 255
 }
 
 [[ -n "$stats_json" && ! -f "$stats_json" ]] && {
-  print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
+  gh_print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
   exit 255
 }
 
-set_return 0
+tkl_set_return
 
 fi

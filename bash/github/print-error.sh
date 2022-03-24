@@ -7,34 +7,48 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
-function print_error()
+function gh_print_error()
 {
   local arg
-  for arg in "$@"; do
-    if [[ -n "$GITHUB_ACTIONS" ]]; then
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    for arg in "$@"; do
       echo "::error ::$arg" >&2
-    else
+    done
+  else
+    for arg in "$@"; do
       echo "$arg" >&2
-    fi
-  done
+    done
+  fi
+}
+
+function gh_write_error_to_changelog_text_bullet_ln()
+{
+  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+
+  local changelog_msg="$1"
+
+  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* error: ${changelog_msg}"$'\r\n'
 }
 
 # format: <message> | <error_message> <changelog_message>
-function print_error_and_changelog_text_bullet_ln()
+function gh_print_error_and_changelog_text_bullet_ln()
 {
   local error_msg="$1"
-  local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE && ${#@} < 2 )) && changelog_msg="$error_msg"
+  gh_print_error "$error_msg"
 
-  print_error "$error_msg"
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    local changelog_msg="$2"
 
-  (( ENABLE_GENERATE_CHANGELOG_FILE )) && CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* error: ${changelog_msg}\r\n"
+    (( ${#@} < 2 )) && changelog_msg="$error_msg"
+
+    gh_write_error_to_changelog_text_bullet_ln "$changelog_msg"
+  fi
 }
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  print_error "$@"
+  gh_print_error "$@"
 fi
 
 fi
