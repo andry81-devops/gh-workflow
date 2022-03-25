@@ -42,7 +42,7 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 current_date_time_utc=$(date --utc +%FT%TZ)
 
 # on exit handler
-builtin trap "tkl_set_error $?; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+builtin trap "tkl_set_error $?; gh_flush_print_buffers; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
 
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
@@ -62,7 +62,11 @@ TEMP_DIR=$(mktemp -d)
 
 trap "rm -rf \"$TEMP_DIR\"" EXIT HUP INT QUIT
 
-eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || exit $?
+eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || {
+  gh_enable_print_buffering
+
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
+}
 
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
@@ -142,6 +146,8 @@ if (( replies < last_replies || views < last_views )); then
 fi
 
 if (( last_replies >= replies && last_views >= views )); then
+  gh_enable_print_buffering
+
   gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views." "nothing is changed for \`$board_name\`, no new board replies/views"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255

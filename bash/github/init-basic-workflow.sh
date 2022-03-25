@@ -46,11 +46,49 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh" || tkl_abort_includ
 tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-error.sh" || tkl_abort_include
 
 
-CHANGELOG_BUF_STR=''
+tkl_declare_global CHANGELOG_BUF_STR ''
+
+gh_set_print_warning_lag  .010 # 10 msec
+gh_set_print_error_lag    .010
 
 function gh_set_env_var()
 {
   [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
+}
+
+function gh_enable_print_buffering()
+{
+  local enable_print_notice_buffering=${1:-0}   # by default is not buffered, printfs at first
+  local enable_print_warning_buffering=${1:-1}  # by default is buffered, prints at second
+  local enable_print_error_buffering=${1:-1}    # by default is buffered, prints at third
+
+  (( enable_print_notice_buffering )) && gh_enable_print_notice_buffering
+  (( enable_print_warning_buffering )) && gh_enable_print_warning_buffering
+  (( enable_print_error_buffering )) && gh_enable_print_error_buffering
+}
+
+function gh_flush_print_buffers()
+{
+  # notices
+  if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
+    local print_str="${PRINT_NOTICE_BUF_STR}"
+    unset PRINT_NOTICE_BUF_STR
+    gh_print_notice "$print_str"
+  fi
+
+  # warnings
+  if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
+    local print_str="${PRINT_WARNING_BUF_STR}"
+    unset PRINT_WARNING_BUF_STR
+    gh_print_warning "$print_str"
+  fi
+
+  # errors
+  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
+    local print_str="${PRINT_ERROR_BUF_STR}"
+    unset PRINT_ERROR_BUF_STR
+    gh_print_error "$print_str"
+  fi
 }
 
 function gh_prepend_changelog_file()

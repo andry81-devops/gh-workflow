@@ -3,6 +3,10 @@
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
 ## 2022.03.25:
+* new: bash: accum-*.sh: enable warnings and errors print buffering on demand to resort warning prints after notices and error prints after warnings and notices
+* new: bash: accum-*.sh: added warnings and errors print lag
+
+## 2022.03.25:
 * fixed: bash: accum-*.sh: missed to call `gh_prepend_changelog_file` on early exit
 
 ## 2022.03.24:

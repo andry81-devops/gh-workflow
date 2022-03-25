@@ -28,7 +28,7 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 current_date_time_utc=$(date --utc +%FT%TZ)
 
 # on exit handler
-builtin trap "tkl_set_error $?; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+builtin trap "tkl_set_error $?; gh_flush_print_buffers; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
 
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
@@ -64,6 +64,8 @@ jq_fix_null \
 gh_print_notice_and_changelog_text_bullet_ln "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
 
 (( ! count && ! uniques && ! stats_length )) && {
+  gh_enable_print_buffering
+
   gh_print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty." "json data is invalid or empty"
 
   # try to request json generic response fields to print them as a notice
@@ -369,6 +371,8 @@ if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uni
       "$stats_timestamp_next_seq" == "$stats_timestamp_prev_seq" && \
       "$stats_count_next_seq" == "$stats_count_prev_seq" && \
       "$stats_uniques_next_seq" == "$stats_uniques_prev_seq" ]]; then
+  gh_enable_print_buffering
+
   gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
@@ -402,7 +406,7 @@ fi
 
   echo ']
 }'
-} > $stats_accum_json || exit $?
+} > $stats_accum_json
 
 # CAUTION:
 #   The GitHub has an issue with the `latest.json` file residual (no effect) changes related to the statistic interpolation issue,
@@ -470,6 +474,8 @@ done
 
 # treat equality as not residual change
 if (( has_residual_changes && ! has_not_residual_changes )); then
+  gh_enable_print_buffering
+
   gh_print_warning_and_changelog_text_bullet_ln "$0: warning: json data has only residual changes which has no effect and ignored." "json data has only residual changes which has no effect and ignored"
 
   (( ! CONTINUE_ON_RESIDUAL_CHANGES )) && exit 255
