@@ -2,8 +2,12 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.03.25:
+* fixed: bash: accum-*.sh: missed to call `gh_prepend_changelog_file` on early exit
+
 ## 2022.03.24:
 * fixed: bash/github/init-basic-workflow.sh: avoid strings excessive expansion in `prepend_changelog_file` function
+* new: bash/github: `init-jq-workflow.sh` initialization script
 * new: _externals: partially added as an external copy of the tacklelib bash library
 * changed: bash: accum-*.sh: reduce text output size into the changelog file
 

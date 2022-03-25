@@ -28,6 +28,13 @@ fi
 
 SOURCE_TACKLELIB_BASH_TACKLELIB_SH=1 # including guard
 
+function tkl_debug_echo()
+{
+  local last_error=$?
+  echo "$@"
+  return $last_error
+}
+
 # WORKAROUND:
 #   The `declare -g` has been introduced in the `bash-4.2-alpha`, so to make
 #   a global variable in an older version we have to replace the
@@ -42,8 +49,9 @@ function tkl_return_as_global()
   tkl_declare_global "$@"
 }
 
-# The `tkl_return` used for:
-# 1. To return a local variable to upper context.
+# NOTE:
+#   The `tkl_return` used for:
+#   1. To return a local variable to upper context.
 #
 function tkl_return()
 {
@@ -51,19 +59,25 @@ function tkl_return()
   tkl_declare "$@"
 }
 
-# basically used together with forwarded local declaration, must not unset a variable if value is empty
+# NOTE:
+#   Basically used together with forwarded local declaration, must not unset a variable if value is empty.
+#
 function tkl_declare()
 {
   eval "$1=\"\$2\"" # can be defined externally as local
 }
 
-# basically used together with forwarded local declaration, must not unset a variable if value is empty
+# NOTE:
+#   Basically used together with forwarded local declaration, must not unset a variable if value is empty.
+#
 function tkl_declare_eval()
 {
   eval "$1=\"$2\"" # right argument does evaluate, can be defined externally as local
 }
 
-# basically used together with forwarded local declaration, must not unset a variable if value is empty
+# NOTE:
+#   Basically used together with forwarded local declaration, must not unset a variable if value is empty.
+#
 function tkl_declare_array()
 {
   local IFS=$' \t\r\n' # just in case, workaround for the bug in the "[@]:i" expression under the bash version lower than 4.1
@@ -234,17 +248,29 @@ function tkl_false()
   return 1
 }
 
+# CAUTION:
+#   DOES NOT set the shell exit code, but DOES SET the $? variable.
+#   You must explicitly save the $? variable value in a trap handler to pass it
+#   to the trap handler end, see the `tkl_set_error` function description.
+#
 function tkl_set_return()
 {
   [[ -z "${1//[0-9]/}" ]] && return ${1:-0}
   return 255
 }
 
+# NOTE:
+#   Can be used in a trap handler to save the $? variable to pass it to the trap handler end:
+#     >
+#     builtin trap "tkl_set_error $?; ...code changes the $? variable...; builtin trap - <TRAP>; tkl_set_return $tkl__last_error;" <TRAP>
+#
 function tkl_set_error()
 {
-  if [[ -n "$1" ]]; then
+  if [[ -n "$1" && -z "${1//[0-9]/}" ]]; then
     tkl_declare_global tkl__last_error $1
     return $tkl__last_error
+  else
+    tkl_declare_global tkl__last_error 0
   fi
 }
 
@@ -254,43 +280,49 @@ function tkl_pause()
   read -n1 -r -p "Press any key to continue..."$'\n' key
 }
 
-# exit with optional user stdout message
+# NOTE:
+#   Exit with custom user exit code or the $? variable and optional user stdout message.
+#
 function tkl_exit()
 {
-  local LastError=${1:-$?}
+  local last_error=${1:-$?}
 
   [[ -n "$NEST_LVL" ]] && (( NEST_LVL-- ))
 
   [[ -n "$2" ]] && { echo "$2"; }
 
-  tkl_declare_global tkl__last_error $LastError
+  tkl_declare_global tkl__last_error $last_error
 
-  exit $LastError
+  exit $last_error
 }
 
-# exit with optional user stdout message
+# NOTE:
+#   Conditional exit with custom user exit code or the $? variable and optional user stdout message.
+#
 function tkl_exit_if_error()
 {
-  local LastError=${1:-$?}
+  local last_error=${1:-$?}
   local IFS=$' \t\r\n' # workaround for the bug in the "[@]:i" expression under the bash version lower than 4.1
-  (( LastError )) && tkl_exit $LastError "${@:2}"
+  (( last_error )) && tkl_exit $last_error "${@:2}"
   return 0
 }
 
-# exit with optional user stderr message
+# NOTE:
+#   Exit with custom user exit code or the $? variable and optional user stdout message.
+#
 function tkl_abort()
 {
-  local LastError=${1:-$?}
+  local last_error=${1:-$?}
 
   [[ -n "$NEST_LVL" ]] && (( NEST_LVL-- ))
 
-  echo "${FUNCNAME[0]}: ${FUNCNAME[1]}: code=\`$LastError\`; line=\`${BASH_LINENO[1]}\`; source=\`${BASH_SOURCE[1]}\`" >&2
+  echo "${FUNCNAME[0]}: ${FUNCNAME[1]}: code=\`$last_error\`; line=\`${BASH_LINENO[1]}\`; source=\`${BASH_SOURCE[1]}\`" >&2
 
   [[ -n "$2" ]] && { echo "$2" >&2; }
 
-  tkl_declare_global tkl__last_error $LastError
+  tkl_declare_global tkl__last_error $last_error
 
-  exit $LastError
+  exit $last_error
 }
 
 function tkl_pushd()
@@ -304,9 +336,9 @@ function tkl_pushd()
 
 function tkl_popd()
 {
-  local LastError=$?
+  local last_error=$?
   popd "$@" > /dev/null
-  return $LastError
+  return $last_error
 }
 
 function tkl_push_var_to_stack_impl()
@@ -586,7 +618,7 @@ function tkl_unset_show_includes()
 # Alternative inclusion command additionally to the `source` command.
 function tkl_include()
 {
-  local LastError=$?
+  local last_error=$?
 
   local IFS=$' \t\r\n' # workaround for the bug in the "[@]:i" expression under the bash version lower than 4.1
 
@@ -602,9 +634,9 @@ function tkl_include()
 
   if tkl_is_abs_path "$1"; then
     if tkl_get_abs_path_from_dir "$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
-      tkl_set_return $LastError
+      tkl_set_return $last_error
       tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
-      LastError=$?
+      last_error=$?
     fi
   else
     local _84CB4B34_included=0
@@ -623,9 +655,9 @@ function tkl_include()
         if tkl_get_abs_path_from_dir "$_84CB4B34_path_prefix/$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
           if [[ -f "$RETURN_VALUE" ]]; then
             _84CB4B34_included=1
-            tkl_set_return $LastError
+            tkl_set_return $last_error
             tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
-            LastError=$?
+            last_error=$?
             break
           fi
         fi
@@ -636,19 +668,19 @@ function tkl_include()
       (( is_first_time_include )) && tkl_make_source_file_components "${@:2}"
 
       if tkl_get_abs_path_from_dir "$BASH_SOURCE_DIR" "$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
-        tkl_set_return $LastError
+        tkl_set_return $last_error
         tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
-        LastError=$?
+        last_error=$?
       fi
     fi
   fi
 
-  return $LastError
+  return $last_error
 }
 
 function tkl_include_local_impl()
 {
-  local LastError=$?
+  local last_error=$?
 
   local IFS=$' \t\r\n' # workaround for the bug in the "[@]:i" expression under the bash version lower than 4.1
 
@@ -680,7 +712,7 @@ function tkl_include_local_impl()
     unset -f \"\${FUNCNAME[0]}\" # drop function after execution
   }"
 
-  builtin trap "tkl_local_return_${#FUNCNAME[@]}; builtin trap - RETURN" RETURN || return $LastError
+  builtin trap "tkl_local_return_${#FUNCNAME[@]}; builtin trap - RETURN" RETURN || return $last_error
 
   #echo "tkl_include_local_impl: ${BASH_SOURCE_FILE} -> $1"
 
@@ -699,7 +731,7 @@ function tkl_include_local_impl()
     echo "${source_prefix// /| }source: \`$BASH_SOURCE_CMD_LINE\`"
   fi
 
-  tkl_declare_global tkl__last_error $LastError
+  tkl_declare_global tkl__last_error $last_error
 
   builtin trap 'builtin trap - RETURN' RETURN
   source "${BASH_SOURCE_CMD_LINE_ARR[@]}"
@@ -804,10 +836,10 @@ function tkl_convert_backend_path_to_native()
   if [[ "${Flags/i/}" != "$Flags" ]]; then
     # w/ user mount points bypassing
     tkl_exctract_path_ignoring_user_mount_points -w "$PathToConvert"
-    local LastError=$?
+    local last_error=$?
     # convert backslashes to slashes
     [[ "${Flags/s/}" != "$Flags" ]] && RETURN_VALUE="${RETURN_VALUE//\\//}"
-    return LastError
+    return last_error
   fi
 
   tkl_normalize_path "$PathToConvert" || return 1

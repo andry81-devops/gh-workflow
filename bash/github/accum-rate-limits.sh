@@ -23,6 +23,9 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+# on exit handler
+builtin trap "tkl_set_error $?; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
@@ -183,9 +186,6 @@ commit_message_date_time_prefix="$current_date_utc"
 if (( ! commit_message_insert_time )); then
   commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
 fi
-
-# update changelog file
-gh_prepend_changelog_file
 
 # return output variables
 
