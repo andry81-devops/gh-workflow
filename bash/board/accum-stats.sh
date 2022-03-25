@@ -41,6 +41,9 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
+# on exit handler
+builtin trap "tkl_set_error $?; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
@@ -143,9 +146,6 @@ if (( last_replies >= replies && last_views >= views )); then
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
-
-# update changelog file
-gh_prepend_changelog_file
 
 # return output variables
 
