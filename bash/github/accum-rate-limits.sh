@@ -24,7 +24,7 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 current_date_time_utc=$(date --utc +%FT%TZ)
 
 # on exit handler
-builtin trap "tkl_set_error $?; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+builtin trap "tkl_set_error $?; gh_flush_print_buffers; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
 
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
@@ -158,6 +158,8 @@ if (( resources_length != 8 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
       ! source_import_limit || ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || \
       ! rate_limit )); then
+  gh_enable_print_buffering
+
   gh_print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
 
   # try to request json generic response fields to print them as a notice
@@ -176,6 +178,8 @@ if (( resources_length != 8 || \
 fi
 
 if (( ! has_changes )); then
+  gh_enable_print_buffering
+
   gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255

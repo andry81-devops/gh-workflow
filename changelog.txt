@@ -1,4 +1,9 @@
 2022.03.25:
+* new: bash/github/print-*.sh: print buffering and lag support
+* new: bash: accum-*.sh: enable warnings and errors print buffering on demand to resort warning prints after notices and error prints after warnings and notices
+* new: bash: accum-*.sh: added warnings and errors print lag
+
+2022.03.25:
 * fixed: _externals/tacklelib/bash/tacklelib/bash_tacklelib: correctly handle of return code in a trap handler
 * fixed: bash: accum-*.sh: missed to call `gh_prepend_changelog_file` on early exit
 

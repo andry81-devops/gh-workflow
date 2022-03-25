@@ -7,17 +7,52 @@
 # Script both for execution and inclusion.
 if [[ -n "$BASH" ]]; then
 
+source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+
+function gh_enable_print_warning_buffering()
+{
+  tkl_declare_global PRINT_WARNING_BUF_STR ''
+}
+
+# NOTE:
+#   To set lag to try to avoid printing warnings before notices and/or errors to a log without buffering.
+#
+function gh_set_print_warning_lag()
+{
+  tkl_declare_global PRINT_WARNING_LAG_FSEC 0
+
+  # with check on integer value
+  [[ -n "$1" && -z "${1//[0-9]/}" ]] && PRINT_WARNING_LAG_FSEC=$1
+}
+
 function gh_print_warning()
 {
-  local arg
-  if [[ -n "$GITHUB_ACTIONS" ]]; then
-    for arg in "$@"; do
-      echo "::warning ::$arg" >&2
-    done
+  if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
+    local arg
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}::warning ::$arg"$'\r\n'
+      done
+    else
+      for arg in "$@"; do
+        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}$arg"$'\r\n'
+      done
+    fi
   else
-    for arg in "$@"; do
-      echo "$arg" >&2
-    done
+    # with check on integer value
+    [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_WARNING_LAG_FSEC
+
+    local arg
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        echo "::warning ::$arg" >&2
+      done
+    else
+      for arg in "$@"; do
+        echo "$arg" >&2
+      done
+    fi
   fi
 }
 
