@@ -32,11 +32,11 @@ function gh_print_warning()
     local arg
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
-        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}::warning ::$arg"$'\r\n'
+        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+$'\r\n'}::warning ::$arg"
       done
     else
       for arg in "$@"; do
-        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}$arg"$'\r\n'
+        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+$'\r\n'}$arg"
       done
     fi
   else

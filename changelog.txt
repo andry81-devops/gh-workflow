@@ -1,3 +1,6 @@
+2022.03.26:
+* fixed: bash/github/print-*.sh: print buffering fixup
+
 2022.03.25:
 * new: bash/github/print-*.sh: print buffering and lag support
 * new: bash: accum-*.sh: enable warnings and errors print buffering on demand to resort warning prints after notices and error prints after warnings and notices

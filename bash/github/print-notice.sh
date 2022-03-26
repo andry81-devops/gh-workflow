@@ -32,11 +32,11 @@ function gh_print_notice()
     local arg
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
-        PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}::notice ::$arg"$'\r\n'
+        PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}${PRINT_NOTICE_BUF_STR:+$'\r\n'}::notice ::$arg"
       done
     else
       for arg in "$@"; do
-        PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}$arg"$'\r\n'
+        PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}${PRINT_NOTICE_BUF_STR:+$'\r\n'}$arg"
       done
     fi
   else

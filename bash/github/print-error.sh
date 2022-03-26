@@ -32,11 +32,11 @@ function gh_print_error()
     local arg
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
-        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}::error ::$arg"$'\r\n'
+        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}::error ::$arg"
       done
     else
       for arg in "$@"; do
-        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}$arg"$'\r\n'
+        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}$arg"
       done
     fi
   else
