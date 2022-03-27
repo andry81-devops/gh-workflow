@@ -1,3 +1,9 @@
+2022.03.27:
+* fixed: bash: accum-*.sh: scripts execution
+* new: bash/github: `init-tacklelib-workflow.sh` initialization script
+* new: _externals/tacklelib/bash/tacklelib: partially added as an external copy of the tacklelib bash library
+* changed: _externals/tacklelib/bash/tacklelib: tacklelib bash library update
+
 2022.03.26:
 * fixed: bash/github/print-*.sh: print buffering fixup
 

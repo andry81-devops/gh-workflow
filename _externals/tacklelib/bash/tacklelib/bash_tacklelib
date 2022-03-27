@@ -140,6 +140,32 @@ function tkl_declare_global_eval()
   eval "$1=\"$2\"" # right argument does evaluate
 }
 
+function tkl_declare_as_expr_from_args()
+{
+  local out_var="$1"
+  local expr="$2"
+  shift 2
+
+  eval "unset out_var expr; tkl_declare '$out_var' $expr"
+}
+
+function tkl_declare_array_as_expr_from_args()
+{
+  local out_var="$1"
+  local expr="$2"
+  shift 2
+
+  eval "unset out_var expr; tkl_declare_array '$out_var' $expr"
+}
+
+function tkl_echo_args_as_expr()
+{
+  local expr="$1"
+  shift
+
+  eval "unset out_var; echo $expr"
+}
+
 function tkl_export()
 {
   # CAUTION:
@@ -434,7 +460,7 @@ function tkl_pop_var_from_stack()
   local _2BA2974B_is_var_defined
   eval "_2BA2974B_is_var_defined=\"\${tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}__defined}\""
   if (( _2BA2974B_is_var_defined )); then
-    tkl_export_eval "$2" "\${tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}}"
+    tkl_declare_eval "$2" "\${tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}}"
   else
     unset $2
   fi
@@ -448,6 +474,48 @@ function tkl_pop_var_from_stack()
   # unset previous
   unset tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}
   unset tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}__defined
+
+  return 0
+}
+
+function tkl_set_var_from_stack_top()
+{
+  # INFO:
+  #   1. All variables here must be unique irrespective to the function scope,
+  #      because `unset ${var_name}` still can be applied to a local variable!
+  #   2. Must be used only exportable variables (not arrays) to pass the stack
+  #      through the bash-to-bash process barrier.
+  #
+
+  if [[ -z "$1" ]]; then
+    echo "tkl_pop_var_from_stack: stack entry must be not empty" >&2
+    return 1
+  fi
+  if [[ -z "$2" ]]; then
+    echo "tkl_pop_var_from_stack: variable name must be not empty: stack_entry=\`$1\`" >&2
+    return 2
+  fi
+
+  #local _2BA2974B_stack_entry="$1"
+  #local _2BA2974B_var_name="$2"
+
+  local _2BA2974B_vars_stack_size
+  eval "_2BA2974B_vars_stack_size=\"\${tkl__vars_stack__$1__$2__size}\""
+  if (( ! ${#_2BA2974B_vars_stack_size} || ! _2BA2974B_vars_stack_size )); then
+    echo "tkl_pop_var_from_stack: variables stack either undefined or empty" >&2
+    return 3
+  fi
+
+  local _2BA2974B_vars_stack_next_size
+  (( _2BA2974B_vars_stack_next_size=_2BA2974B_vars_stack_size-1 ))
+
+  local _2BA2974B_is_var_defined
+  eval "_2BA2974B_is_var_defined=\"\${tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}__defined}\""
+  if (( _2BA2974B_is_var_defined )); then
+    tkl_declare_eval "$2" "\${tkl__vars_stack__$1__$2__${_2BA2974B_vars_stack_next_size}}"
+  else
+    unset $2
+  fi
 
   return 0
 }
