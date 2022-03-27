@@ -41,9 +41,9 @@ if [[ -n "$BASH" ]]; then
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh" || tkl_abort_include
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh" || tkl_abort_include
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/print-error.sh" || tkl_abort_include
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 
 tkl_declare_global CHANGELOG_BUF_STR ''

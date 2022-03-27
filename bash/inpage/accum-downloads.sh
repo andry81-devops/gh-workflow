@@ -11,9 +11,10 @@
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh" || tkl_abort_include
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh" || tkl_abort_include
-tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_include
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
 [[ -z "$stat_entity_path" ]] && {
@@ -37,7 +38,7 @@ tkl_include "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh" || tkl_abort_inc
 current_date_time_utc=$(date --utc +%FT%TZ)
 
 # on exit handler
-builtin trap "tkl_set_error $?; gh_flush_print_buffers; gh_prepend_changelog_file; builtin trap - EXIT; tkl_set_return $tkl__last_error;" EXIT
+tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
@@ -54,7 +55,7 @@ jq_fix_null \
 
 TEMP_DIR=$(mktemp -d)
 
-trap "rm -rf \"$TEMP_DIR\"" EXIT HUP INT QUIT
+tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
 
 eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || {
   gh_enable_print_buffering
@@ -73,9 +74,10 @@ fi
 
 gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
 
-gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-'-'} / +$stats_prev_exec_downloads_inc"
+gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 
-[[ -z "$downloads" ]] && downloads=0
+# with check on integer value
+[[ -z "$downloads" || -n "${downloads//[0-9]/}" ]] && downloads=0
 
 # stats between last change in previous/next day (independent to the pipeline scheduler times)
 stats_prev_day_downloads_inc=0
