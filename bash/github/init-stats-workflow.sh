@@ -16,17 +16,17 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 
 
 [[ -z "$stats_dir" ]] && {
-  gh_print_error "$0: error: \`stats_dir\` variable must be defined."
+  gh_print_error_ln "$0: error: \`stats_dir\` variable must be defined."
   exit 255
 }
 
 [[ ! -d "$stats_dir" ]] && {
-  gh_print_error "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
+  gh_print_error_ln "$0: error: \`stats_dir\` directory is not found: \`$stats_dir\`"
   exit 255
 }
 
 [[ -n "$stats_json" && ! -f "$stats_json" ]] && {
-  gh_print_error "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
+  gh_print_error_ln "$0: error: \`stats_json\` file is not found: \`$stats_json\`"
   exit 255
 }
 

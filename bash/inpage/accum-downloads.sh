@@ -18,17 +18,17 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
 [[ -z "$stat_entity_path" ]] && {
-  gh_print_error "$0: error: \`stat_entity_path\` variable is not defined."
+  gh_print_error_ln "$0: error: \`stat_entity_path\` variable is not defined."
   exit 255
 }
 
 [[ -z "$query_url" ]] && {
-  gh_print_error "$0: error: \`query_url\` variable is not defined."
+  gh_print_error_ln "$0: error: \`query_url\` variable is not defined."
   exit 255
 }
 
 [[ -z "$downloads_sed_regexp" ]] && {
-  gh_print_error "$0: error: \`downloads_sed_regexp\` variable is not defined."
+  gh_print_error_ln "$0: error: \`downloads_sed_regexp\` variable is not defined."
   exit 255
 }
 

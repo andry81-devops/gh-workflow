@@ -26,7 +26,15 @@ function gh_set_print_warning_lag()
   [[ -n "$1" && -z "${1//[0-9]/}" ]] && PRINT_WARNING_LAG_FSEC=$1
 }
 
-function gh_print_warning()
+# NOTE:
+#   To use a single line as a multiline output you must replace all `\n` by
+#   `%0A`.
+#
+#   For the details:
+#     https://github.com/actions/toolkit/issues/193#issuecomment-605394935
+#     https://github.com/actions/starter-workflows/issues/68#issuecomment-581479448
+#
+function gh_print_warning_ln()
 {
   if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
     local arg
@@ -70,7 +78,7 @@ function gh_print_warning_and_changelog_text_bullet_ln()
 {
   local warning_msg="$1"
 
-  gh_print_warning "$warning_msg"
+  gh_print_warning_ln "$warning_msg"
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$2"
@@ -83,7 +91,7 @@ function gh_print_warning_and_changelog_text_bullet_ln()
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  gh_print_warning "$@"
+  gh_print_warning_ln "$@"
 fi
 
 fi

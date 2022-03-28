@@ -1,3 +1,7 @@
+2022.03.28:
+* fixed: bash/github/init-basic-workflow.sh: split a print buffer by line returns to print
+* refactor: bash: code refactor
+
 2022.03.27:
 * fixed: bash: accum-*.sh: scripts execution
 * new: bash/github: `init-tacklelib-workflow.sh` initialization script

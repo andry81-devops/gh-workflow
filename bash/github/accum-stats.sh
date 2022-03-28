@@ -18,7 +18,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
 [[ -z "$stats_list_key" ]] && {
-  gh_print_error "$0: error: \`stats_list_key\` variable must be defined."
+  gh_print_error_ln "$0: error: \`stats_list_key\` variable must be defined."
   exit 255
 }
 
@@ -360,9 +360,9 @@ done
 
 gh_print_notice_and_changelog_text_bullet_ln "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
 
-gh_print_notice "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
+gh_print_notice_ln "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
 
-gh_print_notice "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+gh_print_notice_ln "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 gh_write_notice_to_changelog_text_bullet_ln \
   "prev json diff // prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec // +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
