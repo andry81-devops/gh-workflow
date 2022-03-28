@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.03.28:
+* fixed: bash/github/init-basic-workflow.sh: split a print buffer by line returns to print
+
 ## 2022.03.27:
 * fixed: bash: accum-*.sh: scripts execution
 

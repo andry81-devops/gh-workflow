@@ -69,7 +69,7 @@ jq_fix_null \
   stats_prev_exec_scim_limit:0 stats_prev_exec_scim_used:0 \
   stats_prev_exec_rate_limit:0 stats_prev_exec_rate_used:0
 
-gh_print_notice "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
+gh_print_notice_ln "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -113,7 +113,7 @@ jq_fix_null \
   scim_limit:0 scim_used:0 \
   rate_limit:0 rate_used:0
 
-gh_print_notice "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
+gh_print_notice_ln "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
 
 gh_write_notice_to_changelog_text_bullet_ln \
   "prev // next: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used // $core_limit $core_used / $rate_limit $rate_used"

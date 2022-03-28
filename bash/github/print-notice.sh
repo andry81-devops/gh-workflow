@@ -26,7 +26,15 @@ function gh_set_print_notice_lag()
   [[ -n "$1" && -z "${1//[0-9]/}" ]] && PRINT_NOTICE_LAG_FSEC=$1
 }
 
-function gh_print_notice()
+# NOTE:
+#   To use a single line as a multiline output you must replace all `\n` by
+#   `%0A`.
+#
+#   For the details:
+#     https://github.com/actions/toolkit/issues/193#issuecomment-605394935
+#     https://github.com/actions/starter-workflows/issues/68#issuecomment-581479448
+#
+function gh_print_notice_ln()
 {
   if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
     local arg
@@ -79,7 +87,7 @@ function gh_print_notice_and_changelog_text_ln()
 {
   local notice_msg="$1"
 
-  gh_print_notice "$notice_msg"
+  gh_print_notice_ln "$notice_msg"
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$2"
@@ -95,7 +103,7 @@ function gh_print_notice_and_changelog_text_bullet_ln()
 {
   local notice_msg="$1"
 
-  gh_print_notice "$notice_msg"
+  gh_print_notice_ln "$notice_msg"
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$2"
@@ -108,7 +116,7 @@ function gh_print_notice_and_changelog_text_bullet_ln()
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  gh_print_notice "$@"
+  gh_print_notice_ln "$@"
 fi
 
 fi

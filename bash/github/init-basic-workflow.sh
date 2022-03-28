@@ -69,25 +69,39 @@ function gh_enable_print_buffering()
 
 function gh_flush_print_buffers()
 {
+  # NOTE:
+  #   We have to iterate by lines, because Github pipeline does ignore multine
+  #   strings for command execution (started from the `::` sequence).
+  #
+  local IFS=$'\n'
+  local print_str
+  local line
+
   # notices
   if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
-    local print_str="${PRINT_NOTICE_BUF_STR}"
+    print_str="${PRINT_NOTICE_BUF_STR}"
     unset PRINT_NOTICE_BUF_STR
-    gh_print_notice "$print_str"
+    for line in "${print_str}"; do
+      gh_print_notice_ln "$line"
+    done
   fi
 
   # warnings
   if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
-    local print_str="${PRINT_WARNING_BUF_STR}"
+    print_str="${PRINT_WARNING_BUF_STR}"
     unset PRINT_WARNING_BUF_STR
-    gh_print_warning "$print_str"
+    for line in "${print_str}"; do
+      gh_print_warning_ln "$line"
+    done
   fi
 
   # errors
   if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
-    local print_str="${PRINT_ERROR_BUF_STR}"
+    print_str="${PRINT_ERROR_BUF_STR}"
     unset PRINT_ERROR_BUF_STR
-    gh_print_error "$print_str"
+    for line in "${print_str}"; do
+      gh_print_error_ln "$line"
+    done
   fi
 }
 
@@ -114,7 +128,7 @@ function gh_prepend_changelog_file()
 
 if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
   [[ -z "$changelog_dir" ]] && {
-    gh_print_error "$0: error: \`changelog_dir\` variable must be defined."
+    gh_print_error_ln "$0: error: \`changelog_dir\` variable must be defined."
     exit 255
   }
 

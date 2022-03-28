@@ -18,22 +18,22 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
 [[ -z "$board_name" ]] && {
-  gh_print_error "$0: error: \`board_name\` variable is not defined."
+  gh_print_error_ln "$0: error: \`board_name\` variable is not defined."
   exit 255
 }
 
 [[ -z "$topic_query_url" ]] && {
-  gh_print_error "$0: error: \`topic_query_url\` variable is not defined."
+  gh_print_error_ln "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
 }
 
 [[ -z "$replies_sed_regexp" ]] && {
-  gh_print_error "$0: error: \`replies_sed_regexp\` variable is not defined."
+  gh_print_error_ln "$0: error: \`replies_sed_regexp\` variable is not defined."
   exit 255
 }
 
 [[ -z "$views_sed_regexp" ]] && {
-  gh_print_error "$0: error: \`views_sed_regexp\` variable is not defined."
+  gh_print_error_ln "$0: error: \`views_sed_regexp\` variable is not defined."
   exit 255
 }
 
