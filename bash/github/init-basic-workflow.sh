@@ -69,39 +69,27 @@ function gh_enable_print_buffering()
 
 function gh_flush_print_buffers()
 {
-  # NOTE:
-  #   We have to iterate by lines, because Github pipeline does ignore multine
-  #   strings for command execution (started from the `::` sequence).
-  #
-  local IFS=$'\n'
   local print_str
-  local line
 
   # notices
   if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
     print_str="${PRINT_NOTICE_BUF_STR}"
     unset PRINT_NOTICE_BUF_STR
-    for line in "${print_str}"; do
-      gh_print_notice_ln "$line"
-    done
+    gh_print_notices "$print_str"
   fi
 
   # warnings
   if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
     print_str="${PRINT_WARNING_BUF_STR}"
     unset PRINT_WARNING_BUF_STR
-    for line in "${print_str}"; do
-      gh_print_warning_ln "$line"
-    done
+    gh_print_warnings "$print_str"
   fi
 
   # errors
   if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
     print_str="${PRINT_ERROR_BUF_STR}"
     unset PRINT_ERROR_BUF_STR
-    for line in "${print_str}"; do
-      gh_print_error_ln "$line"
-    done
+    gh_print_errors "$print_str"
   fi
 }
 
