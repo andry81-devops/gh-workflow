@@ -14,6 +14,7 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
@@ -61,16 +62,16 @@ jq_fix_null \
 
 TEMP_DIR=$(mktemp -d)
 
-tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
+tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
-eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/query.txt" || {
+eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/response.txt" || {
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
 }
 
-replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/query.txt")
-views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/query.txt")
+replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/response.txt")
+views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/response.txt")
 
 # stats between previos/next script execution (dependent to the pipeline scheduler times)
 stats_prev_exec_replies_inc=0
@@ -83,7 +84,7 @@ if [[ -n "$views" ]]; then
   (( last_views < views )) && (( stats_prev_exec_views_inc=views-last_views ))
 fi
 
-gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
 gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
