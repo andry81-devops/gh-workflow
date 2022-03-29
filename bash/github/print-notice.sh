@@ -36,8 +36,40 @@ function gh_set_print_notice_lag()
 #
 function gh_print_notice_ln()
 {
+  local IFS=$'\n'
+  local line=''
+  local arg
+
   if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
-    local arg
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        line="${line}${line:+"%0D%0A"}$arg"
+      done
+      PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}${PRINT_NOTICE_BUF_STR:+$'\r\n'}::notice ::$line"
+    else
+      PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}${PRINT_NOTICE_BUF_STR:+$'\r\n'}$*"
+    fi
+  else
+    # with check on integer value
+    [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_NOTICE_LAG_FSEC
+
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        line="${line}${line:+"%0D%0A"}$arg"
+      done
+      echo "::notice ::$line"
+    else
+      echo "$*"
+    fi
+  fi
+}
+
+function gh_print_notices()
+{
+  local IFS=$'\n'
+  local arg
+
+  if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
         PRINT_NOTICE_BUF_STR="${PRINT_NOTICE_BUF_STR}${PRINT_NOTICE_BUF_STR:+$'\r\n'}::notice ::$arg"
@@ -51,7 +83,6 @@ function gh_print_notice_ln()
     # with check on integer value
     [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_NOTICE_LAG_FSEC
 
-    local arg
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
         echo "::notice ::$arg"

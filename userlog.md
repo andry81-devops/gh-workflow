@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.03.29:
+* changed: bash/github/print-*.sh: split `gh_print_*_ln` functions into `gh_print_*_ln` and `gh_print_*s` functions to print either all as a single line or all as multi line
+
 ## 2022.03.28:
 * fixed: bash/github/init-basic-workflow.sh: split a print buffer by line returns to print
 

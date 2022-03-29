@@ -36,8 +36,40 @@ function gh_set_print_error_lag()
 #
 function gh_print_error_ln()
 {
+  local IFS=$'\n'
+  local line=''
+  local arg
+
   if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
-    local arg
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        line="${line}${line:+"%0D%0A"}$arg"
+      done
+      PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}::error ::$line"
+    else
+      PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}$*"
+    fi
+  else
+    # with check on integer value
+    [[ -n "$PRINT_ERROR_LAG_FSEC" && -z "${PRINT_ERROR_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_ERROR_LAG_FSEC
+
+    if [[ -n "$GITHUB_ACTIONS" ]]; then
+      for arg in "$@"; do
+        line="${line}${line:+"%0D%0A"}$arg"
+      done
+      echo "::error ::$line" >&2
+    else
+      echo "$*" >&2
+    fi
+  fi
+}
+
+function gh_print_errors()
+{
+  local IFS=$'\n'
+  local arg
+
+  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
         PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}::error ::$arg"
@@ -51,7 +83,6 @@ function gh_print_error_ln()
     # with check on integer value
     [[ -n "$PRINT_ERROR_LAG_FSEC" && -z "${PRINT_ERROR_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_ERROR_LAG_FSEC
 
-    local arg
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       for arg in "$@"; do
         echo "::error ::$arg" >&2
