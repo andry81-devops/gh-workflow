@@ -14,6 +14,7 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
@@ -55,15 +56,15 @@ jq_fix_null \
 
 TEMP_DIR=$(mktemp -d)
 
-tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
+tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
-eval curl $curl_flags "\$query_url" > "$TEMP_DIR/query.txt" || {
+eval curl $curl_flags "\$query_url" > "$TEMP_DIR/response.txt" || {
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
 }
 
-downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/query.txt")
+downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")
 
 # stats between previos/next script execution (dependent to the pipeline scheduler times)
 stats_prev_exec_downloads_inc=0
@@ -72,7 +73,7 @@ if [[ -n "$downloads" ]]; then
   (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
 fi
 
-gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/query.txt")"
+gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
 gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 

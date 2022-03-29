@@ -18,6 +18,7 @@
 #     * CONTINUE_ON_EMPTY_CHANGES
 #     * CONTINUE_ON_RESIDUAL_CHANGES
 #     * ENABLE_GENERATE_CHANGELOG_FILE
+#     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR
 #
 #   Because invalid input, empty or residual changes has to be detected and
 #   has to be not trigger a commit, then we must to continue on them
@@ -113,6 +114,7 @@ function gh_prepend_changelog_file()
 [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
 [[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] && CONTINUE_ON_RESIDUAL_CHANGES=0
 [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] && ENABLE_GENERATE_CHANGELOG_FILE=0
+[[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] && ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=0
 
 if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
   [[ -z "$changelog_dir" ]] && {
