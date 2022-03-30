@@ -122,7 +122,7 @@ function gh_print_warning_and_changelog_text_bullet_ln()
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  gh_print_warning_ln "$@"
+  gh_print_warnings "$@"
 fi
 
 fi

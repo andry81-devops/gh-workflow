@@ -482,6 +482,12 @@ if (( has_residual_changes && ! has_not_residual_changes )); then
   (( ! CONTINUE_ON_RESIDUAL_CHANGES )) && exit 255
 fi
 
+commit_message_date_time_prefix="$current_date_utc"
+
+if (( ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME )); then
+  commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
+fi
+
 # return output variables
 
 # CAUTION:
@@ -502,6 +508,7 @@ gh_set_env_var STATS_PREV_DAY_UNIQUES_INC         "$stats_prev_day_uniques_inc"
 gh_set_env_var STATS_PREV_DAY_COUNT_DEC           "$stats_prev_day_count_dec"
 gh_set_env_var STATS_PREV_DAY_UNIQUES_DEC         "$stats_prev_day_uniques_dec"
 
+gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 tkl_set_return
