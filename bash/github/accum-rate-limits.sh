@@ -20,7 +20,6 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
-[[ -z "$commit_message_insert_time" ]] && commit_message_insert_time=0
 
 current_date_time_utc=$(date --utc +%FT%TZ)
 
@@ -188,7 +187,7 @@ fi
 
 commit_message_date_time_prefix="$current_date_utc"
 
-if (( ! commit_message_insert_time )); then
+if (( ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME )); then
   commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
 fi
 

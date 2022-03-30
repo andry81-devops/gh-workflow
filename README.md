@@ -47,7 +47,7 @@ Tutorial to use with: https://github.com/andry81-devops/github-accum-stats</h4>
 
 ## Dependentees<a name="dependentees"></a>
 
-* https://github.com/andry81?tab=repositories&q=gh-action--
+* https://github.com/orgs/andry81-devops/repositories?q=gh-action--
 
 ## Copyright and License<a name="copyright-and-license"></a>
 

@@ -1,4 +1,10 @@
 2022.03.30:
+* new: bash: accum-*.sh: added `ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME` environment variable to add date with time to a generated commit message
+* changed: bash/github/accum-rate-limits.sh: removed `commit_message_insert_time` as a script parameter
+* changed: bash/github/print-*.sh: use script call as call to the `gh_print_*s` function instead of call to the `gh_print_*_ln` function to print each argument as a single line
+* changed: README.md: readme update
+
+2022.03.30:
 * new: bash/github: `init-curl-workflow.sh` initialization script
 * new: bash: print curl response on error support through `ENABLE_PRINT_CURL_RESPONSE_ON_ERROR` variable
 

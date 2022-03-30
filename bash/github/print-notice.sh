@@ -147,7 +147,7 @@ function gh_print_notice_and_changelog_text_bullet_ln()
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  gh_print_notice_ln "$@"
+  gh_print_notices "$@"
 fi
 
 fi

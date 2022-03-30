@@ -156,6 +156,12 @@ if (( last_replies >= replies && last_views >= views )); then
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
 
+commit_message_date_time_prefix="$current_date_utc"
+
+if (( ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME )); then
+  commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
+fi
+
 # return output variables
 
 # CAUTION:
@@ -172,6 +178,7 @@ gh_set_env_var STATS_PREV_EXEC_VIEWS_INC          "$stats_prev_exec_views_inc"
 gh_set_env_var STATS_PREV_DAY_REPLIES_INC         "$stats_prev_day_replies_inc"
 gh_set_env_var STATS_PREV_DAY_VIEWS_INC           "$stats_prev_day_views_inc"
 
+gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
 
 tkl_set_return
