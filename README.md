@@ -28,6 +28,10 @@
     <img src="https://img.shields.io/github/v/release/andry81-devops/gh-workflow?include_prereleases&label=latest" valign="middle" alt="latest release name" /></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/andry81/donate"><img src="https://github.com/andry81/andry81/raw/master/badges/donate.svg" valign="middle" alt="donate" /></a>
+</p>
+
 ---
 
 <p align="center">
