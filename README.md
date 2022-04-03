@@ -49,10 +49,10 @@ Tutorial to use with: https://github.com/andry81-devops/github-accum-stats</h4>
 
 # gh-workflow@master
 
-## Dependentees<a name="dependentees"></a>
+## <a name="dependentees">Dependentees</a>
 
 * https://github.com/orgs/andry81-devops/repositories?q=gh-action--
 
-## Copyright and License<a name="copyright-and-license"></a>
+## <a name="copyright-and-license">Copyright and License</a>
 
 Code and documentation copyright 2021 Andrey Dibrov. Code released under [MIT License](https://github.com/andry81-devops/gh-workflow/blob/master/license.txt)
