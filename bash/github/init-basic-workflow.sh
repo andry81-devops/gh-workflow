@@ -50,8 +50,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 tkl_declare_global CHANGELOG_BUF_STR ''
 
-gh_set_print_warning_lag  .010 # 10 msec
-gh_set_print_error_lag    .010
+gh_set_print_warning_lag  .025 # 25 msec
+gh_set_print_error_lag    .025
 
 function gh_set_env_var()
 {
