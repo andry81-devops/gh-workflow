@@ -68,7 +68,7 @@ jq_fix_null \
   stats_prev_exec_scim_limit:0 stats_prev_exec_scim_used:0 \
   stats_prev_exec_rate_limit:0 stats_prev_exec_rate_used:0
 
-gh_print_notice_ln "prev: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
+gh_print_notice_ln "prev: graphql / rate: limit used: $stats_prev_exec_graphql_limit $stats_prev_exec_graphql_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -112,10 +112,10 @@ jq_fix_null \
   scim_limit:0 scim_used:0 \
   rate_limit:0 rate_used:0
 
-gh_print_notice_ln "next: core / rate: limit used: $core_limit $core_used / $rate_limit $rate_used"
+gh_print_notice_ln "next: graphql / rate: limit used: $graphql_limit $graphql_used / $rate_limit $rate_used"
 
 gh_write_notice_to_changelog_text_bullet_ln \
-  "prev // next: core / rate: limit used: $stats_prev_exec_core_limit $stats_prev_exec_core_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used // $core_limit $core_used / $rate_limit $rate_used"
+  "prev // next: graphql / rate: limit used: $stats_prev_exec_graphql_limit $stats_prev_exec_graphql_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used // $graphql_limit $graphql_used / $rate_limit $rate_used"
 
 timestamp_date_utc=$current_date_utc
 timestamp_year_utc=${current_date_utc/%-*}
@@ -141,10 +141,21 @@ if (( core_limit != stats_prev_exec_core_limit || core_used != stats_prev_exec_c
   cp -f -T $stats_json $year_date_json
 fi
 
+stats_prev_exec_graphql_limit_inc=0
+stats_prev_exec_graphql_limit_dec=0
+stats_prev_exec_graphql_used_inc=0
+stats_prev_exec_graphql_used_dec=0
+
 stats_prev_exec_rate_limit_inc=0
 stats_prev_exec_rate_limit_dec=0
 stats_prev_exec_rate_used_inc=0
 stats_prev_exec_rate_used_dec=0
+
+(( graphql_limit > stats_prev_exec_graphql_limit )) && (( stats_prev_exec_graphql_limit_inc=graphql_limit-stats_prev_exec_graphql_limit ))
+(( graphql_limit < stats_prev_exec_graphql_limit )) && (( stats_prev_exec_graphql_limit_dec=stats_prev_exec_graphql_limit-graphql_limit ))
+
+(( graphql_used > stats_prev_exec_graphql_used )) && (( stats_prev_exec_graphql_used_inc=graphql_used-stats_prev_exec_graphql_used ))
+(( graphql_used < stats_prev_exec_graphql_used )) && (( stats_prev_exec_graphql_used_dec=stats_prev_exec_graphql_used-graphql_used ))
 
 (( rate_limit > stats_prev_exec_rate_limit )) && (( stats_prev_exec_rate_limit_inc=rate_limit-stats_prev_exec_rate_limit ))
 (( rate_limit < stats_prev_exec_rate_limit )) && (( stats_prev_exec_rate_limit_dec=stats_prev_exec_rate_limit-rate_limit ))
@@ -152,7 +163,8 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used > stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used ))
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
-gh_print_notice_and_changelog_text_bullet_ln "prev json diff: rate.limit rate.used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+gh_print_notice_and_changelog_text_bullet_ln \
+  "prev json diff: graphql // rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc / -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec // +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
@@ -207,6 +219,7 @@ gh_set_env_var STATS_PREV_EXEC_RATE_LIMIT_DEC     "$stats_prev_exec_rate_limit_d
 gh_set_env_var STATS_PREV_EXEC_RATE_USED_DEC      "$stats_prev_exec_rate_used_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | limit used: +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX \
+  " | gql / rt: used: +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_used_dec"
 
 tkl_set_return

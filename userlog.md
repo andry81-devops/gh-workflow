@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.04.17:
+* changed: bash/github/accum-rate-limits.sh: replaced `core` statistic by `graphql` statistic because `rate` duplicates the `core` statistic, added `graphql` statistic difference
+
 ## 2022.03.30:
 * new: bash: accum-*.sh: added `ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME` environment variable to add date with time to a generated commit message
 * changed: bash/github/accum-rate-limits.sh: removed `commit_message_insert_time` as a script parameter
