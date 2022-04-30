@@ -25,7 +25,7 @@ function curl_print_response_if_error()
 
   [[ ! -f "$response_file" ]] && return
 
-  read -r -d '' curl_response_file < "$TEMP_DIR/response.txt" || return
+  read -r -d '' curl_response_file < "$response_file" || return
 
   # CAUTION:
   #   As a single line to reduce probability of mix with the stderr.

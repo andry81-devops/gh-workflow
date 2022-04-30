@@ -14,6 +14,8 @@ if [[ -n "$BASH" ]]; then
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
+which jq > /dev/null || exit $?
+
 
 function jq_is_null()
 {

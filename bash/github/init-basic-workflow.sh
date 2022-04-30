@@ -20,6 +20,7 @@
 #     * ENABLE_GENERATE_CHANGELOG_FILE
 #     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR
 #     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME
+#     * CHANGELOG_FILE
 #
 #   Because invalid input, empty or residual changes has to be detected and
 #   has to be not trigger a commit, then we must to continue on them
@@ -100,13 +101,13 @@ function gh_prepend_changelog_file()
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
   [[ -z "$CHANGELOG_BUF_STR" ]] && return 0
 
-  if [[ -f "$changelog_txt" ]]; then
-    local changelog_file="${CHANGELOG_BUF_STR}"$'\r\n'"$(< "$changelog_txt")"
+  if [[ -f "$CHANGELOG_FILE" ]]; then
+    local changelog_buf="${CHANGELOG_BUF_STR}"$'\r\n'"$(< "$CHANGELOG_FILE")"
   else
-    local changelog_file="${CHANGELOG_BUF_STR}"
+    local changelog_buf="${CHANGELOG_BUF_STR}"
   fi
 
-  echo -n "$changelog_file" > "$changelog_txt"
+  echo -n "$changelog_buf" > "$CHANGELOG_FILE"
 
   CHANGELOG_BUF_STR=''
 }
@@ -119,12 +120,7 @@ function gh_prepend_changelog_file()
 [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] && ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=0
 
 if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-  [[ -z "$changelog_dir" ]] && {
-    gh_print_error_ln "$0: error: \`changelog_dir\` variable must be defined."
-    exit 255
-  }
-
-  [[ -z "$changelog_txt" ]] && changelog_txt="$changelog_dir/changelog.txt"
+  [[ -z "$CHANGELOG_FILE" ]] && CHANGELOG_FILE='changelog.txt'
 fi
 
 tkl_set_return
