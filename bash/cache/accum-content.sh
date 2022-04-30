@@ -61,7 +61,7 @@ current_date_utc=${current_date_time_utc/%T*}
 
 current_date_utc_sec=$(date --utc -d "${current_date_utc}Z" +%s) # seconds from epoch to current date
 
-IFS=$'\n' read -r -d '' dirs_num <<< $(yq '."content-config".entries[0].dirs|length' $content_config_file)
+IFS=$'\n' read -r -d '' dirs_num <<< $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|length' $content_config_file)
 
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -88,17 +88,17 @@ stats_skipped_inc=0
 stats_downloaded_inc=0
 stats_changed_inc=0
 
-for i in $(yq '."content-config".entries[0].dirs|keys|.[]' $content_config_file); do
+for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' $content_config_file); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
   #
   yq_is_null i && break
 
   IFS=$'\n' read -r -d '' config_dir config_sched_next_update_timestamp_delta <<< \
-    $(yq -c -r ".\"content-config\".entries[0].dirs[$i].dir,.\"content-config\".entries[0].dirs[$i].schedule.\"next-update\".timestamp" $content_config_file) 2>/dev/null
+    $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir,.\"content-config\".entries[0].dirs[$i].schedule.\"next-update\".timestamp" $content_config_file) 2>/dev/null
 
   IFS=$'\n' read -r -d '' index_dir <<< \
-    $(yq -c -r ".\"content-index\".entries[0].dirs[$i].dir" "$content_index_file") 2>/dev/null
+    $("${YQ_CMDLINE_READ[@]}" ".\"content-index\".entries[0].dirs[$i].dir" "$content_index_file") 2>/dev/null
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -119,17 +119,17 @@ for i in $(yq '."content-config".entries[0].dirs|keys|.[]' $content_config_file)
     continue
   fi
 
-  for j in $(yq ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" $content_config_file); do
+  for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" $content_config_file); do
     # CAUTION:
     #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
     #
     yq_is_null j && break
 
     IFS=$'\n' read -r -d '' config_file config_query_url <<< \
-      $(yq -c -r ".\"content-config\".entries[0].dirs[$i].files[$j].file,.\"content-config\".entries[0].dirs[$i].files[$j].\"query-url\"" $content_config_file) 2>/dev/null
+      $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files[$j].file,.\"content-config\".entries[0].dirs[$i].files[$j].\"query-url\"" $content_config_file) 2>/dev/null
 
     IFS=$'\n' read -r -d '' index_file index_queried_url index_file_prev_md5_hash index_file_prev_timestamp <<< \
-      $(yq -c -r ".\"content-index\".entries[0].dirs[$i].files[$j].file,.\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\",.\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\",.\"content-index\".entries[0].dirs[$i].files[$j].timestamp" "$content_index_file") 2>/dev/null
+      $("${YQ_CMDLINE_READ[@]}" ".\"content-index\".entries[0].dirs[$i].files[$j].file,.\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\",.\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\",.\"content-index\".entries[0].dirs[$i].files[$j].timestamp" "$content_index_file") 2>/dev/null
 
     # CAUTION:
     #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -243,13 +243,14 @@ for i in $(yq '."content-config".entries[0].dirs|keys|.[]' $content_config_file)
     (( stats_downloaded_inc++ ))
 
     if [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-      gh_print_notice_ln "File MD5 hash is changed: new=\`$index_file_next_md5_hash\` prev=\`$index_file_prev_md5_hash\`"
+      echo "File MD5 hash is changed: new=\`$index_file_next_md5_hash\` prev=\`$index_file_prev_md5_hash\`"
     else
-      gh_print_notice_ln "File MD5 hash is not changed: \`$index_file_next_md5_hash\`"
+      echo "File MD5 hash is not changed: \`$index_file_next_md5_hash\`"
     fi
 
     if (( ! is_index_file_prev_exist )) || [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-      gh_write_notice_to_changelog_text_ln \
+      gh_print_notice_and_changelog_text_ln \
+        "changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`" \
         "* changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`"
 
       (( stats_changed_inc++ ))

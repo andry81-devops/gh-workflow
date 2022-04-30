@@ -1,3 +1,8 @@
+2022.05.01:
+* fixed: bash/cache/accum-content.sh: support and detection of 2 `yq` implementations
+* new: bash/github/init-yq-workflow.sh: `yq` detection function
+* new: bash/github/init-jq-workflow.sh: `jq` detection function
+
 2022.04.30:
 * new: bash/github: `init-yq-workflow.sh` initialization script
 * new: bash/cache: `accum-content.sh` script to periodically download and accumulate content

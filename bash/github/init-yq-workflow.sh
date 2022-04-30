@@ -6,7 +6,15 @@
 
 # NOTE:
 #
-#   Yaml specific variables:
+#   Yaml specific system variables (to use):
+#
+#     * YQ_CMDLINE_READ
+#     * YQ_CMDLINE_WRITE
+#     * YQ_DIFF_CMDLINE
+#     * YQ_DIFF_GREP_CMDLINE_0
+#     * YQ_PATCH_DIFF_CMDLINE
+#
+#   Yaml specific user variables (to set):
 #
 #     * ENABLE_YAML_PRINT_AFTER_EDIT
 #     * ENABLE_YAML_DIFF_PRINT_AFTER_EDIT
@@ -16,8 +24,8 @@
 #
 #   The `yq` command lines designed to be able to run independently to these `yq` implementations:
 #
-#   * `github.com/kislyuk/yq`   - a `jq` wrapper (default Cygwin distribution)
-#   * `github.com/mikefarah/yq` - Go implementation (default Ubuntu 20.04 distribution)
+#   * https://github.com/kislyuk/yq     - a `jq` wrapper (default Cygwin distribution)
+#   * https://github.com/mikefarah/yq   - Go implementation (default Ubuntu 20.04 distribution)
 #
 
 # Script both for execution and inclusion.
@@ -30,7 +38,42 @@ if [[ -n "$BASH" ]]; then
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-which yq > /dev/null || exit $?
+
+function yq_init()
+{
+  which yq > /dev/null || return $?
+
+  local yq_help=$(yq --help)
+
+  # CAUTION:
+  #   Array instead of string is required here for correct expansion!
+  #
+  if grep 'https://github.com/mikefarah/yq[/ ]' - <<< "$yq_help" >/dev/null; then
+    YQ_CMDLINE_READ=(yq)
+    YQ_CMDLINE_WRITE=(yq e)
+    YQ_DIFF_CMDLINE=(diff -awB)
+    YQ_DIFF_GREP_CMDLINE_0=(grep -vE '^\s*$')
+    YQ_PATCH_DIFF_CMDLINE=(patch -Nlt --merge)
+  elif grep 'https://github.com/kislyuk/yq[/ ]' - <<< "$yq_help" >/dev/null; then
+    YQ_CMDLINE_READ=(yq -c -r)
+    YQ_CMDLINE_WRITE=(yq -y)
+    YQ_DIFF_CMDLINE=(diff -awB)
+    YQ_DIFF_GREP_CMDLINE_0=(grep -vE '^\s*(#|$)')
+    YQ_PATCH_DIFF_CMDLINE=(patch -Nlt --merge)
+  else
+    YQ_CMDLINE_READ=(yq)
+    YQ_CMDLINE_WRITE=(yq)
+    YQ_DIFF_CMDLINE=(diff -awB)
+    YQ_DIFF_GREP_CMDLINE_0=(grep -vE '^\s*$')
+    YQ_PATCH_DIFF_CMDLINE=(patch -Nlt --merge)
+    echo "$0: error: \`yq\` implementation is not known." >&2
+    return 255
+  fi
+  
+  return 0
+}
+
+yq_init || exit $?
 
 
 function yq_is_null()
@@ -85,7 +128,7 @@ function yq_edit()
   # on return handler
   tkl_push_trap 'on_return_handler' RETURN
 
-  yq -y \
+  "${YQ_CMDLINE_WRITE[@]}" \
     "${edit_list[0]}" \
     "$input_file" > "$TEMP_DIR/${edit_file_name}-edit0.yml" || return $?
 
@@ -100,7 +143,7 @@ function yq_edit()
       fi
     }
 
-    yq -y \
+    "${YQ_CMDLINE_WRITE[@]}" \
       "$arg" \
       "$TEMP_DIR/${edit_file_name}-edit${i}.yml" > "$TEMP_DIR/${edit_file_name}-edit${j}.yml" || return $?
 
@@ -137,8 +180,8 @@ function yq_diff()
   #  1     Differences were found.
   # >1     An error occurred.
   #
-  diff -awB \
-    <(grep -vE '^\s*(#|$)' "$input_file_before") \
+  "${YQ_DIFF_CMDLINE[@]}" \
+    <("${YQ_DIFF_GREP_CMDLINE_0[@]}" "$input_file_before") \
     "$input_file_after" > "$output_diff_file"
   last_error=$?
 
@@ -160,7 +203,7 @@ function yq_patch()
   local temp_file="$3"
   local output_file="$4"
 
-  patch -Nlt --merge -o "$temp_file" -i "$input_diff_file" "$input_file" && \
+  "${YQ_PATCH_DIFF_CMDLINE[@]}" -o "$temp_file" -i "$input_diff_file" "$input_file" && \
   mv -Tf "$temp_file" "$output_file"
 }
 
