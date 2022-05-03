@@ -158,6 +158,8 @@ gh_set_env_var STATS_PREV_EXEC_DOWNLOADS_INC      "$stats_prev_exec_downloads_in
 gh_set_env_var STATS_PREV_DAY_DOWNLOADS_INC       "$stats_prev_day_downloads_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | dl: +$stats_prev_day_downloads_inc"
+
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "dl: +$stats_prev_day_downloads_inc"
 
 tkl_set_return

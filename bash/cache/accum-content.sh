@@ -231,6 +231,14 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       continue
     }
 
+    # check on empty
+    if [[ ! -s "$TEMP_DIR/content/$index_dir/$index_file" ]]; then
+      (( stats_failed_inc++ ))
+
+      gh_print_error_ln "$0: error: downloaded file is empty: \`$index_dir/$index_file\`".
+      continue
+    fi
+
     index_file_next_timestamp=$(date --utc +%FT%TZ)
 
     index_file_next_md5_hash=( $(md5sum -b "$TEMP_DIR/content/$index_dir/$index_file") )
@@ -312,6 +320,8 @@ gh_set_env_var STATS_DOWNLOADED_INC               "$stats_downloaded_inc"
 gh_set_env_var STATS_CHANGED_INC                  "$stats_changed_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | fl sk / dl ch: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
+
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "$store_entity_path"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "fl sk / dl ch: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
 
 tkl_set_return

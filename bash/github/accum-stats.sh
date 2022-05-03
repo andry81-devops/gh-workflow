@@ -509,6 +509,8 @@ gh_set_env_var STATS_PREV_DAY_COUNT_DEC           "$stats_prev_day_count_dec"
 gh_set_env_var STATS_PREV_DAY_UNIQUES_DEC         "$stats_prev_day_uniques_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              " | unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 tkl_set_return
