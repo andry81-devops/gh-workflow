@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.04:
+* new: action.yml: added `COMMIT_MESSAGE_PREFIX` to split an automated user commit message into prefix and suffix parts
+* changed: bash/cache/accum-content.sh: treat empty downloaded files as invalid
+
 ## 2022.04.17:
 * changed: bash/github/accum-rate-limits.sh: replaced `core` statistic by `graphql` statistic because `rate` duplicates the `core` statistic, added `graphql` statistic difference
 

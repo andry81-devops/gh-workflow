@@ -1,3 +1,7 @@
+2022.05.04:
+* new: bash: added `COMMIT_MESSAGE_PREFIX` to split an automated user commit message into prefix and suffix parts
+* changed: bash/cache/accum-content.sh: treat empty downloaded files as invalid
+
 2022.05.01:
 * fixed: bash/cache/accum-content.sh: support and detection of 2 `yq` implementations
 * new: bash/github/init-yq-workflow.sh: `yq` detection function

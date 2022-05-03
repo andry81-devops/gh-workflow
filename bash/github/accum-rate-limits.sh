@@ -219,7 +219,8 @@ gh_set_env_var STATS_PREV_EXEC_RATE_LIMIT_DEC     "$stats_prev_exec_rate_limit_d
 gh_set_env_var STATS_PREV_EXEC_RATE_USED_DEC      "$stats_prev_exec_rate_used_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX \
-  " | gql / rt: used: +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_used_dec"
+
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "gql / rt: used: +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_used_dec"
 
 tkl_set_return
