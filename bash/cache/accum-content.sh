@@ -225,17 +225,25 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     echo "Downloading: \`$index_dir/$index_file\`..."
 
     eval curl $curl_flags "\$config_query_url" > "$TEMP_DIR/content/$index_dir/$index_file" || {
+      echo '---'
+
       (( stats_failed_inc++ ))
 
-      gh_print_error_ln "$0: error: failed to download: \`$index_dir/$index_file\`".
+      gh_print_error_and_changelog_text_ln \
+        "$0: error: failed to download: \`$index_dir/$index_file\`" \
+        "* error: $index_dir/$index_file: failed to download"
       continue
     }
+
+    echo '---'
 
     # check on empty
     if [[ ! -s "$TEMP_DIR/content/$index_dir/$index_file" ]]; then
       (( stats_failed_inc++ ))
 
-      gh_print_error_ln "$0: error: downloaded file is empty: \`$index_dir/$index_file\`".
+      gh_print_warning_and_changelog_text_ln \
+        "$0: warning: downloaded file is empty: \`$index_dir/$index_file\`" \
+        "* warning: $index_dir/$index_file: downloaded file is empty"
       continue
     fi
 

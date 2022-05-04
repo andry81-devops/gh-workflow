@@ -121,7 +121,7 @@ function yq_edit()
     if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
       echo ">\`$TEMP_DIR/${edit_file_name}-edit0.yml\`:"
       echo "$(<"$TEMP_DIR/${edit_file_name}-edit0.yml")"
-      echo '<'
+      echo '==='
     fi
   }
 
@@ -139,7 +139,7 @@ function yq_edit()
       if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
         echo ">\`$TEMP_DIR/${edit_file_name}-edit${j}.yml\`:"
         echo "$(<"$TEMP_DIR/${edit_file_name}-edit${j}.yml")"
-        echo '<'
+        echo '==='
       fi
     }
 
@@ -160,7 +160,7 @@ function yq_edit()
       if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
         echo ">\`$output_file\`:"
         echo "$(<"$output_file")"
-        echo '<'
+        echo '==='
       fi
     }
   fi
@@ -190,7 +190,7 @@ function yq_diff()
   if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT )); then
     echo ">\`$output_diff_file\`:"
     echo "$(<"$output_diff_file")"
-    echo '<'
+    echo '==='
   fi
 
   return 0
