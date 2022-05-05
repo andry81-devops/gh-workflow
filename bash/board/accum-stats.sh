@@ -46,7 +46,7 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
-gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -64,11 +64,32 @@ TEMP_DIR=$(mktemp -d)
 
 tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
-eval curl $curl_flags "\$topic_query_url" > "$TEMP_DIR/response.txt" || {
+if eval curl $curl_flags -o "\$TEMP_DIR/response.txt" "\$topic_query_url" 2> "$TEMP_DIR/response-stderr.txt"; then
+  echo '---'
+else
+  echo '---'
+
+  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
+    echo "$(<"$TEMP_DIR/response-stderr.txt")"
+    echo '---'
+  fi
+
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
-}
+fi
+
+# check on empty
+if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
+  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
+    echo "$(<"$TEMP_DIR/response-stderr.txt")"
+    echo '---'
+  fi
+
+  gh_enable_print_buffering
+
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
+fi
 
 replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/response.txt")
 views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/response.txt")
@@ -84,9 +105,9 @@ if [[ -n "$views" ]]; then
   (( last_views < views )) && (( stats_prev_exec_views_inc=views-last_views ))
 fi
 
-gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
-gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
 # with check on integer value
 [[ -z "$replies" || -n "${replies//[0-9]/}" ]] && replies=0
@@ -121,7 +142,7 @@ fi
 (( stats_prev_day_replies_inc+=replies_prev_day_inc_saved+stats_prev_exec_replies_inc ))
 (( stats_prev_day_views_inc+=views_prev_day_inc_saved+stats_prev_exec_views_inc ))
 
-gh_print_notice_and_changelog_text_bullet_ln "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
 
 if (( replies != replies_saved || views != views_saved )); then
   echo "\
@@ -145,13 +166,13 @@ fi
 
 # continue if at least one is valid
 if (( replies < last_replies || views < last_views )); then
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: replies or views is decremented for \`$board_name\`." "replies or views is decremented for \`$board_name\`"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: replies or views is decremented for \`$board_name\`." "replies or views is decremented for \`$board_name\`"
 fi
 
 if (( last_replies >= replies && last_views >= views )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views." "nothing is changed for \`$board_name\`, no new board replies/views"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views." "nothing is changed for \`$board_name\`, no new board replies/views"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi

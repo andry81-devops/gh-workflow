@@ -31,7 +31,7 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
-gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -49,7 +49,7 @@ jq_fix_null \
   uniques:0 \
   stats_length:0
 
-gh_print_notice_and_changelog_text_bullet_ln "last 14d: all unq: $count $uniques"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "last 14d: all unq: $count $uniques"
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
@@ -62,12 +62,12 @@ jq_fix_null \
   count_prev:0 \
   uniques_prev:0
 
-gh_print_notice_and_changelog_text_bullet_ln "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
 
 (( ! count && ! uniques && ! stats_length )) && {
   gh_enable_print_buffering
 
-  gh_print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty." "json data is invalid or empty"
+  gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: json data is invalid or empty." "json data is invalid or empty"
 
   # try to request json generic response fields to print them as a notice
   IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)
@@ -77,9 +77,9 @@ gh_print_notice_and_changelog_text_bullet_ln "prev accum: outdated-all outdated-
     json_url \
     json_documentation_url
 
-  [[ -n "$json_message" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
-  [[ -n "$json_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
-  [[ -n "$json_documentation_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
+  [[ -n "$json_message" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+  [[ -n "$json_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+  [[ -n "$json_documentation_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 }
@@ -358,7 +358,7 @@ done
 (( count_next += count_outdated_next ))
 (( uniques_next += uniques_outdated_next ))
 
-gh_print_notice_and_changelog_text_bullet_ln "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
 
 gh_print_notice_ln "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
 
@@ -374,7 +374,7 @@ if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uni
       "$stats_uniques_next_seq" == "$stats_uniques_prev_seq" ]]; then
   gh_enable_print_buffering
 
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
@@ -477,7 +477,7 @@ done
 if (( has_residual_changes && ! has_not_residual_changes )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: json data has only residual changes which has no effect and ignored." "json data has only residual changes which has no effect and ignored"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: json data has only residual changes which has no effect and ignored." "json data has only residual changes which has no effect and ignored"
 
   (( ! CONTINUE_ON_RESIDUAL_CHANGES )) && exit 255
 fi

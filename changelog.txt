@@ -1,3 +1,10 @@
+2022.05.05:
+* fixed: bash/github/accum-content.sh: execution fix
+* fixed: bash/github/print-*.sh: accidental buffer unset in case of call twice to `gh_enable_print_*_buffering`
+* new: bash: curl stderr print on error or empty download
+* new: bash/github: include guards for shared scripts
+* refactor: bash: code refactor
+
 2022.05.04:
 * changed: cache/accum-content.sh: duplicate several warnings and errors into content cache changelog file
 * changed: bash/init-yq-workflow.sh: minor pipeline log readability improvement

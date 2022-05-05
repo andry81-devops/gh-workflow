@@ -2,6 +2,11 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.05:
+* fixed: bash/github/accum-content.sh: execution fix
+* fixed: bash/github/print-*.sh: accidental buffer unset in case of call twice to `gh_enable_print_*_buffering`
+* new: bash: curl stderr print on error
+
 ## 2022.05.04:
 * new: action.yml: added `COMMIT_MESSAGE_PREFIX` to split an automated user commit message into prefix and suffix parts
 * changed: bash/cache/accum-content.sh: treat empty downloaded files as invalid
