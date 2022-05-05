@@ -5,14 +5,18 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_PRINT_NOTICE_SH" && SOURCE_GHWF_PRINT_NOTICE_SH -ne 0) ]] && return
+
+SOURCE_GHWF_PRINT_NOTICE_SH=1 # including guard
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
 
 
 function gh_enable_print_notice_buffering()
 {
-  tkl_declare_global PRINT_NOTICE_BUF_STR ''
+  [[ -z "${PRINT_NOTICE_BUF_STR+x}" ]] && tkl_declare_global PRINT_NOTICE_BUF_STR ''
 }
 
 # NOTE:
@@ -95,15 +99,6 @@ function gh_print_notices()
   fi
 }
 
-function gh_write_notice_to_changelog_text_ln()
-{
-  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
-
-  local changelog_msg="$1"
-
-  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}${changelog_msg}"$'\r\n'
-}
-
 function gh_write_notice_to_changelog_text_bullet_ln()
 {
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
@@ -114,7 +109,7 @@ function gh_write_notice_to_changelog_text_bullet_ln()
 }
 
 # format: <message> | <notice_message> <changelog_message>
-function gh_print_notice_and_changelog_text_ln()
+function gh_print_notice_and_write_to_changelog_text_ln()
 {
   local notice_msg="$1"
 
@@ -125,12 +120,12 @@ function gh_print_notice_and_changelog_text_ln()
 
     (( ${#@} < 2 )) && changelog_msg="$notice_msg"
 
-    gh_write_notice_to_changelog_text_ln "$changelog_msg"
+    gh_write_to_changelog_text_ln "$changelog_msg"
   fi
 }
 
 # format: <message> | <notice_message> <changelog_message>
-function gh_print_notice_and_changelog_text_bullet_ln()
+function gh_print_notice_and_write_to_changelog_text_bullet_ln()
 {
   local notice_msg="$1"
 
@@ -148,6 +143,4 @@ function gh_print_notice_and_changelog_text_bullet_ln()
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
   gh_print_notices "$@"
-fi
-
 fi

@@ -5,7 +5,9 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_JQ_WORKFLOW_SH" && SOURCE_GHWF_INIT_JQ_WORKFLOW_SH -ne 0) ]] && return
+
+SOURCE_GHWF_INIT_JQ_WORKFLOW_SH=1 # including guard
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
@@ -48,5 +50,3 @@ function jq_fix_null()
 }
 
 tkl_set_return
-
-fi

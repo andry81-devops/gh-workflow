@@ -41,7 +41,7 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
-gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -58,11 +58,32 @@ TEMP_DIR=$(mktemp -d)
 
 tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
-eval curl $curl_flags "\$query_url" > "$TEMP_DIR/response.txt" || {
+if eval curl $curl_flags -o "\$TEMP_DIR/response.txt" "\$query_url" 2> "$TEMP_DIR/response-stderr.txt"; then
+  echo '---'
+else
+  echo '---'
+
+  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
+    echo "$(<"$TEMP_DIR/response-stderr.txt")"
+    echo '---'
+  fi
+
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
-}
+fi
+
+# check on empty
+if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
+  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
+    echo "$(<"$TEMP_DIR/response-stderr.txt")"
+    echo '---'
+  fi
+
+  gh_enable_print_buffering
+
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
+fi
 
 downloads=$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")
 
@@ -73,9 +94,9 @@ if [[ -n "$downloads" ]]; then
   (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
 fi
 
-gh_print_notice_and_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
-gh_print_notice_and_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 
 # with check on integer value
 [[ -z "$downloads" || -n "${downloads//[0-9]/}" ]] && downloads=0
@@ -105,7 +126,7 @@ fi
 
 (( stats_prev_day_downloads_inc+=downloads_prev_day_inc_saved+stats_prev_exec_downloads_inc ))
 
-gh_print_notice_and_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
 
 if (( downloads != downloads_saved )); then
   echo "\
@@ -126,13 +147,13 @@ fi
 
 # continue if at least one is valid
 if (( downloads < last_downloads )); then
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
 fi
 
 if (( last_downloads >= downloads )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi

@@ -5,7 +5,9 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH" && SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH -ne 0) ]] && return
+
+SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH=1 # including guard
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
@@ -18,6 +20,3 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/base
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/funclib.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/traplib.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/hashlib.sh"
-
-
-fi

@@ -26,7 +26,7 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
-gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -163,7 +163,7 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used > stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used ))
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
-gh_print_notice_and_changelog_text_bullet_ln \
+gh_print_notice_and_write_to_changelog_text_bullet_ln \
   "prev json diff: graphql // rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc / -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec // +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
@@ -172,7 +172,7 @@ if (( resources_length != 8 || \
       ! rate_limit )); then
   gh_enable_print_buffering
 
-  gh_print_error_and_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
+  gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
 
   # try to request json generic response fields to print them as a notice
   IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)
@@ -182,9 +182,9 @@ if (( resources_length != 8 || \
     json_url \
     json_documentation_url
 
-  [[ -n "$json_message" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
-  [[ -n "$json_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
-  [[ -n "$json_documentation_url" ]] && gh_print_notice_and_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
+  [[ -n "$json_message" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+  [[ -n "$json_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+  [[ -n "$json_documentation_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 fi
@@ -192,7 +192,7 @@ fi
 if (( ! has_changes )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi

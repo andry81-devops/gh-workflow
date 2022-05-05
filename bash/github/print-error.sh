@@ -5,14 +5,18 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_PRINT_ERROR_SH" && SOURCE_GHWF_PRINT_ERROR_SH -ne 0) ]] && return
+
+SOURCE_GHWF_PRINT_ERROR_SH=1 # including guard
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
+
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
 
 
 function gh_enable_print_error_buffering()
 {
-  tkl_declare_global PRINT_ERROR_BUF_STR ''
+  [[ -z "${PRINT_ERROR_BUF_STR+x}" ]] && tkl_declare_global PRINT_ERROR_BUF_STR ''
 }
 
 # NOTE:
@@ -105,7 +109,23 @@ function gh_write_error_to_changelog_text_bullet_ln()
 }
 
 # format: <message> | <error_message> <changelog_message>
-function gh_print_error_and_changelog_text_bullet_ln()
+function gh_print_error_and_write_to_changelog_text_ln()
+{
+  local error_msg="$1"
+
+  gh_print_error_ln "$error_msg"
+
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    local changelog_msg="$2"
+
+    (( ${#@} < 2 )) && changelog_msg="$error_msg"
+
+    gh_write_to_changelog_text_ln "$changelog_msg"
+  fi
+}
+
+# format: <message> | <error_message> <changelog_message>
+function gh_print_error_and_write_to_changelog_text_bullet_ln()
 {
   local error_msg="$1"
 
@@ -123,6 +143,4 @@ function gh_print_error_and_changelog_text_bullet_ln()
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
   gh_print_errors "$@"
-fi
-
 fi

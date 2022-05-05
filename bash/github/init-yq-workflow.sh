@@ -29,7 +29,9 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_YQ_WORKFLOW_SH" && SOURCE_GHWF_INIT_YQ_WORKFLOW_SH -ne 0) ]] && return
+
+SOURCE_GHWF_INIT_YQ_WORKFLOW_SH=1 # including guard
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
@@ -69,7 +71,10 @@ function yq_init()
     echo "$0: error: \`yq\` implementation is not known." >&2
     return 255
   fi
-  
+
+  [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_PRINT_AFTER_EDIT=0
+  [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_DIFF_PRINT_AFTER_EDIT=0
+
   return 0
 }
 
@@ -207,9 +212,4 @@ function yq_patch()
   mv -Tf "$temp_file" "$output_file"
 }
 
-[[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_PRINT_AFTER_EDIT=0
-[[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_DIFF_PRINT_AFTER_EDIT=0
-
 tkl_set_return
-
-fi

@@ -35,7 +35,9 @@
 #
 
 # Script both for execution and inclusion.
-if [[ -n "$BASH" ]]; then
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH" && SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH -ne 0) ]] && return
+
+SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH=1 # including guard
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
@@ -44,56 +46,36 @@ if [[ -n "$BASH" ]]; then
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-notice.sh"
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-warning.sh"
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
 
 
-tkl_declare_global CHANGELOG_BUF_STR ''
+function init_basic_workflow()
+{
+  tkl_declare_global CHANGELOG_BUF_STR ''
 
-gh_set_print_warning_lag  .025 # 25 msec
-gh_set_print_error_lag    .025
+  gh_set_print_warning_lag  .025 # 25 msec
+  gh_set_print_error_lag    .025
+
+  [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
+  [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
+  [[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] && CONTINUE_ON_RESIDUAL_CHANGES=0
+  [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] && ENABLE_GENERATE_CHANGELOG_FILE=0
+  [[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] && ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=0
+  [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] && ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=0
+
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    [[ -z "$CHANGELOG_FILE" ]] && CHANGELOG_FILE='changelog.txt'
+  fi
+
+  return 0
+}
+
+init_basic_workflow || exit $?
+
 
 function gh_set_env_var()
 {
   [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
-}
-
-function gh_enable_print_buffering()
-{
-  local enable_print_notice_buffering=${1:-0}   # by default is not buffered, printfs at first
-  local enable_print_warning_buffering=${1:-1}  # by default is buffered, prints at second
-  local enable_print_error_buffering=${1:-1}    # by default is buffered, prints at third
-
-  (( enable_print_notice_buffering )) && gh_enable_print_notice_buffering
-  (( enable_print_warning_buffering )) && gh_enable_print_warning_buffering
-  (( enable_print_error_buffering )) && gh_enable_print_error_buffering
-}
-
-function gh_flush_print_buffers()
-{
-  local print_str
-
-  # notices
-  if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
-    print_str="${PRINT_NOTICE_BUF_STR}"
-    unset PRINT_NOTICE_BUF_STR
-    gh_print_notices "$print_str"
-  fi
-
-  # warnings
-  if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
-    print_str="${PRINT_WARNING_BUF_STR}"
-    unset PRINT_WARNING_BUF_STR
-    gh_print_warnings "$print_str"
-  fi
-
-  # errors
-  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
-    print_str="${PRINT_ERROR_BUF_STR}"
-    unset PRINT_ERROR_BUF_STR
-    gh_print_errors "$print_str"
-  fi
 }
 
 function gh_prepend_changelog_file()
@@ -112,17 +94,4 @@ function gh_prepend_changelog_file()
   CHANGELOG_BUF_STR=''
 }
 
-[[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
-[[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
-[[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] && CONTINUE_ON_RESIDUAL_CHANGES=0
-[[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] && ENABLE_GENERATE_CHANGELOG_FILE=0
-[[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] && ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=0
-[[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] && ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=0
-
-if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-  [[ -z "$CHANGELOG_FILE" ]] && CHANGELOG_FILE='changelog.txt'
-fi
-
 tkl_set_return
-
-fi

@@ -55,7 +55,7 @@ current_date_time_utc=$(date --utc +%FT%TZ)
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
-gh_print_notice_and_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
+gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc=${current_date_time_utc/%T*}
 
@@ -72,7 +72,7 @@ yq_fix_null \
 (( ! dirs_num )) && {
   gh_enable_print_buffering
 
-  gh_print_error_and_changelog_text_bullet_ln "$0: error: content config is invalid or empty." "content config is invalid or empty"
+  gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: content config is invalid or empty." "content config is invalid or empty"
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 }
@@ -220,28 +220,45 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       index_file_prev_md5_hash=$index_file_next_md5_hash
     fi
 
-    [[ ! -d "$TEMP_DIR/content/$index_dir" ]] && mkdir -p "$TEMP_DIR/content/$index_dir"
+    [[ ! -d "$TEMP_DIR/content/$index_dir" ]] &&      mkdir -p "$TEMP_DIR/content/$index_dir"
+    [[ ! -d "$TEMP_DIR/curl_stderr/$index_dir" ]] &&  mkdir -p "$TEMP_DIR/curl_stderr/$index_dir"
 
-    echo "Downloading: \`$index_dir/$index_file\`..."
+    echo "Downloading:"
+    echo "  file: \`$index_dir/$index_file\`"
+    echo "  URL:  $config_query_url"
 
-    eval curl $curl_flags "\$config_query_url" > "$TEMP_DIR/content/$index_dir/$index_file" || {
+    if eval curl $curl_flags -o "\$TEMP_DIR/content/\$index_dir/\$index_file" "\$config_query_url" 2> "$TEMP_DIR/curl_stderr/$index_dir/$index_file"; then
       echo '---'
+    else
+      echo '---'
+
+      if [[ -s "$TEMP_DIR/curl_stderr/$index_dir/$index_file" ]]; then
+        echo "$(<"$TEMP_DIR/curl_stderr/$index_dir/$index_file")"
+        echo '---'
+      fi
 
       (( stats_failed_inc++ ))
 
-      gh_print_error_and_changelog_text_ln \
+      gh_enable_print_buffering
+
+      gh_print_error_and_write_to_changelog_text_ln \
         "$0: error: failed to download: \`$index_dir/$index_file\`" \
         "* error: $index_dir/$index_file: failed to download"
       continue
-    }
-
-    echo '---'
+    fi
 
     # check on empty
     if [[ ! -s "$TEMP_DIR/content/$index_dir/$index_file" ]]; then
+      if [[ -s "$TEMP_DIR/curl_stderr/$index_dir/$index_file" ]]; then
+        echo "$(<"$TEMP_DIR/curl_stderr/$index_dir/$index_file")"
+        echo '---'
+      fi
+
       (( stats_failed_inc++ ))
 
-      gh_print_warning_and_changelog_text_ln \
+      gh_enable_print_buffering
+
+      gh_print_warning_and_write_to_changelog_text_ln \
         "$0: warning: downloaded file is empty: \`$index_dir/$index_file\`" \
         "* warning: $index_dir/$index_file: downloaded file is empty"
       continue
@@ -265,7 +282,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     fi
 
     if (( ! is_index_file_prev_exist )) || [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-      gh_print_notice_and_changelog_text_ln \
+      gh_print_notice_and_write_to_changelog_text_ln \
         "changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`" \
         "* changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`"
 
@@ -296,7 +313,7 @@ if (( stats_changed_inc )) || [[ "$content_index_file_next_md5_hash" != "$conten
   echo '---'
 fi
 
-gh_print_notice_and_changelog_text_bullet_ln "failed skipped / downloaded changed: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "failed skipped / downloaded changed: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
 
 if (( ! stats_changed_inc )); then
   gh_enable_print_buffering
