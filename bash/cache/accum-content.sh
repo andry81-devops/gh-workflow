@@ -85,6 +85,7 @@ tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
 
 stats_failed_inc=0
 stats_skipped_inc=0
+stats_expired_inc=0
 stats_downloaded_inc=0
 stats_changed_inc=0
 
@@ -212,6 +213,8 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
       continue
     else
+      (( stats_expired_inc++ ))
+
       echo "File is expired: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
     fi
 
@@ -228,6 +231,8 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     echo "  URL:  $config_query_url"
 
     if eval curl $curl_flags -o "\$TEMP_DIR/content/\$index_dir/\$index_file" "\$config_query_url" 2> "$TEMP_DIR/curl_stderr/$index_dir/$index_file"; then
+      (( stats_downloaded_inc++ ))
+
       echo '---'
     else
       echo '---'
@@ -268,25 +273,25 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
     index_file_next_md5_hash=( $(md5sum -b "$TEMP_DIR/content/$index_dir/$index_file") )
 
-    # always rewrite on curl success
-    [[ ! -d "$index_dir" ]] && mkdir -p "$index_dir"
-
-    mv -Tf "$TEMP_DIR/content/$index_dir/$index_file" "$index_dir/$index_file"
-
-    (( stats_downloaded_inc++ ))
-
     if [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
       echo "File MD5 hash is changed: new=\`$index_file_next_md5_hash\` prev=\`$index_file_prev_md5_hash\`"
     else
       echo "File MD5 hash is not changed: \`$index_file_next_md5_hash\`"
     fi
 
+    # update file only if content is changed
     if (( ! is_index_file_prev_exist )) || [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
+      (( stats_changed_inc++ ))
+
       gh_print_notice_and_write_to_changelog_text_ln \
         "changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`" \
         "* changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`"
 
-      (( stats_changed_inc++ ))
+      [[ ! -d "$index_dir" ]] && mkdir -p "$index_dir"
+
+      mv -Tf "$TEMP_DIR/content/$index_dir/$index_file" "$index_dir/$index_file"
+    else
+      (( stats_skipped_inc++ ))
     fi
 
     # update index file fields
@@ -313,7 +318,7 @@ if (( stats_changed_inc )) || [[ "$content_index_file_next_md5_hash" != "$conten
   echo '---'
 fi
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "failed skipped / downloaded changed: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "failed / skipped expired / downloaded changed: $stats_failed_inc / $stats_skipped_inc $stats_expired_inc / $stats_downloaded_inc $stats_changed_inc"
 
 if (( ! stats_changed_inc )); then
   gh_enable_print_buffering
@@ -321,6 +326,10 @@ if (( ! stats_changed_inc )); then
   gh_print_warning_ln "$0: warning: nothing is changed for \`${content_index_dir:-.}\`, no new downloads."
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+
+  if (( ! stats_failed_inc )); then
+    (( ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS )) && exit 255
+  fi
 fi
 
 commit_message_date_time_prefix="$current_date_utc"
@@ -341,12 +350,13 @@ gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
 gh_set_env_var STATS_FAILED_INC                   "$stats_failed_inc"
 gh_set_env_var STATS_SKIPPED_INC                  "$stats_skipped_inc"
+gh_set_env_var STATS_EXPIRED_INC                  "$stats_expired_inc"
 gh_set_env_var STATS_DOWNLOADED_INC               "$stats_downloaded_inc"
 gh_set_env_var STATS_CHANGED_INC                  "$stats_changed_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
 gh_set_env_var COMMIT_MESSAGE_PREFIX              "$store_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "fl sk / dl ch: $stats_failed_inc $stats_skipped_inc / $stats_downloaded_inc $stats_changed_inc"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "fl / sk ex / dl ch: $stats_failed_inc / $stats_skipped_inc $stats_expired_inc / $stats_downloaded_inc $stats_changed_inc"
 
 tkl_set_return
