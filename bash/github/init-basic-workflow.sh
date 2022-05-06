@@ -17,10 +17,6 @@
 #     * CONTINUE_ON_INVALID_INPUT
 #     * CONTINUE_ON_EMPTY_CHANGES
 #     * CONTINUE_ON_RESIDUAL_CHANGES
-#     * ENABLE_GENERATE_CHANGELOG_FILE
-#     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR
-#     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME
-#     * CHANGELOG_FILE
 #
 #   Because invalid input, empty or residual changes has to be detected and
 #   has to be not trigger a commit, then we must to continue on them
@@ -32,6 +28,14 @@
 #   execution altogether with several notices and warnings printed from the
 #   script to highlight the pipeline events and basic statistic without a need
 #   to compare a complete set of changes.
+#
+#   Other variables:
+#
+#     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
+#     * ENABLE_GENERATE_CHANGELOG_FILE
+#     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR
+#     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME
+#     * CHANGELOG_FILE
 #
 
 # Script both for execution and inclusion.
@@ -83,7 +87,7 @@ function gh_prepend_changelog_file()
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
   [[ -z "$CHANGELOG_BUF_STR" ]] && return 0
 
-  if [[ -f "$CHANGELOG_FILE" ]]; then
+  if [[ -f "$CHANGELOG_FILE" && -s "$CHANGELOG_FILE" ]]; then
     local changelog_buf="${CHANGELOG_BUF_STR}"$'\r\n'"$(< "$CHANGELOG_FILE")"
   else
     local changelog_buf="${CHANGELOG_BUF_STR}"
