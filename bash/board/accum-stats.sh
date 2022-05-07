@@ -64,7 +64,11 @@ TEMP_DIR=$(mktemp -d)
 
 tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
-if eval curl $curl_flags -o "\$TEMP_DIR/response.txt" "\$topic_query_url" 2> "$TEMP_DIR/response-stderr.txt"; then
+# CAUTION:
+#   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
+#   This is required for uniform parse the curl output in both verbose or non verbose mode.
+#
+if eval curl $curl_flags -o "\$TEMP_DIR/response.txt" "\$topic_query_url" 2>&1 | tee "$TEMP_DIR/response-stderr.txt" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
   echo '---'
 else
   echo '---'

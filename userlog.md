@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.07:
+* fixed: bash: board/accum-stats.sh, cache/accum-content.sh, inpage/accum-downloads.sh: curl progress obscure by stderr is workarounded by grep it into stdout
+* new: bash/github/accum-content.sh: generate `content-index.yml` from `content-config.yml` if does not exist
+
 ## 2022.05.06:
 * fixed: bash/github/accum-content.sh: update downloaded file only if content is changed, increment skip counter if file hash is not changed (additionally to not yet expired files)
 * new: bash/github/accum-content.sh: `ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS` environment variable to generate error on empty changes without errors to interrupt futher pipeline execution
