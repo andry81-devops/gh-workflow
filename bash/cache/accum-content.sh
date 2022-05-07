@@ -35,11 +35,6 @@ content_index_file="${content_index_file//\\//}"
   exit 255
 }
 
-[[ ! -f "$content_index_file" ]] && {
-  gh_print_error_ln "$0: error: \`content_index_file\` file is not found: \`$content_index_file\`"
-  exit 255
-}
-
 content_index_dir="${content_index_dir%/}"
 
 if [[ -z "$content_index_dir" ]]; then
@@ -76,6 +71,92 @@ yq_fix_null \
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 }
+
+if [[ ! -f "$content_index_file" ]]; then
+  # CAUTION:
+  #   `content_index_dir` and `content_index_file_dir` is 2 different paths.
+  #
+  content_index_file_dir="${content_index_file%/*}"
+
+  [[ -n "$content_index_file_dir" && ! -d "$content_index_file_dir" ]] && mkdir -p "$content_index_file_dir"
+
+  {
+    # CAUTION:
+    #   We must use '' as an empty value placeholder to leave single quotes for it.
+    #   If try to leave a value empty without quotes, then for a value with `:` character the `yq` parser will replace it with double-quotes or
+    #   even change it in case of the UTC timestamp value.
+    #
+    echo \
+"# This file is automatically updated by the GitHub action script: https://github.com/andry81-devops/gh-action--accum-content
+#
+
+content-index:
+
+  timestamp: ''
+
+  entries:
+
+    - dirs:
+"
+
+    for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' $content_config_file); do
+      # CAUTION:
+      #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
+      #
+      yq_is_null i && break
+
+      IFS=$'\n' read -r -d '' config_dir <<< \
+        $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir" $content_config_file) 2>/dev/null
+
+      # CAUTION:
+      #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
+      #
+      yq_fix_null \
+        config_dir
+
+      if [[ -n "$content_index_dir" ]]; then
+        config_index_dir="${content_index_dir//\\//}${config_dir:+/}${config_dir//\\//}"
+      else
+        config_index_dir="${config_dir//\\//}"
+      fi
+
+      echo \
+"        - dir: $config_index_dir
+"
+
+      for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" $content_config_file); do
+        # CAUTION:
+        #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
+        #
+        yq_is_null j && break
+
+        IFS=$'\n' read -r -d '' config_file <<< \
+          $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files[$j].file" $content_config_file) 2>/dev/null
+
+        # CAUTION:
+        #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
+        #
+        yq_fix_null \
+          config_file
+
+        if (( ! j )); then
+          echo \
+'          files:
+'
+        fi
+
+        echo \
+"            - file: $config_file
+              queried-url:
+              md5-hash:
+              timestamp: ''
+"
+      done
+    done
+  } > "$content_index_file"
+fi
+
+#echo $'---\n'"$(<"$content_index_file")"$'\n---'
 
 content_index_file_prev_md5_hash=( $(md5sum -b "$content_index_file") )
 
@@ -230,7 +311,11 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     echo "  file: \`$index_dir/$index_file\`"
     echo "  URL:  $config_query_url"
 
-    if eval curl $curl_flags -o "\$TEMP_DIR/content/\$index_dir/\$index_file" "\$config_query_url" 2> "$TEMP_DIR/curl_stderr/$index_dir/$index_file"; then
+    # CAUTION:
+    #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
+    #   This is required for uniform parse the curl output in both verbose or non verbose mode.
+    #
+    if eval curl $curl_flags -o "\$TEMP_DIR/content/\$index_dir/\$index_file" "\$config_query_url" 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
       (( stats_downloaded_inc++ ))
 
       echo '---'
