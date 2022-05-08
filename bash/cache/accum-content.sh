@@ -442,6 +442,6 @@ gh_set_env_var STATS_CHANGED_INC                  "$stats_changed_inc"
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
 gh_set_env_var COMMIT_MESSAGE_PREFIX              "$store_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "fl / sk ex / dl ch: $stats_failed_inc / $stats_skipped_inc $stats_expired_inc / $stats_downloaded_inc $stats_changed_inc"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$stats_failed_inc $stats_skipped_inc $stats_expired_inc $stats_downloaded_inc $stats_changed_inc < fl sk ex dl ch"
 
 tkl_set_return

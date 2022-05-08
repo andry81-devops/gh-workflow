@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.08:
+* changed: bash/github/accum-content.sh: changed the commit message to improve readability in case of GitHub commit message truncation
+
 ## 2022.05.07:
 * fixed: bash: board/accum-stats.sh, cache/accum-content.sh, inpage/accum-downloads.sh: curl progress obscure by stderr is workarounded by grep it into stdout
 * new: bash/github/accum-content.sh: generate `content-index.yml` from `content-config.yml` if does not exist
