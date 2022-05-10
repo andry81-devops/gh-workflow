@@ -41,7 +41,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 
-current_date_time_utc=$(date --utc +%FT%TZ)
+current_date_time_utc="$(date --utc +%FT%TZ)"
 
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
@@ -60,7 +60,7 @@ jq_fix_null \
   last_replies:0 \
   last_views:0
 
-TEMP_DIR=$(mktemp -d)
+TEMP_DIR="$(mktemp -d)"
 
 tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
 
@@ -95,8 +95,8 @@ if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
 fi
 
-replies=$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/response.txt")
-views=$(sed -rn "$views_sed_regexp" "$TEMP_DIR/response.txt")
+replies="$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/response.txt")"
+views="$(sed -rn "$views_sed_regexp" "$TEMP_DIR/response.txt")"
 
 # stats between previos/next script execution (dependent to the pipeline scheduler times)
 stats_prev_exec_replies_inc=0

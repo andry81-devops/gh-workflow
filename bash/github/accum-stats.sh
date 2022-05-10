@@ -26,7 +26,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
 
-current_date_time_utc=$(date --utc +%FT%TZ)
+current_date_time_utc="$(date --utc +%FT%TZ)"
 
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
