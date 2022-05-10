@@ -45,7 +45,7 @@ function yq_init()
 {
   which yq > /dev/null || return $?
 
-  local yq_help=$(yq --help)
+  local yq_help="$(yq --help)"
 
   # CAUTION:
   #   Array instead of string is required here for correct expansion!

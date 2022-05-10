@@ -45,7 +45,7 @@ if [[ -z "$content_index_dir" ]]; then
   fi
 fi
 
-current_date_time_utc=$(date --utc +%FT%TZ)
+current_date_time_utc="$(date --utc +%FT%TZ)"
 
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
@@ -54,7 +54,7 @@ gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date
 
 current_date_utc=${current_date_time_utc/%T*}
 
-current_date_utc_sec=$(date --utc -d "${current_date_utc}Z" +%s) # seconds from epoch to current date
+current_date_utc_sec="$(date --utc -d "${current_date_utc}Z" +%s)" # seconds from epoch to current date
 
 IFS=$'\n' read -r -d '' dirs_num <<< $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|length' $content_config_file)
 
@@ -160,7 +160,7 @@ fi
 
 content_index_file_prev_md5_hash=( $(md5sum -b "$content_index_file") )
 
-TEMP_DIR=$(mktemp -d)
+TEMP_DIR="$(mktemp -d)"
 
 tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
 
@@ -246,15 +246,15 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     index_file_expired_timestamp_delta=0
 
     if [[ -n "$index_file_prev_timestamp" ]]; then
-      current_date_time_utc_sec=$(date --utc -d "$current_date_time_utc" +%s)
+      current_date_time_utc_sec="$(date --utc -d "$current_date_time_utc" +%s)"
 
-      index_file_prev_timestamp_utc_sec=$(date --utc -d "$index_file_prev_timestamp" +%s)
+      index_file_prev_timestamp_utc_sec="$(date --utc -d "$index_file_prev_timestamp" +%s)"
 
       (( config_sched_next_update_timestamp_delta_sec = $(date --utc -d "$config_sched_next_update_timestamp_delta" +%s) - current_date_utc_sec ))
 
       (( index_file_next_update_timestamp_utc_sec = index_file_prev_timestamp_utc_sec + config_sched_next_update_timestamp_delta_sec ))
 
-      config_sched_next_update_timestamp_utc=$(date --utc -d "@$index_file_next_update_timestamp_utc_sec" +%FT%TZ)
+      config_sched_next_update_timestamp_utc="$(date --utc -d "@$index_file_next_update_timestamp_utc_sec" +%FT%TZ)"
 
       (( index_file_expired_sec = current_date_time_utc_sec - index_file_next_update_timestamp_utc_sec ))
 
@@ -280,7 +280,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
       # update existing file hash on skip
       if [[ -n "$index_file_next_md5_hash" && "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-        index_file_next_timestamp=$(date --utc +%FT%TZ)
+        index_file_next_timestamp="$(date --utc +%FT%TZ)"
 
         yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
@@ -354,7 +354,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       continue
     fi
 
-    index_file_next_timestamp=$(date --utc +%FT%TZ)
+    index_file_next_timestamp="$(date --utc +%FT%TZ)"
 
     index_file_next_md5_hash=( $(md5sum -b "$TEMP_DIR/content/$index_dir/$index_file") )
 
