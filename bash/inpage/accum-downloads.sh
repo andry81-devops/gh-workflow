@@ -18,11 +18,6 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
-[[ -z "$stat_entity_path" ]] && {
-  gh_print_error_ln "$0: error: \`stat_entity_path\` variable is not defined."
-  exit 255
-}
-
 [[ -z "$query_url" ]] && {
   gh_print_error_ln "$0: error: \`query_url\` variable is not defined."
   exit 255
@@ -132,7 +127,7 @@ fi
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
 
-if (( downloads != downloads_saved )); then
+if (( downloads != last_downloads )); then
   echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
@@ -144,20 +139,20 @@ if (( downloads != downloads_saved )); then
   echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
-  \"downloads\" : $downloads,
+  \"downloads\" : $downloads_saved,
   \"downloads_prev_day_inc\" : $stats_prev_day_downloads_inc
 }" > "$year_date_json"
 fi
 
 # continue if at least one is valid
 if (( downloads < last_downloads )); then
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: downloads is decremented for \`$stat_entity_path\`." "downloads is decremented for \`$stat_entity_path\`"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: downloads is decremented." "downloads is decremented"
 fi
 
 if (( last_downloads >= downloads )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$stat_entity_path\`, no new downloads." "nothing is changed for \`$stat_entity_path\`, no new downloads"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new downloads." "nothing is changed, no new downloads"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
@@ -184,7 +179,7 @@ gh_set_env_var STATS_PREV_DAY_DOWNLOADS_INC       "$stats_prev_day_downloads_inc
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "dl: +$stats_prev_day_downloads_inc"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "dl: +$stats_prev_exec_downloads_inc +$stats_prev_day_downloads_inc / $downloads_saved"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return

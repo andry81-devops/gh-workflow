@@ -17,9 +17,16 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
+[[ -z "$stat_entity" ]] && {
+  gh_print_error_ln "$0: error: \`stat_entity\` variable is not defined."
+  exit 255
+}
+
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
+
+[[ -z "$commit_msg_entity" ]] && commit_msg_entity="$stat_entity"
 
 current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -164,7 +171,7 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln \
-  "prev json diff: graphql // rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc / -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec // +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc / -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+  "prev json diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
@@ -220,7 +227,7 @@ gh_set_env_var STATS_PREV_EXEC_RATE_USED_DEC      "$stats_prev_exec_rate_used_de
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "gql / rt: used: +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_used_dec"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "gql / rt: used: +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_used_dec"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return

@@ -16,6 +16,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-yq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
+
 # slashes fix
 content_config_file="${content_config_file//\\//}"
 content_index_file="${content_index_file//\\//}"
@@ -197,7 +198,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
   fi
 
   if [[ "$config_index_dir" != "$index_dir" ]]; then
-    gh_print_warning_ln "$0: warning: invalid index file directory record: dirs[$i]:"$'\n'"  config_index_dir=\`$config_index_dir\`"$'\n'"  index_dir=\`$index_dir\`"
+    gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'"  config_index_dir=\`$config_index_dir\`"$'\n'"  index_dir=\`$index_dir\`"
     continue
   fi
 
@@ -225,12 +226,12 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       index_file_prev_timestamp
 
     if [[ "$config_file" != "$index_file" ]]; then
-      gh_print_warning_ln "$0: warning: invalid index file file record: dirs[$i].files[$j]:"$'\n'"  config_file=\`$config_file\`"$'\n'"  index_file=\`$index_file\`"
+      gh_print_warning_ln "$0: warning: invalid index file file entry: dirs[$i].files[$j]:"$'\n'"  config_file=\`$config_file\`"$'\n'"  index_file=\`$index_file\`"
       continue
     fi
 
     if [[ -z "$config_sched_next_update_timestamp_delta" ]]; then
-      gh_print_warning_ln "$0: warning: invalid index file file record: dirs[$i].files[$j]:"$'\n'"  config_sched_next_update_timestamp_delta=\`$config_sched_next_update_timestamp_delta\`"
+      gh_print_warning_ln "$0: warning: invalid index file file entry: dirs[$i].files[$j]:"$'\n'"  config_sched_next_update_timestamp_delta=\`$config_sched_next_update_timestamp_delta\`"
       continue
     fi
 
@@ -408,7 +409,7 @@ gh_print_notice_and_write_to_changelog_text_bullet_ln "failed / skipped expired 
 if (( ! stats_changed_inc )); then
   gh_enable_print_buffering
 
-  gh_print_warning_ln "$0: warning: nothing is changed for \`${content_index_dir:-.}\`, no new downloads."
+  gh_print_warning_ln "$0: warning: nothing is changed, no new downloads."
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 
@@ -441,7 +442,7 @@ gh_set_env_var STATS_CHANGED_INC                  "$stats_changed_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "$store_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$stats_failed_inc $stats_skipped_inc $stats_expired_inc $stats_downloaded_inc $stats_changed_inc < fl sk ex dl ch"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stats_failed_inc $stats_skipped_inc $stats_expired_inc $stats_downloaded_inc $stats_changed_inc < fl sk ex dl ch"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return

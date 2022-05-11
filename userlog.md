@@ -2,6 +2,23 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.11:
+* fixed: bash/inpage/accum-downloads.sh: save into `by_year` json file relative `downloads` counter instead of absolute
+* fixed: bash/boards/accum-stats.sh: save into `by_year` json file relative `downloads` counter instead of absolute
+* new: bash: added `commit_msg_entity` optional input parameter as replacement of `stat_entity` in the commit message
+* new: bash/github/accum-rate-limits.sh: added `stat_entity` required input parameter to select implementation
+* new: bash/github/accum-stats.sh: added `STATS_CURRENT_DATE_COUNT`, `STATS_CURRENT_DATE_UNIQUES`, `STATS_DATED_COUNT`, `STATS_DATED_UNIQUES`, `STATS_OUTDATED_COUNT`, `STATS_OUTDATED_UNIQUES` return variables
+* changed: bash/github/accum-stats.sh: removed `stats_list_key` input parameter, use `stat_entity` to select the implementation
+* changed: bash/board/accum-stats.sh: removed `board_name` input parameter
+* changed: bash/board/accum-stats.sh: changed the commit message, replaced previous day increment group by current date accumulated value
+* changed: bash/cache/accum-content.sh: removed `store_entity_path` input parameter
+* changed: bash/cache/accum-content.sh: changed the commit message, replaced previous day increment/decrement group by current date accumulated value
+* changed: bash/inpage/accum-downloads.sh: removed `stat_entity_path` input parameter
+* changed: bash/inpage/accum-downloads.sh: changed the commit message, replaced previous day increment group by current date accumulated value
+* changed: bash: swapped `COMMIT_MESSAGE_PREFIX` and `COMMIT_MESSAGE_SUFFIX` in all scripts to further improve readability in case of GitHub commit message truncation
+* changed: bash: added more accumulation details in the `COMMIT_MESSAGE_PREFIX` value
+* refactor: bash: renamed `stat_entity_path` to `stat_entity` in the rest scripts
+
 ## 2022.05.08:
 * changed: bash/github/accum-content.sh: changed the commit message to improve readability in case of GitHub commit message truncation
 
