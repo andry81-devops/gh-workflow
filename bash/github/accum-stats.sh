@@ -17,14 +17,18 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
-[[ -z "$stats_list_key" ]] && {
-  gh_print_error_ln "$0: error: \`stats_list_key\` variable must be defined."
+[[ -z "$stat_entity" ]] && {
+  gh_print_error_ln "$0: error: \`stat_entity\` variable is not defined."
   exit 255
 }
+
+stat_list_key="$stat_entity"
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
+
+[[ -z "$commit_msg_entity" ]] && commit_msg_entity="$stat_entity"
 
 current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -39,7 +43,7 @@ current_date_utc=${current_date_time_utc/%T*}
 #   Sometimes the json data file comes empty for some reason.
 #   We must check that special case to avoid invalid accumulation!
 #
-IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$stats_list_key|length" $stats_json)
+IFS=$'\n' read -r -d '' count uniques stats_length <<< $(jq ".count,.uniques,.$stat_list_key|length" $stats_json)
 
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -100,15 +104,15 @@ stats_unique_prev_seq=""
 stats_accum_count_max=()
 stats_accum_uniques_max=()
 
-for i in $(jq ".$stats_list_key|keys|.[]" $stats_accum_json); do
+for i in $(jq ".$stat_list_key|keys|.[]" $stats_accum_json); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_is_null i && break
 
   IFS=$'\n' read -r -d '' timestamp count uniques count_max uniques_max <<< \
-    "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques,
-        .$stats_list_key[$i].count_minmax[1],.$stats_list_key[$i].uniques_minmax[1]" $stats_accum_json)"
+    "$(jq -c -r ".$stat_list_key[$i].timestamp,.$stat_list_key[$i].count,.$stat_list_key[$i].uniques,
+        .$stat_list_key[$i].count_minmax[1],.$stat_list_key[$i].uniques_minmax[1]" $stats_accum_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -154,13 +158,13 @@ stats_count_max=()
 stats_uniques_min=()
 stats_uniques_max=()
 
-for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
+for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_is_null i && break
 
-  IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
+  IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stat_list_key[$i].timestamp,.$stat_list_key[$i].count,.$stat_list_key[$i].uniques" $stats_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -365,7 +369,7 @@ gh_print_notice_ln "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$sta
 gh_print_notice_ln "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 gh_write_notice_to_changelog_text_bullet_ln \
-  "prev json diff // prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec // +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+  "prev json diff / prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
 if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
       count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -387,7 +391,7 @@ fi
   \"uniques_outdated\" : $uniques_outdated_next,
   \"count\" : $count_next,
   \"uniques\" : $uniques_next,
-  \"$stats_list_key\" : ["
+  \"$stat_list_key\" : ["
 
   for (( i=0; i < ${#stats_timestamp[@]}; i++)); do
     (( i )) && echo -n ','
@@ -418,13 +422,13 @@ fi
 has_not_residual_changes=0
 has_residual_changes=0
 
-for i in $(jq ".$stats_list_key|keys|.[]" $stats_json); do
+for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_is_null i && break
 
-  IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stats_list_key[$i].timestamp,.$stats_list_key[$i].count,.$stats_list_key[$i].uniques" $stats_json)"
+  IFS=$'\n' read -r -d '' timestamp count uniques <<< "$(jq -c -r ".$stat_list_key[$i].timestamp,.$stat_list_key[$i].count,.$stat_list_key[$i].uniques" $stats_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -498,6 +502,18 @@ fi
 gh_set_env_var STATS_DATE_UTC                     "$current_date_utc"
 gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
+# counters of current date
+gh_set_env_var STATS_CURRENT_DATE_COUNT           "$count_saved"
+gh_set_env_var STATS_CURRENT_DATE_UNIQUES         "$uniques_saved"
+
+# counters of GitHub dated period (not greater than 14-days)
+gh_set_env_var STATS_DATED_COUNT                  "$count_next"
+gh_set_env_var STATS_DATED_UNIQUES                "$uniques_next"
+
+# counters of outdated records (greater than 14 days)
+gh_set_env_var STATS_OUTDATED_COUNT               "$count_outdated_next"
+gh_set_env_var STATS_OUTDATED_UNIQUES             "$uniques_outdated_next"
+
 gh_set_env_var STATS_PREV_EXEC_COUNT_INC          "$stats_prev_exec_count_inc"
 gh_set_env_var STATS_PREV_EXEC_UNIQUES_INC        "$stats_prev_exec_uniques_inc"
 gh_set_env_var STATS_PREV_EXEC_COUNT_DEC          "$stats_prev_exec_count_dec"
@@ -510,7 +526,7 @@ gh_set_env_var STATS_PREV_DAY_UNIQUES_DEC         "$stats_prev_day_uniques_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / $uniques_saved $count_saved"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return

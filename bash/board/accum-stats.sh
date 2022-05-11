@@ -18,11 +18,6 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
-[[ -z "$board_name" ]] && {
-  gh_print_error_ln "$0: error: \`board_name\` variable is not defined."
-  exit 255
-}
-
 [[ -z "$topic_query_url" ]] && {
   gh_print_error_ln "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
@@ -59,6 +54,10 @@ IFS=$'\n' read -r -d '' last_replies last_views <<< "$(jq -c -r ".replies,.views
 jq_fix_null \
   last_replies:0 \
   last_views:0
+
+# with check on integer value
+[[ -z "$last_replies" || -n "${last_replies//[0-9]/}" ]] && last_replies=0
+[[ -z "$last_views" || -n "${last_views//[0-9]/}" ]] && last_views=0
 
 TEMP_DIR="$(mktemp -d)"
 
@@ -114,8 +113,8 @@ gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -
 gh_print_notice_and_write_to_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
 # with check on integer value
-[[ -z "$replies" || -n "${replies//[0-9]/}" ]] && replies=0
-[[ -z "$views" || -n "${views//[0-9]/}" ]] && views=0
+[[ -z "$replies" || -n "${replies//[0-9]/}" ]] && replies=$last_replies
+[[ -z "$views" || -n "${views//[0-9]/}" ]] && views=$last_views
 
 # stats between last change in previous/next day (independent to the pipeline scheduler times)
 stats_prev_day_replies_inc=0
@@ -148,7 +147,7 @@ fi
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
 
-if (( replies != replies_saved || views != views_saved )); then
+if (( replies != last_replies || views != last_views )); then
   echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
@@ -161,22 +160,22 @@ if (( replies != replies_saved || views != views_saved )); then
   echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
-  \"replies\" : $replies,
+  \"replies\" : $replies_saved,
   \"replies_prev_day_inc\" : $stats_prev_day_replies_inc,
-  \"views\" : $views,
+  \"views\" : $views_saved,
   \"views_prev_day_inc\" : $stats_prev_day_views_inc
 }" > "$year_date_json"
 fi
 
 # continue if at least one is valid
 if (( replies < last_replies || views < last_views )); then
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: replies or views is decremented for \`$board_name\`." "replies or views is decremented for \`$board_name\`"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: replies or views is decremented." "replies or views is decremented"
 fi
 
 if (( last_replies >= replies && last_views >= views )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed for \`$board_name\`, no new board replies/views." "nothing is changed for \`$board_name\`, no new board replies/views"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new board replies/views." "nothing is changed, no new board replies/views"
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
@@ -205,7 +204,7 @@ gh_set_env_var STATS_PREV_DAY_VIEWS_INC           "$stats_prev_day_views_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "$stat_entity_path"
-gh_set_env_var COMMIT_MESSAGE_SUFFIX              "re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "re vi: +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc / $replies_saved $views_saved"
+gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return
