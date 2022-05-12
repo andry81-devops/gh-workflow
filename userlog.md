@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.12:
+* new: bash/cache/accum-content.sh: added check of `NO_SKIP_UNEXPIRED_ENTRIES` to avoid skip of not yet expired files and force to download them
+
 ## 2022.05.11:
 * fixed: bash/inpage/accum-downloads.sh: save into `by_year` json file relative `downloads` counter instead of absolute
 * fixed: bash/boards/accum-stats.sh: save into `by_year` json file relative `downloads` counter instead of absolute
