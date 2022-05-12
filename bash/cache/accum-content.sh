@@ -277,23 +277,27 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     fi
 
     if (( ! is_file_expired )); then
-      echo "File is skipped: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
+      if (( ! NO_SKIP_UNEXPIRED_ENTRIES )); then
+        echo "File is skipped: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
 
-      # update existing file hash on skip
-      if [[ -n "$index_file_next_md5_hash" && "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-        index_file_next_timestamp="$(date --utc +%FT%TZ)"
+        # update existing file hash on skip
+        if [[ -n "$index_file_next_md5_hash" && "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
+          index_file_next_timestamp="$(date --utc +%FT%TZ)"
 
-        yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
-          ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
-          yq_diff "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
-          yq_patch "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
+          yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
+            ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
+            yq_diff "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
+            yq_patch "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
 
-        echo '---'
+          echo '---'
+        fi
+
+        (( stats_skipped_inc++ ))
+
+        continue
+      else
+        echo "File is forced to download: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
       fi
-
-      (( stats_skipped_inc++ ))
-
-      continue
     else
       (( stats_expired_inc++ ))
 
