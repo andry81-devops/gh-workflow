@@ -158,6 +158,8 @@ stats_count_max=()
 stats_uniques_min=()
 stats_uniques_max=()
 
+stats_changed_data_timestamp=()
+
 for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -250,10 +252,12 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   (( stats_prev_exec_count_dec+=count_dec ))
   (( stats_prev_exec_uniques_dec+=uniques_dec ))
 
-  if (( count != count_saved || uniques != uniques_saved || \
+  if (( count_inc || uniques_inc || count_dec || uniques_dec || \
         count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
-  echo "\
+    stats_changed_data_timestamp[${#stats_changed_data_timestamp[@]}]="$timestamp"
+
+    echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"count\" : $count,
@@ -273,6 +277,9 @@ stats_prev_day_count_inc=0
 stats_prev_day_uniques_inc=0
 stats_prev_day_count_dec=0
 stats_prev_day_uniques_dec=0
+
+current_date_count=0
+current_date_uniques=0
 
 count_saved=0
 uniques_saved=0
@@ -303,6 +310,9 @@ if [[ -f "$year_date_json" ]]; then
     uniques_prev_day_inc_saved:0 uniques_prev_day_dec_saved:0 \
     count_min_saved:$count_saved count_max_saved:$count_saved \
     uniques_min_saved:$uniques_saved uniques_max_saved:$uniques_saved
+
+  current_date_count=$count_saved
+  current_date_uniques=$uniques_saved
 fi
 
 (( stats_prev_day_count_inc+=count_prev_day_inc_saved+stats_prev_exec_count_inc ))
@@ -370,6 +380,8 @@ gh_print_notice_ln "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats
 
 gh_write_notice_to_changelog_text_bullet_ln \
   "prev json diff / prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+
+gh_print_notice_and_write_to_changelog_text_bullet_ln "changed dates: [${stats_changed_data_timestamp[@]%T*}]"
 
 if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
       count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -503,8 +515,8 @@ gh_set_env_var STATS_DATE_UTC                     "$current_date_utc"
 gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
 # counters of current date
-gh_set_env_var STATS_CURRENT_DATE_COUNT           "$count_saved"
-gh_set_env_var STATS_CURRENT_DATE_UNIQUES         "$uniques_saved"
+gh_set_env_var STATS_CURRENT_DATE_COUNT           "$current_date_count"
+gh_set_env_var STATS_CURRENT_DATE_UNIQUES         "$current_date_uniques"
 
 # counters of GitHub dated period (not greater than 14-days)
 gh_set_env_var STATS_DATED_COUNT                  "$count_next"
@@ -526,7 +538,7 @@ gh_set_env_var STATS_PREV_DAY_UNIQUES_DEC         "$stats_prev_day_uniques_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / $uniques_saved $count_saved"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / $current_date_uniques $current_date_count"
 gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return
