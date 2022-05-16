@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.16:
+* fixed: bash/github/accum-stats.sh: minor changelog output fix
+
 ## 2022.05.13:
 * fixed: bash/github/accum-stats.sh: current date count/uniques print into changelog file
 * new: bash/github/accum-stats.sh: save changed dates list into changelog file

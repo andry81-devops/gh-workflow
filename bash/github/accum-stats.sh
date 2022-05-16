@@ -88,8 +88,8 @@ gh_print_notice_and_write_to_changelog_text_bullet_ln "prev accum: outdated-all 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 }
 
-stats_accum_timestamp=()
-stats_accum_count=()
+stats_accum_timestamps=()
+stats_accum_counts=()
 stats_accum_uniques=()
 
 stats_timestamp_prev_seq=""
@@ -121,8 +121,8 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_accum_json); do
     count:0 \
     uniques:0
 
-  stats_accum_timestamp[${#stats_accum_timestamp[@]}]="$timestamp"
-  stats_accum_count[${#stats_accum_count[@]}]=$count
+  stats_accum_timestamps[${#stats_accum_timestamps[@]}]="$timestamp"
+  stats_accum_counts[${#stats_accum_counts[@]}]=$count
   stats_accum_uniques[${#stats_accum_uniques[@]}]=$uniques
 
   jq_fix_null \
@@ -145,8 +145,8 @@ stats_prev_exec_uniques_dec=0
 
 first_stats_timestamp=""
 
-stats_timestamp=()
-stats_count=()
+stats_timestamps=()
+stats_counts=()
 stats_uniques=()
 
 stats_timestamp_next_seq=""
@@ -158,7 +158,7 @@ stats_count_max=()
 stats_uniques_min=()
 stats_uniques_max=()
 
-stats_changed_data_timestamp=()
+stats_changed_data_timestamps=()
 
 for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   # CAUTION:
@@ -177,8 +177,8 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
 
   (( ! i )) && first_stats_timestamp="$timestamp"
 
-  stats_timestamp[${#stats_timestamp[@]}]="$timestamp"
-  stats_count[${#stats_count[@]}]=$count
+  stats_timestamps[${#stats_timestamps[@]}]="$timestamp"
+  stats_counts[${#stats_counts[@]}]=$count
   stats_uniques[${#stats_uniques[@]}]=$uniques
 
   stats_timestamp_next_seq="$stats_timestamp_next_seq|$timestamp"
@@ -255,7 +255,7 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   if (( count_inc || uniques_inc || count_dec || uniques_dec || \
         count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
-    stats_changed_data_timestamp[${#stats_changed_data_timestamp[@]}]="$timestamp"
+    stats_changed_data_timestamps[${#stats_changed_data_timestamps[@]}]="$timestamp"
 
     echo "\
 {
@@ -348,10 +348,10 @@ count_outdated_next=$count_outdated_prev
 uniques_outdated_next=$uniques_outdated_prev
 
 j=0
-for (( i=0; i < ${#stats_accum_timestamp[@]}; i++)); do
-  if [[ -z "$first_stats_timestamp" || "${stats_accum_timestamp[i]}" < "$first_stats_timestamp" ]]; then
+for (( i=0; i < ${#stats_accum_timestamps[@]}; i++ )); do
+  if [[ -z "$first_stats_timestamp" || "${stats_accum_timestamps[i]}" < "$first_stats_timestamp" ]]; then
     if (( j )); then
-      (( count_outdated_next += ${stats_accum_count[i]} ))
+      (( count_outdated_next += ${stats_accum_counts[i]} ))
       (( uniques_outdated_next += ${stats_accum_uniques[i]} ))
     else
       (( count_outdated_next += ${stats_accum_count_max[i]} ))
@@ -364,8 +364,8 @@ done
 count_next=0
 uniques_next=0
 
-for (( i=0; i < ${#stats_timestamp[@]}; i++)); do
-  (( count_next += ${stats_count[i]} ))
+for (( i=0; i < ${#stats_timestamps[@]}; i++ )); do
+  (( count_next += ${stats_counts[i]} ))
   (( uniques_next += ${stats_uniques[i]} ))
 done
 
@@ -381,7 +381,14 @@ gh_print_notice_ln "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats
 gh_write_notice_to_changelog_text_bullet_ln \
   "prev json diff / prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "changed dates: [${stats_changed_data_timestamp[@]%T*}]"
+stats_changed_dates=()
+
+for (( i=0; i < ${#stats_changed_data_timestamps[@]}; i++ )); do
+  stats_changed_data_timestamp_str="${stats_changed_data_timestamps[i]}"
+  stats_changed_dates[i]="${stats_changed_data_timestamp_str/%T*}"
+done
+
+gh_print_notice_and_write_to_changelog_text_bullet_ln "changed dates: [${stats_changed_dates[*]}]"
 
 if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
       count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -405,14 +412,14 @@ fi
   \"uniques\" : $uniques_next,
   \"$stat_list_key\" : ["
 
-  for (( i=0; i < ${#stats_timestamp[@]}; i++)); do
+  for (( i=0; i < ${#stats_timestamps[@]}; i++ )); do
     (( i )) && echo -n ','
     echo ''
 
     echo -n "\
     {
-      \"timestamp\": \"${stats_timestamp[i]}\",
-      \"count\": ${stats_count[i]},
+      \"timestamp\": \"${stats_timestamps[i]}\",
+      \"count\": ${stats_counts[i]},
       \"count_minmax\": [ ${stats_count_min[i]}, ${stats_count_max[i]} ],
       \"uniques\": ${stats_uniques[i]},
       \"uniques_minmax\": [ ${stats_uniques_min[i]}, ${stats_uniques_max[i]} ]
