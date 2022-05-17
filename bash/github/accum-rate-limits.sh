@@ -124,8 +124,8 @@ gh_print_notice_ln "next: graphql / rate: limit used: $graphql_limit $graphql_us
 gh_write_notice_to_changelog_text_bullet_ln \
   "prev // next: graphql / rate: limit used: $stats_prev_exec_graphql_limit $stats_prev_exec_graphql_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used // $graphql_limit $graphql_used / $rate_limit $rate_used"
 
-timestamp_date_utc=$current_date_utc
-timestamp_year_utc=${current_date_utc/%-*}
+timestamp_date_utc="$current_date_utc"
+timestamp_year_utc="${current_date_utc/%-*}"
 timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
@@ -171,7 +171,7 @@ stats_prev_exec_rate_used_dec=0
 (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln \
-  "prev json diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
+  "prev exec diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
 if (( resources_length != 8 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \

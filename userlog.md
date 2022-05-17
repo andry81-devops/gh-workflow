@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.17:
+* new: bash/github/accum-stats.sh: added `STATS_CURRENT_DATE_*_INC` and `STATS_CURRENT_DATE_*_DEC` return variables
+* changed: bash/github/accum-stats.sh: removed previous days increment/decrement counters and replaced by increment/decrement counters in a last date, removed `STATS_PREV_DAY_*` return variables
+
 ## 2022.05.16:
 * fixed: bash/github/accum-stats.sh: minor changelog output fix
 

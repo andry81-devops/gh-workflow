@@ -160,6 +160,11 @@ stats_uniques_max=()
 
 stats_changed_data_timestamps=()
 
+last_date_count_dec=0
+last_date_count_inc=0
+last_date_uniques_dec=0
+last_date_uniques_inc=0
+
 for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -205,29 +210,33 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
 
   count_saved=0
   uniques_saved=0
-  count_prev_day_inc_saved=0
-  count_prev_day_dec_saved=0
-  uniques_prev_day_inc_saved=0
-  uniques_prev_day_dec_saved=0
+
   count_min_saved=0
   count_max_saved=0
   uniques_min_saved=0
   uniques_max_saved=0
 
+  count_dec_saved=0
+  count_inc_saved=0
+  uniques_dec_saved=0
+  uniques_inc_saved=0
+
   # calculate min/max
   if [[ -f "$year_date_json" ]]; then
-    IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
-      "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+    IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved \
+      count_dec_saved count_inc_saved uniques_dec_saved uniques_inc_saved <<< \
+      "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1],.count_decinc[0],.count_decinc[1],.uniques_decinc[0],.uniques_decinc[1]" \
+         $year_date_json)"
 
     # CAUTION:
     #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
     #
     jq_fix_null \
       count_saved:0 uniques_saved:0 \
-      count_prev_day_inc_saved:0 count_prev_day_dec_saved:0 \
-      uniques_prev_day_inc_saved:0 uniques_prev_day_dec_saved:0 \
       count_min_saved:$count_saved count_max_saved:$count_saved \
-      uniques_min_saved:$uniques_saved uniques_max_saved:$uniques_saved
+      uniques_min_saved:$uniques_saved uniques_max_saved:$uniques_saved \
+      count_dec_saved:0 count_inc_saved:0 \
+      uniques_dec_saved:0 uniques_inc_saved:0
 
     (( count_max_saved > count_max )) && count_max=$count_max_saved
     (( count_min_saved < count_min )) && count_min=$count_min_saved
@@ -247,100 +256,80 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   (( uniques < uniques_saved )) && (( uniques_dec=uniques_saved-uniques ))
 
   (( stats_prev_exec_count_inc+=count_inc ))
-  (( stats_prev_exec_uniques_inc+=uniques_inc ))
-
   (( stats_prev_exec_count_dec+=count_dec ))
+
+  (( stats_prev_exec_uniques_inc+=uniques_inc ))
   (( stats_prev_exec_uniques_dec+=uniques_dec ))
+
+  # accumulate saved increment/decrement in a day
+  (( count_inc+=count_inc_saved ))
+  (( count_dec+=count_dec_saved ))
+  (( uniques_inc+=uniques_inc_saved ))
+  (( uniques_dec+=uniques_dec_saved ))
 
   if (( count_inc || uniques_inc || count_dec || uniques_dec || \
         count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
     stats_changed_data_timestamps[${#stats_changed_data_timestamps[@]}]="$timestamp"
 
+    last_date_count_inc=$count_inc
+    last_date_count_dec=$count_dec
+    last_date_uniques_inc=$uniques_inc
+    last_date_uniques_dec=$uniques_dec
+
     echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"count\" : $count,
   \"count_minmax\" : [ $count_min, $count_max ],
-  \"count_prev_day_inc\" : $count_prev_day_inc_saved,
-  \"count_prev_day_dec\" : $count_prev_day_dec_saved,
+  \"count_decinc\" : [ -$count_dec, +$count_inc ],
   \"uniques\" : $uniques,
   \"uniques_minmax\" : [ $uniques_min, $uniques_max ],
-  \"uniques_prev_day_inc\" : $uniques_prev_day_inc_saved,
-  \"uniques_prev_day_dec\" : $uniques_prev_day_dec_saved
+  \"uniques_decinc\" : [ -$uniques_dec, +$uniques_inc ]
 }" > "$year_date_json"
   fi
 done
 
 # stats between last change in previous/next day (independent to the pipeline scheduler times)
-stats_prev_day_count_inc=0
-stats_prev_day_uniques_inc=0
-stats_prev_day_count_dec=0
-stats_prev_day_uniques_dec=0
-
 current_date_count=0
 current_date_uniques=0
 
 count_saved=0
 uniques_saved=0
-count_prev_day_inc_saved=0
-count_prev_day_dec_saved=0
-uniques_prev_day_inc_saved=0
-uniques_prev_day_dec_saved=0
+
 count_min_saved=0
 count_max_saved=0
 uniques_min_saved=0
 uniques_max_saved=0
 
-timestamp_date_utc=$current_date_utc
-timestamp_year_utc=${current_date_utc/%-*}
+stats_curr_date_count_inc=0
+stats_curr_date_count_dec=0
+stats_curr_date_uniques_inc=0
+stats_curr_date_uniques_dec=0
+
+timestamp_date_utc="$current_date_utc"
+timestamp_year_utc="${current_date_utc/%-*}"
 timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' count_saved uniques_saved count_prev_day_inc_saved count_prev_day_dec_saved uniques_prev_day_inc_saved uniques_prev_day_dec_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved <<< \
-    "$(jq -c -r ".count,.uniques,.count_prev_day_inc,.count_prev_day_dec,.uniques_prev_day_inc,.uniques_prev_day_dec,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1]" $year_date_json)"
+  IFS=$'\n' read -r -d '' count_saved uniques_saved count_min_saved count_max_saved uniques_min_saved uniques_max_saved \
+    stats_curr_date_count_dec stats_curr_date_count_inc stats_curr_date_uniques_dec stats_curr_date_uniques_inc <<< \
+    "$(jq -c -r ".count,.uniques,.count_minmax[0],.count_minmax[1],.uniques_minmax[0],.uniques_minmax[1],.count_decinc[0],.count_decinc[1],.uniques_decinc[0],.uniques_decinc[1]" \
+       $year_date_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_fix_null \
     count_saved:0 uniques_saved:0 \
-    count_prev_day_inc_saved:0 count_prev_day_dec_saved:0 \
-    uniques_prev_day_inc_saved:0 uniques_prev_day_dec_saved:0 \
     count_min_saved:$count_saved count_max_saved:$count_saved \
-    uniques_min_saved:$uniques_saved uniques_max_saved:$uniques_saved
+    uniques_min_saved:$uniques_saved uniques_max_saved:$uniques_saved \
+    stats_curr_date_count_dec:0 stats_curr_date_count_inc:0 \
+    stats_curr_date_uniques_dec:0 stats_curr_date_uniques_inc:0
 
   current_date_count=$count_saved
   current_date_uniques=$uniques_saved
-fi
-
-(( stats_prev_day_count_inc+=count_prev_day_inc_saved+stats_prev_exec_count_inc ))
-(( stats_prev_day_uniques_inc+=uniques_prev_day_inc_saved+stats_prev_exec_uniques_inc ))
-
-(( stats_prev_day_count_dec+=count_prev_day_dec_saved+stats_prev_exec_count_dec ))
-(( stats_prev_day_uniques_dec+=uniques_prev_day_dec_saved+stats_prev_exec_uniques_dec ))
-
-# CAUTION:
-#   The changes over the current day can unexist, but nonetheless they can exist for all previous days
-#   because upstream may update any of previous day at the current day, so we must detect changes irrespective
-#   to previously saved values.
-#
-if (( stats_prev_exec_count_inc || stats_prev_exec_uniques_inc || stats_prev_exec_count_dec || stats_prev_exec_uniques_dec )); then
-  [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
-
-  echo "\
-{
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"count\" : $count_saved,
-  \"count_minmax\" : [ $count_min_saved, $count_max_saved ],
-  \"count_prev_day_inc\" : $stats_prev_day_count_inc,
-  \"count_prev_day_dec\" : $stats_prev_day_count_dec,
-  \"uniques\" : $uniques_saved,
-  \"uniques_minmax\" : [ $uniques_min_saved, $uniques_max_saved ],
-  \"uniques_prev_day_inc\" : $stats_prev_day_uniques_inc,
-  \"uniques_prev_day_dec\" : $stats_prev_day_uniques_dec
-}" > "$year_date_json"
 fi
 
 # accumulate statistic
@@ -374,12 +363,12 @@ done
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
 
-gh_print_notice_ln "prev json diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
+gh_print_notice_ln "prev exec diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc / -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
 
-gh_print_notice_ln "prev day diff: unq all: +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc / -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+gh_print_notice_ln "last date diff: unq all: +$last_date_uniques_inc +$last_date_count_inc / -$last_date_uniques_dec -$last_date_count_dec"
 
 gh_write_notice_to_changelog_text_bullet_ln \
-  "prev json diff / prev day diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_prev_day_uniques_inc +$stats_prev_day_count_inc -$stats_prev_day_uniques_dec -$stats_prev_day_count_dec"
+  "prev exec diff / last date diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$last_date_uniques_inc +$last_date_count_inc -$last_date_uniques_dec -$last_date_count_dec"
 
 stats_changed_dates=()
 
@@ -456,7 +445,7 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
     count:0 \
     uniques:0
 
-  timestamp_date_utc=${timestamp/%T*}
+  timestamp_date_utc="${timestamp/%T*}"
 
   # changes at current day is always not residual
   if [[ "$timestamp_date_utc" == "$current_date_utc" ]]; then
@@ -525,6 +514,11 @@ gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 gh_set_env_var STATS_CURRENT_DATE_COUNT           "$current_date_count"
 gh_set_env_var STATS_CURRENT_DATE_UNIQUES         "$current_date_uniques"
 
+gh_set_env_var STATS_CURRENT_DATE_COUNT_INC       "$stats_curr_date_count_inc"
+gh_set_env_var STATS_CURRENT_DATE_UNIQUES_INC     "$stats_curr_date_uniques_inc"
+gh_set_env_var STATS_CURRENT_DATE_COUNT_DEC       "$stats_curr_date_count_dec"
+gh_set_env_var STATS_CURRENT_DATE_UNIQUES_DEC     "$stats_curr_date_uniques_dec"
+
 # counters of GitHub dated period (not greater than 14-days)
 gh_set_env_var STATS_DATED_COUNT                  "$count_next"
 gh_set_env_var STATS_DATED_UNIQUES                "$uniques_next"
@@ -537,11 +531,6 @@ gh_set_env_var STATS_PREV_EXEC_COUNT_INC          "$stats_prev_exec_count_inc"
 gh_set_env_var STATS_PREV_EXEC_UNIQUES_INC        "$stats_prev_exec_uniques_inc"
 gh_set_env_var STATS_PREV_EXEC_COUNT_DEC          "$stats_prev_exec_count_dec"
 gh_set_env_var STATS_PREV_EXEC_UNIQUES_DEC        "$stats_prev_exec_uniques_dec"
-
-gh_set_env_var STATS_PREV_DAY_COUNT_INC           "$stats_prev_day_count_inc"
-gh_set_env_var STATS_PREV_DAY_UNIQUES_INC         "$stats_prev_day_uniques_inc"
-gh_set_env_var STATS_PREV_DAY_COUNT_DEC           "$stats_prev_day_count_dec"
-gh_set_env_var STATS_PREV_DAY_UNIQUES_DEC         "$stats_prev_day_uniques_dec"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
