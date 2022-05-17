@@ -1,3 +1,8 @@
+2022.05.17:
+* new: bash/github/accum-stats.sh: added `STATS_CURRENT_DATE_*_INC` and `STATS_CURRENT_DATE_*_DEC` return variables
+* changed: bash/github/accum-stats.sh: removed previous days increment/decrement counters and replaced by increment/decrement counters in a last date, removed `STATS_PREV_DAY_*` return variables
+* refactor: bash/github/accum-rate-limits.sh: minor refactor
+
 2022.05.16:
 * fixed: bash/github/accum-stats.sh: minor changelog output fix
 * refactor: bash/github/accum-stats.sh: minor code refactor
