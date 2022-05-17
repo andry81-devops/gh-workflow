@@ -190,7 +190,7 @@ fi
 
 # CAUTION:
 #   We must explicitly state the statistic calculation time in the script, because
-#   the time taken from a script and the time set to commit changes ARE DIFFERENT
+#   the time taken from the input and the time set to commit changes ARE DIFFERENT
 #   and may be shifted to the next day.
 #
 gh_set_env_var STATS_DATE_UTC                     "$current_date_utc"

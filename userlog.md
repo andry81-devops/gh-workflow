@@ -3,6 +3,12 @@
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
 ## 2022.05.17:
+* fixed: bash/github/accum-stats.sh: count/uniques minimum update fix
+* new: bash/github/accum-stats.sh: added `STATS_CHANGED_DATES` return variable to indicate the list of changed dates at the current date
+* changed: bash/github/accum-stats.sh: `STATS_CURRENT_DATE_*` return variables replaced by `STATS_LAST_CHANGED_DATE_*` return variable because last changed date and current date are different dates and the last changed date taken into account at the current date
+* changed: bash/github/accum-stats.sh: commit message is changed to indicate accumulation for the last changed date only instead of accumulation for all changed dates because the commit message will be placed for all files including `by_year/YYYY/YYYY-MM-DD.json` files
+
+## 2022.05.17:
 * new: bash/github/accum-stats.sh: added `STATS_CURRENT_DATE_*_INC` and `STATS_CURRENT_DATE_*_DEC` return variables
 * changed: bash/github/accum-stats.sh: removed previous days increment/decrement counters and replaced by increment/decrement counters in a last date, removed `STATS_PREV_DAY_*` return variables
 
