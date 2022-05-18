@@ -38,7 +38,7 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
-current_date_utc=${current_date_time_utc/%T*}
+current_date_utc="${current_date_time_utc/%T*}"
 
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_downloads <<< "$(jq -c -r ".downloads" $stats_json)"
@@ -90,42 +90,40 @@ downloads="$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")"
 stats_prev_exec_downloads_inc=0
 
 if [[ -n "$downloads" ]]; then
-  (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc=downloads-last_downloads ))
+  (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc = downloads - last_downloads ))
 fi
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "json prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 
 # with check on integer value
 [[ -z "$downloads" || -n "${downloads//[0-9]/}" ]] && downloads=0
 
-# stats between last change in previous/next day (independent to the pipeline scheduler times)
-stats_prev_day_downloads_inc=0
+# stats between last date and previous date (independent to the pipeline scheduler times)
+stats_last_changed_date_downloads_inc=0
 
 downloads_saved=0
-downloads_prev_day_inc_saved=0
 
-timestamp_date_utc=${current_date_time_utc/%T*}
-timestamp_year_utc=${timestamp_date_utc/%-*}
+timestamp_date_utc="${current_date_time_utc/%T*}"
+timestamp_year_utc="${timestamp_date_utc/%-*}"
 timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' downloads_saved downloads_prev_day_inc_saved <<< \
-    "$(jq -c -r ".downloads,.downloads_prev_day_inc" $year_date_json)"
+  IFS=$'\n' read -r -d '' downloads_saved <<< \
+    "$(jq -c -r ".downloads" $year_date_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_fix_null \
-    downloads_saved:0 \
-    downloads_prev_day_inc_saved:0
+    downloads_saved:0
 fi
 
-(( stats_prev_day_downloads_inc+=downloads_prev_day_inc_saved+stats_prev_exec_downloads_inc ))
+(( downloads_saved += stats_prev_exec_downloads_inc ))
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: dl: +$stats_prev_day_downloads_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "prev exec diff: dl: +$stats_prev_exec_downloads_inc"
 
 if (( downloads != last_downloads )); then
   echo "\
@@ -139,8 +137,7 @@ if (( downloads != last_downloads )); then
   echo "\
 {
   \"timestamp\" : \"$current_date_time_utc\",
-  \"downloads\" : $downloads_saved,
-  \"downloads_prev_day_inc\" : $stats_prev_day_downloads_inc
+  \"downloads\" : $downloads_saved
 }" > "$year_date_json"
 fi
 
@@ -175,11 +172,9 @@ gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
 gh_set_env_var STATS_PREV_EXEC_DOWNLOADS_INC      "$stats_prev_exec_downloads_inc"
 
-gh_set_env_var STATS_PREV_DAY_DOWNLOADS_INC       "$stats_prev_day_downloads_inc"
-
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
-gh_set_env_var COMMIT_MESSAGE_PREFIX              "dl: +$stats_prev_exec_downloads_inc +$stats_prev_day_downloads_inc / $downloads_saved"
+gh_set_env_var COMMIT_MESSAGE_PREFIX              "dl: +$stats_prev_exec_downloads_inc / $downloads_saved"
 gh_set_env_var COMMIT_MESSAGE_SUFFIX              "$commit_msg_entity"
 
 tkl_set_return

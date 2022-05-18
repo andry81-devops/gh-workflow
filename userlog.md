@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.19:
+* fixed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: incorrect save into `by_year` json file relative `downloads` counter
+* changed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: removed previous days increment/decrement counters, removed `STATS_PREV_DAY_*` return variables
+
 ## 2022.05.18:
 * fixed: bash/github/accum-stats.sh: `by_year` file rewrite on empty changes
 * changed: bash/github/accum-stats.sh: made `uniques` counter goes first in all messages

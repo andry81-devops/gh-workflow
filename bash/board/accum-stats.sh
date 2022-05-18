@@ -43,7 +43,7 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
-current_date_utc=${current_date_time_utc/%T*}
+current_date_utc="${current_date_time_utc/%T*}"
 
 # exit with non 0 code if nothing is changed
 IFS=$'\n' read -r -d '' last_replies last_views <<< "$(jq -c -r ".replies,.views" $stats_json)"
@@ -102,50 +102,42 @@ stats_prev_exec_replies_inc=0
 stats_prev_exec_views_inc=0
 
 if [[ -n "$replies" ]]; then
-  (( last_replies < replies )) && (( stats_prev_exec_replies_inc=replies-last_replies ))
+  (( last_replies < replies )) && (( stats_prev_exec_replies_inc = replies - last_replies ))
 fi
 if [[ -n "$views" ]]; then
-  (( last_views < views )) && (( stats_prev_exec_views_inc=views-last_views ))
+  (( last_views < views )) && (( stats_prev_exec_views_inc = views - last_views ))
 fi
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "json prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
 # with check on integer value
 [[ -z "$replies" || -n "${replies//[0-9]/}" ]] && replies=$last_replies
 [[ -z "$views" || -n "${views//[0-9]/}" ]] && views=$last_views
 
-# stats between last change in previous/next day (independent to the pipeline scheduler times)
-stats_prev_day_replies_inc=0
-stats_prev_day_views_inc=0
-
+# stats between last date and previous date (independent to the pipeline scheduler times)
 replies_saved=0
 views_saved=0
-replies_prev_day_inc_saved=0
-views_prev_day_inc_saved=0
 
-timestamp_date_utc=${current_date_time_utc/%T*}
-timestamp_year_utc=${timestamp_date_utc/%-*}
+timestamp_date_utc="${current_date_time_utc/%T*}"
+timestamp_year_utc="${timestamp_date_utc/%-*}"
 timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
 year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
 if [[ -f "$year_date_json" ]]; then
-  IFS=$'\n' read -r -d '' replies_saved views_saved replies_prev_day_inc_saved views_prev_day_inc_saved <<< \
-    "$(jq -c -r ".replies,.views,.replies_prev_day_inc,.views_prev_day_inc" $year_date_json)"
+  IFS=$'\n' read -r -d '' replies_saved views_saved <<< \
+    "$(jq -c -r ".replies,.views" $year_date_json)"
 
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
   #
   jq_fix_null \
-    replies_saved:0 views_saved:0 \
-    replies_prev_day_inc_saved:0 views_prev_day_inc_saved:0
+    replies_saved:0 views_saved:0
 fi
 
-(( stats_prev_day_replies_inc+=replies_prev_day_inc_saved+stats_prev_exec_replies_inc ))
-(( stats_prev_day_views_inc+=views_prev_day_inc_saved+stats_prev_exec_views_inc ))
-
-gh_print_notice_and_write_to_changelog_text_bullet_ln "prev day diff: re vi: +$stats_prev_day_replies_inc +$stats_prev_day_views_inc"
+(( replies_saved += stats_prev_exec_replies_inc ))
+(( views_saved += stats_prev_exec_views_inc ))
 
 if (( replies != last_replies || views != last_views )); then
   echo "\
@@ -161,9 +153,7 @@ if (( replies != last_replies || views != last_views )); then
 {
   \"timestamp\" : \"$current_date_time_utc\",
   \"replies\" : $replies_saved,
-  \"replies_prev_day_inc\" : $stats_prev_day_replies_inc,
-  \"views\" : $views_saved,
-  \"views_prev_day_inc\" : $stats_prev_day_views_inc
+  \"views\" : $views_saved
 }" > "$year_date_json"
 fi
 
@@ -198,9 +188,6 @@ gh_set_env_var STATS_DATE_TIME_UTC                "$current_date_time_utc"
 
 gh_set_env_var STATS_PREV_EXEC_REPLIES_INC        "$stats_prev_exec_replies_inc"
 gh_set_env_var STATS_PREV_EXEC_VIEWS_INC          "$stats_prev_exec_views_inc"
-
-gh_set_env_var STATS_PREV_DAY_REPLIES_INC         "$stats_prev_day_replies_inc"
-gh_set_env_var STATS_PREV_DAY_VIEWS_INC           "$stats_prev_day_views_inc"
 
 gh_set_env_var COMMIT_MESSAGE_DATE_TIME_PREFIX    "$commit_message_date_time_prefix"
 
