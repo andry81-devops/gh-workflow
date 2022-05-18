@@ -53,7 +53,7 @@ jq_fix_null \
   uniques:0 \
   stats_length:0
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "last 14d: all unq: $count $uniques"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "last 14d: unq all: $uniques $count"
 
 IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
@@ -66,7 +66,7 @@ jq_fix_null \
   count_prev:0 \
   uniques_prev:0
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "prev accum: outdated-all outdated-unq / all unq: $count_outdated_prev $uniques_outdated_prev / $count_prev $uniques_prev"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "prev accum: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
 
 (( ! count && ! uniques && ! stats_length )) && {
   gh_enable_print_buffering
@@ -289,7 +289,7 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   (( uniques_inc += uniques_inc_saved ))
   (( uniques_dec += uniques_dec_saved ))
 
-  if (( count_inc || uniques_inc || count_dec || uniques_dec || \
+  if (( count != count_saved || uniques != uniques_saved || \
         count_min != count_min_saved || count_max != count_max_saved || \
         uniques_min != uniques_min_saved || uniques_max != uniques_max_saved )); then
     stats_changed_data_timestamps[${#stats_changed_data_timestamps[@]}]="$timestamp"
@@ -344,7 +344,7 @@ done
 (( count_next += count_outdated_next ))
 (( uniques_next += uniques_outdated_next ))
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-all outdated-unq / all unq: $count_outdated_next $uniques_outdated_next / $count_next $uniques_next"
+gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-unq outdated-all / unq all: $uniques_outdated_next $count_outdated_next / $uniques_next $count_next"
 
 gh_print_notice_ln "prev exec diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
 
