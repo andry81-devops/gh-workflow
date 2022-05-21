@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.21:
+* fixed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: accidental exit with 0 on curl error
+
 ## 2022.05.19:
 * fixed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: incorrect save into `by_year` json file relative `downloads` counter
 * changed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: removed previous days increment/decrement counters, removed `STATS_PREV_DAY_*` return variables

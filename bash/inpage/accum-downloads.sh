@@ -69,7 +69,7 @@ else
 
   gh_enable_print_buffering
 
-  (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 fi
 
 # check on empty
@@ -81,7 +81,7 @@ if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
 
   gh_enable_print_buffering
 
-  (( ! CONTINUE_ON_INVALID_INPUT )) && exit $?
+  (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 fi
 
 downloads="$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")"
