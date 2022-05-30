@@ -53,7 +53,7 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
-current_date_utc=${current_date_time_utc/%T*}
+current_date_utc="${current_date_time_utc/%T*}"
 
 current_date_utc_sec="$(date --utc -d "${current_date_utc}Z" +%s)" # seconds from epoch to current date
 

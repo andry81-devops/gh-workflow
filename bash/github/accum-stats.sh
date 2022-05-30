@@ -37,7 +37,7 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
-current_date_utc=${current_date_time_utc/%T*}
+current_date_utc="${current_date_time_utc/%T*}"
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
@@ -193,8 +193,8 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   stats_count_next_seq="$stats_count_next_seq|$count"
   stats_uniques_next_seq="$stats_uniques_next_seq|$uniques"
 
-  timestamp_date_utc=${timestamp/%T*}
-  timestamp_year_utc=${timestamp_date_utc/%-*}
+  timestamp_date_utc="${timestamp/%T*}"
+  timestamp_year_utc="${timestamp_date_utc/%-*}"
 
   timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
   year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
@@ -319,9 +319,15 @@ done
 count_outdated_next=$count_outdated_prev
 uniques_outdated_next=$uniques_outdated_prev
 
+stats_removed_dates=()
+
 j=0
 for (( i=0; i < ${#stats_accum_timestamps[@]}; i++ )); do
   if [[ -z "$first_stats_timestamp" || "${stats_accum_timestamps[i]}" < "$first_stats_timestamp" ]]; then
+    # NOTE:
+    #   Use the maximum only for the edge value, even if multiple values is outdated, because only
+    #   edge values has a significant interpolation distortion.
+    #
     if (( j )); then
       (( count_outdated_next += ${stats_accum_counts[i]} ))
       (( uniques_outdated_next += ${stats_accum_uniques[i]} ))
@@ -330,6 +336,8 @@ for (( i=0; i < ${#stats_accum_timestamps[@]}; i++ )); do
       (( uniques_outdated_next += ${stats_accum_uniques_max[i]} ))
     fi
     (( j++ ))
+
+    stats_removed_dates[${#stats_removed_dates[@]}]="${stats_accum_timestamps/%T*}"
   fi
 done
 
@@ -354,13 +362,37 @@ gh_write_notice_to_changelog_text_bullet_ln \
   "prev exec diff / last date diff / accum: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_last_changed_date_uniques_inc +$stats_last_changed_date_count_inc -$stats_last_changed_date_uniques_dec -$stats_last_changed_date_count_dec / $stats_last_changed_date_uniques $stats_last_changed_date_count"
 
 stats_changed_dates=()
+stats_last_changed_date_utc=""
 
 for (( i=0; i < ${#stats_changed_data_timestamps[@]}; i++ )); do
   stats_changed_data_timestamp_str="${stats_changed_data_timestamps[i]}"
-  stats_changed_dates[i]="${stats_changed_data_timestamp_str/%T*}"
+  stats_last_changed_date_utc="${stats_changed_data_timestamp_str/%T*}"
+  stats_changed_dates[i]="$stats_last_changed_date_utc"
 done
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "changed dates: [${stats_changed_dates[*]}]"
+# or use last removed date
+if [[ -z "$stats_last_changed_date_utc" ]] && (( ${#stats_removed_dates[@]} )); then
+  stats_last_changed_date_utc="${stats_removed_dates[${#stats_removed_dates[@]} - 1]}"
+fi
+
+if (( ENABLE_COMMIT_MESSAGE_DATE_TIME_WITH_LAST_CHANGED_DATE_OFFSET )); then
+  last_changed_date_offset='+00T'
+
+  if [[ -n "$stats_last_changed_date_utc" ]]; then
+    current_date_utc_sec="$(date --utc -d "${current_date_utc}Z" +%s)"
+    last_changed_date_utc_sec="$(date --utc -d "${stats_last_changed_date_utc}Z" +%s)"
+
+    if (( current_date_utc_sec > last_changed_date_utc_sec )); then
+      (( last_changed_date_offset_day = (current_date_utc_sec - last_changed_date_utc_sec) / 60 / 60 / 24 ))
+      last_changed_date_offset="-$(printf %02u "$last_changed_date_offset_day")T"
+    else
+      (( last_changed_date_offset_day = (last_changed_date_utc_sec - current_date_utc_sec) / 60 / 60 / 24 ))
+      last_changed_date_offset="+$(printf %02u "$last_changed_date_offset_day")T"
+    fi
+  fi
+fi
+
+gh_print_notice_and_write_to_changelog_text_bullet_ln "removed / changed dates: [${stats_removed_dates[*]}] / [${stats_changed_dates[*]}]"
 
 if (( count_outdated_prev == count_outdated_next && uniques_outdated_prev == uniques_outdated_next && \
       count_prev == count_next && uniques_prev == uniques_next )) && [[ \
@@ -436,7 +468,7 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
     break
   fi
 
-  timestamp_year_utc=${timestamp_date_utc/%-*}
+  timestamp_year_utc="${timestamp_date_utc/%-*}"
 
   timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
   year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
@@ -483,6 +515,10 @@ if (( ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME )); then
   commit_message_date_time_prefix="${current_date_time_utc%:*Z}Z"
 fi
 
+if (( ENABLE_COMMIT_MESSAGE_DATE_TIME_WITH_LAST_CHANGED_DATE_OFFSET )); then
+  commit_message_date_time_prefix="${commit_message_date_time_prefix}$last_changed_date_offset"
+fi
+
 # return output variables
 
 # CAUTION:
@@ -502,6 +538,7 @@ gh_set_env_var STATS_LAST_CHANGED_DATE_UNIQUES_INC  "$stats_last_changed_date_un
 gh_set_env_var STATS_LAST_CHANGED_DATE_COUNT_DEC    "$stats_last_changed_date_count_dec"
 gh_set_env_var STATS_LAST_CHANGED_DATE_UNIQUES_DEC  "$stats_last_changed_date_uniques_dec"
 
+gh_set_env_var STATS_REMOVED_DATES                "${stats_removed_dates[*]}"
 gh_set_env_var STATS_CHANGED_DATES                "${stats_changed_dates[*]}"
 
 # counters of GitHub dated period (not greater than 14-days)
