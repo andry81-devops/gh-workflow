@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.05.31:
+* new: bash/github/accum-stats.sh: added `STATS_REMOVED_DATES` return variable, print last removed dates additionally to the last changed dates
+* new: bash/github/accum-stats.sh: `ENABLE_COMMIT_MESSAGE_DATE_TIME_WITH_LAST_CHANGED_DATE_OFFSET` environment variable to insert datetime suffix as offset to the last changed date in format `-DDT` to note the closest changed date
+
 ## 2022.05.21:
 * fixed: bash: inpage/accum-downloads.sh, boards/accum-stats.sh: accidental exit with 0 on curl error
 
