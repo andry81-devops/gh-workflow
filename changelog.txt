@@ -1,3 +1,6 @@
+2022.06.16:
+* changed: bash/github/accum-stats.sh: same print lines between pipeline and changelog file
+
 2022.05.31:
 * new: bash/github/accum-stats.sh: added `STATS_REMOVED_DATES` return variable, print last removed dates additionally to the last changed dates
 * new: bash/github/accum-stats.sh: `ENABLE_COMMIT_MESSAGE_DATE_TIME_WITH_LAST_CHANGED_DATE_OFFSET` environment variable to insert datetime suffix as offset to the last changed date in format `-DDT` to note the closest changed date

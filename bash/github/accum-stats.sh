@@ -354,11 +354,7 @@ done
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-unq outdated-all / unq all: $uniques_outdated_next $count_outdated_next / $uniques_next $count_next"
 
-gh_print_notice_ln "prev exec diff: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec"
-
-gh_print_notice_ln "last date diff / accum: unq all: +$stats_last_changed_date_uniques_inc +$stats_last_changed_date_count_inc -$stats_last_changed_date_uniques_dec -$stats_last_changed_date_count_dec / $stats_last_changed_date_uniques $stats_last_changed_date_count"
-
-gh_write_notice_to_changelog_text_bullet_ln \
+gh_print_notice_and_write_to_changelog_text_bullet_ln \
   "prev exec diff / last date diff / accum: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_last_changed_date_uniques_inc +$stats_last_changed_date_count_inc -$stats_last_changed_date_uniques_dec -$stats_last_changed_date_count_dec / $stats_last_changed_date_uniques $stats_last_changed_date_count"
 
 stats_changed_dates=()
