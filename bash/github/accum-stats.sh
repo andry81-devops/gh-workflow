@@ -55,18 +55,21 @@ jq_fix_null \
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "last 14d: unq all: $uniques $count"
 
-IFS=$'\n' read -r -d '' count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
+IFS=$'\n' read -r -d '' stats_accum_timestamp_prev count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".timestamp,.count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
 #
 jq_fix_null \
+  stats_accum_timestamp_prev \
   count_outdated_prev:0 \
   uniques_outdated_prev:0 \
   count_prev:0 \
   uniques_prev:0
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "prev accum: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
+gh_print_notice_ln "prev accum: $stats_accum_timestamp_prev: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
+
+gh_write_notice_to_changelog_text_bullet_ln "prev accum: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
 
 (( ! count && ! uniques && ! stats_length )) && {
   gh_enable_print_buffering
@@ -352,7 +355,9 @@ done
 (( count_next += count_outdated_next ))
 (( uniques_next += uniques_outdated_next ))
 
-gh_print_notice_and_write_to_changelog_text_bullet_ln "next accum: outdated-unq outdated-all / unq all: $uniques_outdated_next $count_outdated_next / $uniques_next $count_next"
+gh_print_notice_ln "next accum: $current_date_time_utc: outdated-unq outdated-all / unq all: $uniques_outdated_next $count_outdated_next / $uniques_next $count_next"
+
+gh_write_notice_to_changelog_text_bullet_ln "next accum: outdated-unq outdated-all / unq all: $uniques_outdated_next $count_outdated_next / $uniques_next $count_next"
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln \
   "prev exec diff / last date diff / accum: unq all: +$stats_prev_exec_uniques_inc +$stats_prev_exec_count_inc -$stats_prev_exec_uniques_dec -$stats_prev_exec_count_dec / +$stats_last_changed_date_uniques_inc +$stats_last_changed_date_count_inc -$stats_last_changed_date_uniques_dec -$stats_last_changed_date_count_dec / $stats_last_changed_date_uniques $stats_last_changed_date_count"

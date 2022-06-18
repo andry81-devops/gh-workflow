@@ -1,3 +1,6 @@
+2022.06.18:
+* new: bash/github/accum-stats.sh: added date-time prefix for `prev accum` and `next accum` pipeline log lines
+
 2022.06.16:
 * changed: bash/github/accum-stats.sh: same print lines between pipeline and changelog file
 
