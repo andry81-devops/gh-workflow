@@ -199,6 +199,9 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
   if [[ "$config_index_dir" != "$index_dir" ]]; then
     gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'"  config_index_dir=\`$config_index_dir\`"$'\n'"  index_dir=\`$index_dir\`"
+
+    (( stats_failed_inc++ ))
+
     continue
   fi
 
@@ -226,12 +229,20 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       index_file_prev_timestamp
 
     if [[ "$config_file" != "$index_file" ]]; then
-      gh_print_warning_ln "$0: warning: invalid index file file entry: dirs[$i].files[$j]:"$'\n'"  config_file=\`$config_file\`"$'\n'"  index_file=\`$index_file\`"
+      gh_print_warning_ln "$0: warning: invalid index file entry: dirs[$i].files[$j]:"$'\n'"  config_file=\`$config_file\`"$'\n'"  index_file=\`$index_file\`"
+
+      (( stats_failed_inc++ ))
+      (( stats_skipped_inc++ ))
+
       continue
     fi
 
     if [[ -z "$config_sched_next_update_timestamp_delta" ]]; then
-      gh_print_warning_ln "$0: warning: invalid index file file entry: dirs[$i].files[$j]:"$'\n'"  config_sched_next_update_timestamp_delta=\`$config_sched_next_update_timestamp_delta\`"
+      gh_print_warning_ln "$0: warning: invalid index file entry: dirs[$i].files[$j]:"$'\n'"  config_sched_next_update_timestamp_delta=\`$config_sched_next_update_timestamp_delta\`"
+
+      (( stats_failed_inc++ ))
+      (( stats_skipped_inc++ ))
+
       continue
     fi
 

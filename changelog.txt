@@ -1,3 +1,7 @@
+2022.07.22:
+* changed: bash/cache/accum-content.sh: register invalid file index entries as failed/skipped entries
+* changed: bash/cache/accum-content.sh: register invalid file directory index entries as failed entries
+
 2022.06.18:
 * new: bash/github/accum-stats.sh: added date-time prefix for `prev accum` and `next accum` pipeline log lines
 
