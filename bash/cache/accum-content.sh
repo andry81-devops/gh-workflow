@@ -4,6 +4,13 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# NOTE:
+#
+#   Yaml specific user variables (to set):
+#
+#     * DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND
+#
+
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -198,7 +205,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
   fi
 
   if [[ "$config_index_dir" != "$index_dir" ]]; then
-    gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'"  config_index_dir=\`$config_index_dir\`"$'\n'"  index_dir=\`$index_dir\`"
+    gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'"  config_dir=\`$config_dir\`"$'\n'"  index_dir=\`$index_dir\`"$'\n'"  content_index_dir=\`$content_index_dir\`"$'\n'"  config_index_dir=\`$config_index_dir\`"
 
     (( stats_failed_inc++ ))
 
@@ -295,10 +302,22 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
         if [[ -n "$index_file_next_md5_hash" && "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
           index_file_next_timestamp="$(date --utc +%FT%TZ)"
 
-          yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
-            ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
-            yq_diff "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
-            yq_patch "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
+          {
+            # update index file fields
+            if (( DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND )); then
+              yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
+                mv -Tf "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file"
+            else
+              yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
+                yq_diff "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
+                yq_restore_edited_uniform_diff "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" && \
+                yq_patch "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
+            fi
+          } || {
+            (( stats_failed_inc++ ))
+          }
 
           echo '---'
         fi
@@ -395,13 +414,26 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       (( stats_skipped_inc++ ))
     fi
 
-    # update index file fields
-    yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
-      ".\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\"=\"$config_query_url\"" \
-      ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" \
-      ".\"content-index\".entries[0].dirs[$i].files[$j].timestamp=\"$index_file_next_timestamp\"" && \
-      yq_diff "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
-      yq_patch "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
+    {
+      # update index file fields
+      if (( DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND )); then
+        yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\"=\"$config_query_url\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].timestamp=\"$index_file_next_timestamp\"" && \
+          mv -Tf "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file"
+      else
+        yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\"=\"$config_query_url\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].timestamp=\"$index_file_next_timestamp\"" && \
+          yq_diff "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
+          yq_restore_edited_uniform_diff "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" && \
+          yq_patch "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
+      fi
+    } || {
+      (( stats_failed_inc++ ))
+    }
 
     echo '---'
   done
@@ -410,11 +442,22 @@ done
 content_index_file_next_md5_hash=( $(md5sum -b "$content_index_file") )
 
 if (( stats_changed_inc )) || [[ "$content_index_file_next_md5_hash" != "$content_index_file_prev_md5_hash" ]]; then
-  # update index file change timestamp
-  yq_edit 'content-index' "$content_index_file" "$TEMP_DIR/content-index-[timestamp].yml" \
-    ".\"content-index\".timestamp=\"$index_file_next_timestamp\"" && \
-    yq_diff "$content_index_file" "$TEMP_DIR/content-index-[timestamp].yml" "$TEMP_DIR/content-index-[timestamp].diff" && \
-    yq_patch "$content_index_file" "$TEMP_DIR/content-index-[timestamp].diff" "$TEMP_DIR/content-index-[timestamp].yml" "$content_index_file"
+  {
+    # update index file change timestamp
+    if (( DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND )); then
+      yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[timestamp]-edited.yml" \
+        ".\"content-index\".timestamp=\"$index_file_next_timestamp\"" && \
+        mv -Tf "$TEMP_DIR/content-index-[timestamp]-edited.yml" "$content_index_file"
+    else
+      yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[timestamp]-edited.yml" \
+        ".\"content-index\".timestamp=\"$index_file_next_timestamp\"" && \
+        yq_diff "$TEMP_DIR/content-index-[timestamp]-edited.yml" "$content_index_file" "$TEMP_DIR/content-index-[timestamp]-edited.diff" && \
+        yq_restore_edited_uniform_diff "$TEMP_DIR/content-index-[timestamp]-edited.diff" "$TEMP_DIR/content-index-[timestamp]-edited-restored.diff" && \
+        yq_patch "$TEMP_DIR/content-index-[timestamp]-edited.yml" "$TEMP_DIR/content-index-[timestamp]-edited-restored.diff" "$TEMP_DIR/content-index-[timestamp].yml" "$content_index_file"
+    fi
+  } || {
+    (( stats_failed_inc++ ))
+  }
 
   echo '---'
 fi

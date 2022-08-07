@@ -1,3 +1,11 @@
+2022.08.07:
+* fixed: bash/github/init-*-workflow.sh: minor fixup
+* new: bash/github: added `init-diff-workflow.sh` to support `diff` command workflow
+* new: bash/github/init-yq-workflow.sh: `yq_restore_edited_uniform_diff` function to restore yaml comments and blank lines
+* changed: bash/cache/accum-content.sh: use `yq_restore_edited_uniform_diff` function by default
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+* refactor: bash/github/init-yq-workflow.sh: code refactor
+
 2022.07.22:
 * changed: bash/cache/accum-content.sh: register invalid file index entries as failed/skipped entries
 * changed: bash/cache/accum-content.sh: register invalid file directory index entries as failed entries
