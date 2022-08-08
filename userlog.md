@@ -2,6 +2,14 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.08:
+* fixed: bash/github/init-yq-workflow.sh: `yq_restore_edited_uniform_diff` inaccurate blank lines position
+
+## 2022.08.07:
+* new: bash/github: added `init-diff-workflow.sh` to support `diff` command workflow
+* new: bash/github/init-yq-workflow.sh: `yq_restore_edited_uniform_diff` function to restore yaml comments and blank lines
+* changed: bash/cache/accum-content.sh: use `yq_restore_edited_uniform_diff` function by default
+
 ## 2022.05.31:
 * new: bash/github/accum-stats.sh: added `STATS_REMOVED_DATES` return variable, print last removed dates additionally to the last changed dates
 * new: bash/github/accum-stats.sh: `ENABLE_COMMIT_MESSAGE_DATE_TIME_WITH_LAST_CHANGED_DATE_OFFSET` environment variable to insert datetime suffix as offset to the last changed date in format `-DDT` to note the closest changed date

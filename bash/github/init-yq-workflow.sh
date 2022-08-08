@@ -753,7 +753,9 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
   local DiffChunkAddLineOffset
   local DiffChunkNumAddLines
   local DiffChunkOffsetShift
+
   local AccumDiffChunkOffsetShift
+
   local DiffRemoveChunkLine
   local DiffRemoveChunkLineKeyText
   local DiffRemoveChunkLineFiltered
@@ -762,6 +764,7 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
   local DiffRemoveChunkLines
   local DiffRemoveChunkLinesLen
   local DiffRemoveChunkLinesIndex
+
   local DiffAddChunkLine
   local DiffAddChunkLineKeyText
   local DiffAddChunkLineFiltered
@@ -769,6 +772,8 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
   local DiffAddChunkLines
   local DiffAddChunkLinesLen
   local DiffAddChunkLinesIndex
+  local DiffAddChunkLinesToRemove
+
   local MergedDiffChunkLineLen
   local MergeDiffAddChunkLineNextIndex
   local IsDiffAddChunkLineProcessed
@@ -794,6 +799,8 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
 
     DiffRemoveChunkLinesLen="${#DiffRemoveChunkLines[@]}"
     DiffAddChunkLinesLen="${#DiffAddChunkLines[@]}"
+
+    DiffAddChunkLinesToRemove=()
 
     MergeDiffAddChunkLineNextIndex=0
 
@@ -846,6 +853,9 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
 
               (( MergeDiffAddChunkLineNextIndex = DiffAddChunkLinesIndex + 1 ))
 
+              # unregister to remove
+              unset DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex]
+
               IsDiffAddChunkLineProcessed=1
 
               break
@@ -868,22 +878,22 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
 
                 (( MergeDiffAddChunkLineNextIndex = DiffAddChunkLinesIndex + 1 ))
 
+                # unregister to remove
+                unset DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex]
+
                 IsDiffAddChunkLineProcessed=1
 
                 break
               elif [[ -n "$DiffAddChunkLineKeyText" ]]; then
-                # yaml key is found, remove the line
-                unset DiffAddChunkLines[DiffAddChunkLinesIndex]
-
-                (( DiffChunkNumAddLines-- ))
-                (( DiffChunkOffsetShift-- ))
+                # yaml key is found, register to remove the line if would not processed at all
+                (( DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex] = 1 ))
               fi
             fi
           fi
         done
 
         if (( ! IsDiffAddChunkLineProcessed )); then
-          # shift
+          # shift with not set values
           (( DiffAddChunkLinesLen++ ))
 
           for (( DiffAddChunkLinesIndex = DiffAddChunkLinesLen; MergeDiffAddChunkLineNextIndex < DiffAddChunkLinesIndex; DiffAddChunkLinesIndex-- )); do
@@ -891,6 +901,12 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
               DiffAddChunkLines[DiffAddChunkLinesIndex]="${DiffAddChunkLines[DiffAddChunkLinesIndex - 1]}"
             else
               unset DiffAddChunkLines[DiffAddChunkLinesIndex]
+            fi
+
+            if [[ -n "${DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex - 1]+x}" ]]; then
+              DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex]="${DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex - 1]}"
+            else
+              unset DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex]
             fi
           done
 
@@ -927,6 +943,16 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
         continue
       fi
     fi
+
+    # remove chunk addition lines registered to remove
+    for (( DiffAddChunkLinesIndex=0; DiffAddChunkLinesIndex < DiffAddChunkLinesLen; DiffAddChunkLinesIndex++ )); do
+      if (( DiffAddChunkLinesToRemove[DiffAddChunkLinesIndex] )); then
+        unset DiffAddChunkLines[DiffAddChunkLinesIndex]
+
+        (( DiffChunkNumAddLines-- ))
+        (( DiffChunkOffsetShift-- ))
+      fi
+    done
 
     (( DiffChunkAddLineOffset += AccumDiffChunkOffsetShift ))
 

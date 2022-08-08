@@ -1,3 +1,6 @@
+2022.08.08:
+* fixed: bash/github/init-yq-workflow.sh: `yq_restore_edited_uniform_diff` inaccurate blank lines position
+
 2022.08.07:
 * fixed: bash/github/init-*-workflow.sh: minor fixup
 * new: bash/github: added `init-diff-workflow.sh` to support `diff` command workflow
