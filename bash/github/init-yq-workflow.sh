@@ -17,7 +17,9 @@
 #   Yaml specific user variables (to set):
 #
 #     * ENABLE_YAML_PRINT_AFTER_EDIT
+#     * ENABLE_YAML_PRINT_AFTER_PATCH               # has priority over `ENABLE_YAML_PRINT_AFTER_EDIT` variable
 #     * ENABLE_YAML_DIFF_PRINT_AFTER_EDIT
+#     * ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH         # has priority over `ENABLE_YAML_DIFF_PRINT_AFTER_EDIT` variable
 #     * ENABLE_YAML_PATCH_DIFF_PAUSE_MODE
 #
 
@@ -36,7 +38,7 @@
 #   <list-of-yq-eval-strings> && \
 #   yq_diff "$TEMP_DIR/<output-yaml-edited>" "<input-yaml>" "$TEMP_DIR/<output-diff-edited>" && \
 #   yq_restore_edited_uniform_diff "$TEMP_DIR/<output-diff-edited>" "$TEMP_DIR/<output-diff-edited-restored>" && \
-#   yq_patch "$TEMP_DIR/<output-yaml-edited>" "$TEMP_DIR/<output-diff-edited-restored>" "$TEMP_DIR/<output-yaml-edited-restored>" "<output-yaml>"
+#   yq_patch "$TEMP_DIR/<output-yaml-edited>" "$TEMP_DIR/<output-diff-edited-restored>" "$TEMP_DIR/<output-yaml-edited-restored>" "<output-yaml>" ["<input-yaml>"]
 #
 # , where:
 #
@@ -98,7 +100,9 @@ function yq_init()
   fi
 
   [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_PRINT_AFTER_EDIT=0
+  [[ -z "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] && ENABLE_YAML_PRINT_AFTER_PATCH=0
   [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_DIFF_PRINT_AFTER_EDIT=0
+  [[ -z "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] && ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH=0
 
   return 0
 }
@@ -128,6 +132,15 @@ function yq_fix_null()
   done
 }
 
+function yq_print_file()
+{
+  local file_path="$1"
+
+  echo ">\`$file_path\`:"
+  echo "$(<"$file_path")"
+  echo '==='
+}
+
 function yq_edit()
 {
   if [[ -z "$TEMP_DIR" || ! -d "$TEMP_DIR" ]]; then
@@ -137,8 +150,8 @@ function yq_edit()
 
   local prefix_name="$1"
   local suffix_name="$2"
-  local input_file="$3"
-  local output_file="$4"
+  local input_yaml_file="$3"
+  local output_yaml_edited_file="$4"
   local edit_list
   local last_error
 
@@ -149,10 +162,8 @@ function yq_edit()
 
   function on_return_handler()
   {
-    if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
-      echo ">\`$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml\`:"
-      echo "$(<"$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml")"
-      echo '==='
+    if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+      yq_print_file "$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml"
     fi
   }
 
@@ -161,16 +172,14 @@ function yq_edit()
 
   "${YQ_CMDLINE_WRITE[@]}" \
     "${edit_list[0]}" \
-    "$input_file" > "$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml" || return $?
+    "$input_yaml_file" > "$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml" || return $?
 
   local arg
   for arg in "${edit_list[@]:1}"; do
     function on_return_handler()
     {
-      if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
-        echo ">\`$TEMP_DIR/${prefix_name}-${suffix_name}-${j}.yml\`:"
-        echo "$(<"$TEMP_DIR/${prefix_name}-${suffix_name}-${j}.yml")"
-        echo '==='
+      if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+        yq_print_file "$TEMP_DIR/${prefix_name}-${suffix_name}-${j}.yml"
       fi
     }
 
@@ -182,16 +191,14 @@ function yq_edit()
     (( j++ ))
   done
 
-  cp -Tf "$TEMP_DIR/${prefix_name}-${suffix_name}-${i}.yml" "$output_file"
+  cp -Tf "$TEMP_DIR/${prefix_name}-${suffix_name}-${i}.yml" "$output_yaml_edited_file"
   last_error=$?
 
   if [[ ! -f "$TEMP_DIR/${prefix_name}-${suffix_name}-${i}.yml" ]]; then
     function on_return_handler()
     {
-      if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
-        echo ">\`$output_file\`:"
-        echo "$(<"$output_file")"
-        echo '==='
+      if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+        yq_print_file "$output_yaml_edited_file"
       fi
     }
   fi
@@ -199,7 +206,7 @@ function yq_edit()
   return $last_error
 }
 
-function yq_diff()
+function yq_diff_impl()
 {
   local input_file_before="$1"
   local input_file_after="$2"
@@ -225,18 +232,19 @@ function yq_diff()
 
   (( last_error > 1 )) && return $last_error
 
-  # Cut off all empty line removes.
-  # Based on: https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string/5410784#5410784
-  #
-  #sed -i '/^-$/d' "$output_diff_file"
+  return 0
+}
 
-  if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT )); then
-    echo ">\`$output_diff_file\`:"
-    echo "$(<"$output_diff_file")"
-    echo '==='
+function yq_diff()
+{
+  yq_diff_impl "$@"
+  last_error=$?
+
+  if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT && ! ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH )); then
+    yq_print_file "$output_diff_file"
   fi
 
-  return 0
+  return $last_error
 }
 
 # Does convert all chunks with at least one `remove` line into separate chunks
@@ -1009,15 +1017,51 @@ function yq_patch_diff_pause()
 
 function yq_patch()
 {
-  local input_file="$1"
-  local input_diff_file="$2"
-  local temp_file="$3"
-  local output_file="$4"
+  if [[ -z "$TEMP_DIR" || ! -d "$TEMP_DIR" ]]; then
+    echo "$0: error: \`TEMP_DIR\` directory must be defined and exist: \`$TEMP_DIR\`." >&2
+    return 255
+  fi
 
-  {
-    "${YQ_PATCH_DIFF_CMDLINE[@]}" -o "$temp_file" -i "$input_diff_file" "$input_file" && yq_patch_diff_pause && \
-      mv -Tf "$temp_file" "$output_file"
-  } || yq_patch_diff_pause
+  local input_yaml_edited_file="$1"
+  local input_diff_file="$2"
+  local temp_yaml_file="$3"
+  local inout_yaml_file="$4"
+  local input_yaml_file="${4:-"$inout_yaml_file"}" # if empty, then output yaml is used as input yaml to generate diff to print
+
+  local last_error=0
+
+  local temp_yaml_file_name="${temp_yaml_file##*/}"
+
+  "${YQ_PATCH_DIFF_CMDLINE[@]}" -o "$temp_yaml_file" -i "$input_diff_file" "$input_yaml_edited_file" \
+    > "$TEMP_DIR/${temp_yaml_file_name}.patch.stdout.log" 2> "$TEMP_DIR/${temp_yaml_file_name}.patch.stderr.log"
+  last_error=$?
+
+  if (( ! last_error )); then
+    if (( ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH )); then # technically - after patch, logically - before patched file output rewrite
+      yq_diff_impl "$input_yaml_file" "$temp_yaml_file" "$TEMP_DIR/${temp_yaml_file_name}.diff" || return 255
+      yq_print_file "$TEMP_DIR/${temp_yaml_file_name}.diff"
+    fi
+
+    cat "$TEMP_DIR/${temp_yaml_file_name}.patch.stderr.log"
+    cat "$TEMP_DIR/${temp_yaml_file_name}.patch.stdout.log"
+
+    if (( ENABLE_YAML_PRINT_AFTER_PATCH )); then
+      yq_print_file "$temp_yaml_file"
+    fi
+
+    yq_patch_diff_pause
+
+    mv -Tf "$temp_yaml_file" "$inout_yaml_file"
+
+    return $?
+  fi
+
+  cat "$TEMP_DIR/${temp_yaml_file_name}.patch.stderr.log"
+  cat "$TEMP_DIR/${temp_yaml_file_name}.patch.stdout.log"
+
+  yq_patch_diff_pause
+
+  return $last_error
 }
 
 tkl_set_return

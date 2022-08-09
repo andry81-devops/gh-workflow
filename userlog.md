@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.09:
+* new: bash/github/init-yq-workflow.sh: added `ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH`, `ENABLE_YAML_PRINT_AFTER_PATCH` variables to print diff/yaml file before patch instead of after edit (has priority over `ENABLE_YAML_DIFF_PRINT_AFTER_EDIT`, `ENABLE_YAML_PRINT_AFTER_EDIT` variables)
+
 ## 2022.08.08:
 * fixed: bash/github/init-yq-workflow.sh: `yq_restore_edited_uniform_diff` inaccurate blank lines position
 
