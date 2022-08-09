@@ -16,9 +16,17 @@ SOURCE_GHWF_INIT_CURL_WORKFLOW_SH=1 # including guard
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+
 
 function curl_print_response_if_error()
 {
+  if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
+    TEMP_DIR="$(mktemp -d)"
+
+    tkl_push_trap 'rm -rf "$TEMP_DIR"' RETURN
+  fi
+
   local last_error=$?
   local response_file="${1:-"$TEMP_DIR/response.txt"}"
 

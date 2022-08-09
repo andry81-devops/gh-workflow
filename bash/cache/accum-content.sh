@@ -168,9 +168,15 @@ fi
 
 content_index_file_prev_md5_hash=( $(md5sum -b "$content_index_file") )
 
-TEMP_DIR="$(mktemp -d)"
+# drop forwarding backslash: https://unix.stackexchange.com/questions/424628/md5sum-prepends-to-the-checksum
+#
+content_index_file_prev_md5_hash="${content_index_file_prev_md5_hash#\\}"
 
-tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
+if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
+  TEMP_DIR="$(mktemp -d)"
+
+  tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
+fi
 
 stats_failed_inc=0
 stats_skipped_inc=0
@@ -292,6 +298,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     if (( is_index_file_prev_exist )); then
       # to update the file hash in the index file
       index_file_next_md5_hash=( $(md5sum -b "$index_dir/$index_file") )
+
+      # drop forwarding backslash: https://unix.stackexchange.com/questions/424628/md5sum-prepends-to-the-checksum
+      #
+      index_file_next_md5_hash="${index_file_next_md5_hash#\\}"
     fi
 
     if (( ! is_file_expired )); then
@@ -393,6 +403,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
     index_file_next_md5_hash=( $(md5sum -b "$TEMP_DIR/content/$index_dir/$index_file") )
 
+    # drop forwarding backslash: https://unix.stackexchange.com/questions/424628/md5sum-prepends-to-the-checksum
+    #
+    index_file_next_md5_hash="${index_file_next_md5_hash#\\}"
+
     if [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
       echo "File MD5 hash is changed: new=\`$index_file_next_md5_hash\` prev=\`$index_file_prev_md5_hash\`"
     else
@@ -440,6 +454,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 done
 
 content_index_file_next_md5_hash=( $(md5sum -b "$content_index_file") )
+
+# drop forwarding backslash: https://unix.stackexchange.com/questions/424628/md5sum-prepends-to-the-checksum
+#
+content_index_file_next_md5_hash="${content_index_file_next_md5_hash#\\}"
 
 if (( stats_changed_inc )) || [[ "$content_index_file_next_md5_hash" != "$content_index_file_prev_md5_hash" ]]; then
   {

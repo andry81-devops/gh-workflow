@@ -59,9 +59,13 @@ jq_fix_null \
 [[ -z "$last_replies" || -n "${last_replies//[0-9]/}" ]] && last_replies=0
 [[ -z "$last_views" || -n "${last_views//[0-9]/}" ]] && last_views=0
 
-TEMP_DIR="$(mktemp -d)"
+if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
+  TEMP_DIR="$(mktemp -d)"
 
-tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"; rm -rf "$TEMP_DIR"' EXIT
+  tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
+fi
+
+tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"' EXIT
 
 # CAUTION:
 #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
