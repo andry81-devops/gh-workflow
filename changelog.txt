@@ -1,3 +1,8 @@
+2022.08.10:
+* fixed: bash/github/print-*.sh: notices, warnings, errors functions fixup
+* fixed: bash/github/accum-rate-limits.sh: json format change fixup
+* changed: bash/github/accum-rate-limits.sh: changed rate limits json format change message from an error to a warning
+
 2022.08.09:
 * new: bash/github/init-yq-workflow.sh: added `ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH`, `ENABLE_YAML_PRINT_AFTER_PATCH` variables to print diff/yaml file before patch instead of after edit (has priority over `ENABLE_YAML_DIFF_PRINT_AFTER_EDIT`, `ENABLE_YAML_PRINT_AFTER_EDIT` variables)
 

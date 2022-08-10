@@ -50,6 +50,7 @@ IFS=$'\n' read -r -d '' \
   stats_prev_exec_code_scanning_upload_limit        stats_prev_exec_code_scanning_upload_used \
   stats_prev_exec_actions_runner_registration_limit stats_prev_exec_actions_runner_registration_used \
   stats_prev_exec_scim_limit                        stats_prev_exec_scim_used \
+  stats_prev_exec_dependency_snapshots_limit        stats_prev_exec_dependency_snapshots_used \
   stats_prev_exec_rate_limit                        stats_prev_exec_rate_used \
     <<< $(jq ".resources.core.limit,.resources.core.used,\
               .resources.search.limit,.resources.search.used,\
@@ -59,6 +60,7 @@ IFS=$'\n' read -r -d '' \
               .resources.code_scanning_upload.limit,.resources.code_scanning_upload.used,\
               .resources.actions_runner_registration.limit,.resources.actions_runner_registration.used,\
               .resources.scim.limit,.resources.scim.used,\
+              .resources.dependency_snapshots.limit,.resources.dependency_snapshots.used,\
               .rate.limit,.rate.used\
               " $stats_accum_json)
 
@@ -75,6 +77,7 @@ jq_fix_null \
   stats_prev_exec_code_scanning_upload_limit:0 stats_prev_exec_code_scanning_upload_used:0 \
   stats_prev_exec_actions_runner_registration_limit:0 stats_prev_exec_actions_runner_registration_used:0 \
   stats_prev_exec_scim_limit:0 stats_prev_exec_scim_used:0 \
+  stats_prev_exec_dependency_snapshots_limit:0 stats_prev_exec_dependency_snapshots_used:0 \
   stats_prev_exec_rate_limit:0 stats_prev_exec_rate_used:0
 
 gh_print_notice_ln "prev: graphql / rate: limit used: $stats_prev_exec_graphql_limit $stats_prev_exec_graphql_used / $stats_prev_exec_rate_limit $stats_prev_exec_rate_used"
@@ -92,6 +95,7 @@ IFS=$'\n' read -r -d '' \
   code_scanning_upload_limit        code_scanning_upload_used \
   actions_runner_registration_limit actions_runner_registration_used \
   scim_limit                        scim_used \
+  dependency_snapshots_limit        dependency_snapshots_used \
   rate_limit                        rate_used \
   resources_length \
     <<< $(jq ".resources.core.limit,.resources.core.used,\
@@ -102,6 +106,7 @@ IFS=$'\n' read -r -d '' \
               .resources.code_scanning_upload.limit,.resources.code_scanning_upload.used,\
               .resources.actions_runner_registration.limit,.resources.actions_runner_registration.used,\
               .resources.scim.limit,.resources.scim.used,\
+              .resources.dependency_snapshots.limit,.resources.dependency_snapshots.used,\
               .rate.limit,.rate.used,
               .resources|length\
               " $stats_json)
@@ -119,6 +124,7 @@ jq_fix_null \
   code_scanning_upload_limit:0 code_scanning_upload_used:0 \
   actions_runner_registration_limit:0 actions_runner_registration_used:0 \
   scim_limit:0 scim_used:0 \
+  dependency_snapshots_limit:0 dependency_snapshots_used:0 \
   rate_limit:0 rate_used:0
 
 gh_print_notice_ln "next: graphql / rate: limit used: $graphql_limit $graphql_used / $rate_limit $rate_used"
@@ -141,6 +147,7 @@ if (( core_limit != stats_prev_exec_core_limit || core_used != stats_prev_exec_c
       code_scanning_upload_limit != stats_prev_exec_code_scanning_upload_limit || code_scanning_upload_used != stats_prev_exec_code_scanning_upload_used || \
       actions_runner_registration_limit != stats_prev_exec_actions_runner_registration_limit || actions_runner_registration_used != stats_prev_exec_actions_runner_registration_used || \
       scim_limit != stats_prev_exec_scim_limit || scim_used != stats_prev_exec_scim_used || \
+      dependency_snapshots_limit != stats_prev_exec_dependency_snapshots_limit || dependency_snapshots_used != stats_prev_exec_dependency_snapshots_used || \
       rate_limit != stats_prev_exec_rate_limit || rate_used != stats_prev_exec_rate_used )); then
   has_changes=1
 
@@ -175,13 +182,13 @@ stats_prev_exec_rate_used_dec=0
 gh_print_notice_and_write_to_changelog_text_bullet_ln \
   "prev exec diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
-if (( resources_length != 8 || \
+if (( resources_length != 9 || \
       ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || \
-      ! source_import_limit || ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || \
+      ! source_import_limit || ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || ! dependency_snapshots_limit || \
       ! rate_limit )); then
   gh_enable_print_buffering
 
-  gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
+  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: json data is invalid or empty or format is changed." "json data is invalid or empty or format is changed"
 
   # try to request json generic response fields to print them as a notice
   IFS=$'\n' read -r -d '' json_message json_url json_documentation_url <<< $(jq ".message,.url,.documentation_url" $stats_json)

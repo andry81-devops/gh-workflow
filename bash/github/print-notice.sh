@@ -68,6 +68,34 @@ function gh_print_notice_ln()
   fi
 }
 
+function gh_print_notices_nobuf_nolag()
+{
+  local IFS=$'\n'
+  local arg
+
+  # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
+
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    for arg in "$@"; do
+      gh_trim_trailing_line_return_chars "$arg"
+      echo -n "::notice ::$RETURN_VALUE" # without line return
+    done
+  else
+    for arg in "$@"; do
+      gh_trim_trailing_line_return_chars "$arg"
+      echo "::notice ::$RETURN_VALUE" # with line return
+    done
+  fi
+}
+
+function gh_print_notices_nobuf_noprefix()
+{
+  # with check on integer value
+  [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_NOTICE_LAG_FSEC
+
+  gh_print_args "$@"
+}
+
 function gh_print_notices()
 {
   local IFS=$'\n'
@@ -88,13 +116,9 @@ function gh_print_notices()
     [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_NOTICE_LAG_FSEC
 
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      for arg in "$@"; do
-        echo "::notice ::$arg"
-      done
+      gh_print_notices_nobuf_nolag "$@"
     else
-      for arg in "$@"; do
-        echo "$arg"
-      done
+      gh_print_args "$@"
     fi
   fi
 }
