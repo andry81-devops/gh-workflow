@@ -1,3 +1,6 @@
+2022.08.11:
+* fixed: bash/github/print-*.sh: execution fixup
+
 2022.08.10:
 * fixed: bash/github/print-*.sh: notices, warnings, errors functions fixup
 * fixed: bash/github/accum-rate-limits.sh: json format change fixup

@@ -9,6 +9,11 @@
 
 SOURCE_GHWF_PRINT_SH=1 # including guard
 
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
+}
+
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
@@ -73,12 +78,12 @@ function gh_print_args()
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      echo -n "$RETURN_VALUE" >&2 # without line return
+      echo "$RETURN_VALUE"
     done
   else
     for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      echo "$RETURN_VALUE" >&2 # with line return
+      echo "$RETURN_VALUE"
     done
   fi
 }

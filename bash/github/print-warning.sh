@@ -9,6 +9,11 @@
 
 SOURCE_GHWF_PRINT_WARNING_SH=1 # including guard
 
+[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+  echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
+  exit 255
+}
+
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
@@ -57,14 +62,27 @@ function gh_print_warning_ln()
     # with check on integer value
     [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_WARNING_LAG_FSEC
 
-    if [[ -n "$GITHUB_ACTIONS" ]]; then
-      for arg in "$@"; do
-        line="${line}${line:+"%0D%0A"}$arg"
-      done
-      echo "::warning ::$line" >&2
-    else
-      echo "$*" >&2
-    fi
+    gh_print_warning_ln_nobuf_nolag "$@"
+  fi
+}
+
+function gh_print_warning_ln_nobuf_nolag()
+{
+  local IFS=$'\n'
+  local line=''
+  local arg
+
+  # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
+
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    for arg in "$@"; do
+      line="${line}${line:+"%0D%0A"}$arg"
+    done
+    gh_trim_trailing_line_return_chars "$line"
+    echo "::warning ::$RETURN_VALUE" >&2
+  else
+    gh_trim_trailing_line_return_chars "$*"
+    echo "$RETURN_VALUE" >&2
   fi
 }
 
@@ -78,12 +96,12 @@ function gh_print_warnings_nobuf_nolag()
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      echo -n "::warning ::$RETURN_VALUE" # without line return
+      echo "::warning ::$RETURN_VALUE"
     done >&2
   else
     for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      echo "::warning ::$RETURN_VALUE" # with line return
+      echo "$RETURN_VALUE"
     done >&2
   fi
 }
