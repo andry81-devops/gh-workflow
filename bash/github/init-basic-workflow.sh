@@ -50,15 +50,18 @@ SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH=1 # including guard
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 
 function init_basic_workflow()
 {
-  tkl_declare_global CHANGELOG_BUF_STR ''
+  if [[ -z "${CHANGELOG_BUF_STR:+x}" ]]; then # to save buffer between workflow steps
+    tkl_declare_global CHANGELOG_BUF_STR ''
 
-  gh_set_print_warning_lag  .025 # 25 msec
-  gh_set_print_error_lag    .025
+    # update GitHub pipeline variable
+    gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
+  fi
 
   [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
   [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
@@ -77,11 +80,6 @@ function init_basic_workflow()
 init_basic_workflow || exit $?
 
 
-function gh_set_env_var()
-{
-  [[ -n "$GITHUB_ACTIONS" ]] && echo "$1=$2" >> $GITHUB_ENV
-}
-
 function gh_prepend_changelog_file()
 {
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
@@ -96,6 +94,9 @@ function gh_prepend_changelog_file()
   echo -n "$changelog_buf" > "$CHANGELOG_FILE"
 
   CHANGELOG_BUF_STR=''
+
+  # update GitHub pipeline variable
+  gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
 }
 
 tkl_set_return

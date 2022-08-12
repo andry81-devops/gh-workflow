@@ -16,7 +16,7 @@ SOURCE_GHWF_PRINT_ERROR_SH=1 # including guard
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 
 
 function gh_enable_print_error_buffering()
@@ -45,13 +45,13 @@ function gh_set_print_error_lag()
 #
 function gh_print_error_ln()
 {
-  local IFS=$'\n'
+  local IFS
   local line=''
   local arg
 
   if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      for arg in "$@"; do
+      IFS=$'\n'; for arg in "$@"; do
         line="${line}${line:+"%0D%0A"}$arg"
       done
       PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}::error ::$line"
@@ -68,7 +68,7 @@ function gh_print_error_ln()
 
 function gh_print_error_ln_nobuf_nolag()
 {
-  local IFS=$'\n'
+  local IFS
   local line=''
   local arg
 
@@ -78,11 +78,11 @@ function gh_print_error_ln_nobuf_nolag()
   # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    for arg in "$@"; do
+    IFS=$'\n'; for arg in "$@"; do
       line="${line}${line:+"%0D%0A"}$arg"
     done
     gh_trim_trailing_line_return_chars "$line"
-    echo "::error ::$RETURN_VALUE" >&2
+    gh_print_annotation error "::$RETURN_VALUE" >&2
   else
     gh_trim_trailing_line_return_chars "$*"
     echo "$*" >&2
@@ -91,7 +91,7 @@ function gh_print_error_ln_nobuf_nolag()
 
 function gh_print_errors_nobuf_nolag()
 {
-  local IFS=$'\n'
+  local IFS
   local arg
 
   # with check on integer value
@@ -100,12 +100,12 @@ function gh_print_errors_nobuf_nolag()
   # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    for arg in "$@"; do
+    IFS=$'\n'; for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      echo "::error ::$RETURN_VALUE"
+      gh_print_annotation error "::$RETURN_VALUE" >&2
     done >&2
   else
-    for arg in "$@"; do
+    IFS=$'\n'; for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
       echo "$RETURN_VALUE"
     done >&2
@@ -114,24 +114,33 @@ function gh_print_errors_nobuf_nolag()
 
 function gh_print_errors_nobuf_noprefix()
 {
+  local IFS
+
   # with check on integer value
   [[ -n "$PRINT_ERROR_LAG_FSEC" && -z "${PRINT_ERROR_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_ERROR_LAG_FSEC
 
   gh_print_args "$@" >&2
+
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    IFS=$'\n'; for arg in "$@"; do
+      gh_trim_trailing_line_return_chars "$arg"
+      gh_print_annotation error "::$RETURN_VALUE" >&2
+    done
+  fi
 }
 
 function gh_print_errors()
 {
-  local IFS=$'\n'
+  local IFS
   local arg
 
   if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      for arg in "$@"; do
+      IFS=$'\n'; for arg in "$@"; do
         PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}::error ::$arg"
       done
     else
-      for arg in "$@"; do
+      IFS=$'\n'; for arg in "$@"; do
         PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}$arg"
       done
     fi
@@ -154,6 +163,9 @@ function gh_write_error_to_changelog_text_bullet_ln()
   local changelog_msg="$1"
 
   CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* error: ${changelog_msg}"$'\r\n'
+
+  # update GitHub pipeline variable
+  gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
 }
 
 # format: <message> | <error_message> <changelog_message>

@@ -17,6 +17,33 @@ SOURCE_GHWF_UTILS_SH=1 # including guard
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+function gh_set_env_var()
+{
+  local var="$1"
+  local value="$2"
+
+  local IFS
+  local line
+
+  if [[ -n "$GITHUB_ACTIONS" ]]; then
+    # Process line returns differently to avoid `Invalid environment variable format` error.
+    #
+    #   https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+    #
+    if [[ "${value//[$'\r\n']/}" != "$value" ]]; then
+      {
+        echo "$var<<::EOF::"
+        IFS=$'\n'; for line in "$value"; do
+          echo "$line"
+        done
+        echo "::EOF::"
+      } >> $GITHUB_ENV
+    else
+      echo "$var=$value" >> $GITHUB_ENV
+    fi
+  fi
+}
+
 function gh_trim_trailing_line_return_chars()
 {
   local str="$1"

@@ -2,6 +2,11 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.12:
+* fixed: bash/github/print-*.sh: execution fixup
+* new: bash/github: init-print-workflow.sh, print-*.sh, flush-print-annotation.shs: print annotations buffering support
+* new: bash/github: init-basic-workflow.sh, print-*.sh: `CHANGELOG_BUF_STR` update between GitHub pipeline steps
+
 ## 2022.08.10:
 * fixed: bash/github/print-*.sh: notices, warnings, errors functions fixup
 * fixed: bash/github/accum-rate-limits.sh: json format change fixup

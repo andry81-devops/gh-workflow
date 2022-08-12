@@ -1,4 +1,11 @@
 2022.08.12:
+* fixed: bash/github/print-*.sh: execution fixup
+* new: bash/github: init-print-workflow.sh, print-*.sh, flush-print-annotation.shs: print annotations buffering support
+* new: bash/github: init-basic-workflow.sh, print-*.sh: `CHANGELOG_BUF_STR` update between GitHub pipeline steps
+* changed: bash/github/print-*.sh: code cleanup
+* refactor: bash/github: code refactor
+
+2022.08.12:
 * fixed: bash/github/accum-stats.sh: minor fixup
 
 2022.08.12:
