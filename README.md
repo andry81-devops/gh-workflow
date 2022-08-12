@@ -51,7 +51,7 @@
 
 <h4 align="center">GitHub workflow support scripts.<br/>
 <br/>
-Tutorial to use with: https://github.com/andry81-devops/github-accum-stats</h4>
+Tutorials to use with: https://github.com/andry81/index#tutorials</h4>
 
 ##
 

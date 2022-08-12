@@ -1,3 +1,6 @@
+2022.08.12:
+* changed: README.md: readme update
+
 2022.08.11:
 * fixed: bash/github/print-*.sh: execution fixup
 
