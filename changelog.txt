@@ -1,4 +1,7 @@
 2022.08.12:
+* fixed: bash/github/accum-stats.sh: minor fixup
+
+2022.08.12:
 * changed: README.md: readme update
 
 2022.08.11:

@@ -69,7 +69,7 @@ jq_fix_null \
   count_prev:0 \
   uniques_prev:0
 
-gh_print_notice_ln "prev accum: $stats_accum_timestamp_prev: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
+gh_print_notice_ln "prev accum: ${stats_accum_timestamp_prev:-"-"}: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
 
 gh_write_notice_to_changelog_text_bullet_ln "prev accum: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
 
