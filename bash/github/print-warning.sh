@@ -21,7 +21,9 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 
 function gh_enable_print_warning_buffering()
 {
-  [[ -z "${PRINT_WARNING_BUF_STR+x}" ]] && tkl_declare_global PRINT_WARNING_BUF_STR ''
+  if [[ -z "${PRINT_WARNING_BUF_STR+x}" ]]; then
+    tkl_declare_global PRINT_WARNING_BUF_STR ''
+  fi
 }
 
 # NOTE:
@@ -32,7 +34,9 @@ function gh_set_print_warning_lag()
   tkl_declare_global PRINT_WARNING_LAG_FSEC 0
 
   # with check on integer value
-  [[ -n "$1" && -z "${1//[0-9]/}" ]] && PRINT_WARNING_LAG_FSEC=$1
+  if [[ -n "$1" && -z "${1//[0-9]/}" ]]; then
+    PRINT_WARNING_LAG_FSEC="$1"
+  fi
 }
 
 # NOTE:
@@ -45,22 +49,29 @@ function gh_set_print_warning_lag()
 #
 function gh_print_warning_ln()
 {
-  local IFS
   local line=''
   local arg
 
   if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      IFS=$'\n'; for arg in "$@"; do
-        line="${line}${line:+"%0D%0A"}$arg"
+      local IFS=$'\n'; for arg in "$@"; do
+        line="${line}${line:+"%0A"}$arg"
       done
-      PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+$'\r\n'}::warning ::$line"
+
+      gh_trim_trailing_line_return_chars "$line"
+
+      # fix multiline text in a single argument
+      gh_encode_line_return_chars "$RETURN_VALUE"
+
+      gh_process_annotation_print warning '' "$RETURN_VALUE"
+
+      PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
     else
       PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+$'\r\n'}$*"
     fi
   else
     # with check on integer value
-    [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_WARNING_LAG_FSEC
+    [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && (( PRINT_WARNING_LAG_FSEC > 0 )) && sleep $PRINT_WARNING_LAG_FSEC
 
     gh_print_warning_ln_nobuf_nolag "$@"
   fi
@@ -68,20 +79,25 @@ function gh_print_warning_ln()
 
 function gh_print_warning_ln_nobuf_nolag()
 {
-  local IFS
   local line=''
   local arg
 
   # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    IFS=$'\n'; for arg in "$@"; do
-      line="${line}${line:+"%0D%0A"}$arg"
+    local IFS=$'\n'; for arg in "$@"; do
+      line="${line}${line:+"%0A"}$arg"
     done
+
     gh_trim_trailing_line_return_chars "$line"
-    gh_print_annotation warning "::$RETURN_VALUE" >&2
+
+    # fix multiline text in a single argument
+    gh_encode_line_return_chars "$RETURN_VALUE"
+
+    gh_print_annotation warning '' "$RETURN_VALUE" >&2
   else
     gh_trim_trailing_line_return_chars "$*"
+
     echo "$RETURN_VALUE" >&2
   fi
 }
@@ -96,30 +112,41 @@ function gh_print_warnings_nobuf_nolag()
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     IFS=$'\n'; for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
-      gh_print_annotation warning "::$RETURN_VALUE" >&2
+
+      # fix multiline text in a single argument
+      gh_encode_line_return_chars "$RETURN_VALUE"
+
+      gh_print_annotation warning '' "$RETURN_VALUE"
     done >&2
   else
     IFS=$'\n'; for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
+
       echo "$RETURN_VALUE"
     done >&2
   fi
 }
 
-function gh_print_warnings_nobuf_noprefix()
+function gh_print_warnings_buffer()
 {
-  local IFS
+  local buf="$1"
+
+  local line
 
   # with check on integer value
-  [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_WARNING_LAG_FSEC
-
-  gh_print_args "$@" >&2
+  [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && (( PRINT_WARNING_LAG_FSEC > 0 )) && sleep $PRINT_WARNING_LAG_FSEC
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    IFS=$'\n'; for arg in "$@"; do
-      gh_trim_trailing_line_return_chars "$arg"
-      gh_print_annotation warning "::$RETURN_VALUE" >&2
-    done
+    local IFS=$'\n'; for line in "$buf"; do
+      gh_trim_trailing_line_return_chars "$line"
+
+      # fix multiline text in a single argument
+      gh_encode_line_return_chars "$RETURN_VALUE"
+
+      gh_print_annotation warning '' "$RETURN_VALUE"
+    done >&2
+  else
+    gh_print_args "$buf" >&2
   fi
 }
 
@@ -131,7 +158,14 @@ function gh_print_warnings()
   if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       IFS=$'\n'; for arg in "$@"; do
-        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+$'\r\n'}::warning ::$arg"
+        gh_trim_trailing_line_return_chars "$arg"
+
+        # fix multiline text in a single argument
+        gh_encode_line_return_chars "$RETURN_VALUE"
+
+        gh_process_annotation_print warning '' "$RETURN_VALUE"
+
+        PRINT_WARNING_BUF_STR="${PRINT_WARNING_BUF_STR}${PRINT_WARNING_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
       done
     else
       IFS=$'\n'; for arg in "$@"; do
@@ -140,7 +174,7 @@ function gh_print_warnings()
     fi
   else
     # with check on integer value
-    [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && sleep $PRINT_WARNING_LAG_FSEC
+    [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && (( PRINT_WARNING_LAG_FSEC > 0 )) && sleep $PRINT_WARNING_LAG_FSEC
 
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       gh_print_warnings_nobuf_nolag "$@"

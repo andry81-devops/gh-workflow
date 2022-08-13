@@ -17,30 +17,34 @@ SOURCE_GHWF_UTILS_SH=1 # including guard
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+# CAUTION:
+#
+#   Assignment applies ONLY between GitHub Actions job steps!
+#
 function gh_set_env_var()
 {
+  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+
   local var="$1"
   local value="$2"
 
   local IFS
   local line
 
-  if [[ -n "$GITHUB_ACTIONS" ]]; then
-    # Process line returns differently to avoid `Invalid environment variable format` error.
-    #
-    #   https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
-    #
-    if [[ "${value//[$'\r\n']/}" != "$value" ]]; then
-      {
-        echo "$var<<::EOF::"
-        IFS=$'\n'; for line in "$value"; do
-          echo "$line"
-        done
-        echo "::EOF::"
-      } >> $GITHUB_ENV
-    else
-      echo "$var=$value" >> $GITHUB_ENV
-    fi
+  # Process line returns differently to avoid `Invalid environment variable format` error.
+  #
+  #   https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+  #
+  if [[ "${value//[$'\r\n']/}" != "$value" ]]; then
+    {
+      echo "$var<<::EOF::"
+      IFS=$'\n'; for line in "$value"; do
+        echo "$line"
+      done
+      echo "::EOF::"
+    } >> $GITHUB_ENV
+  else
+    echo "$var=$value" >> $GITHUB_ENV
   fi
 }
 
@@ -53,6 +57,22 @@ function gh_trim_trailing_line_return_chars()
   done
 
   RETURN_VALUE="$str"
+}
+
+function gh_encode_line_return_chars()
+{
+  local line="$1"
+
+  RETURN_VALUE="${line//$'\r'/%0D}"
+  RETURN_VALUE="${RETURN_VALUE//$'\n'/%0A}"
+}
+
+function gh_decode_line_return_chars()
+{
+  local line="$1"
+
+  RETURN_VALUE="${line//%0D/$'\r'}"
+  RETURN_VALUE="${RETURN_VALUE//%0A/$'\n'}"
 }
 
 tkl_set_return

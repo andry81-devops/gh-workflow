@@ -2,6 +2,11 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.13:
+* fixed: bash/github/print-*.sh: execution fixup
+* new: bash/github: init-print-workflow.sh, print-*.sh, *-print-annotation-group.sh: ability to group sequence of prints with the same annotation type into single annotation to prevent too many annotations because of the limit in the GitHub Actions job summary (currently is 10)
+* new: bash/github/accum-rate-limits.sh: added usage of a print annotation group
+
 ## 2022.08.12:
 * fixed: bash/github/print-*.sh: execution fixup
 * new: bash/github: init-print-workflow.sh, print-*.sh, flush-print-annotation.shs: print annotations buffering support
