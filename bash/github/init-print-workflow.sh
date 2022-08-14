@@ -30,24 +30,16 @@ function init_print_workflow()
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     # to save variables between workflow steps
-    if [[ -z "${GH_ANNOTATIONS_PRINT_BUF_STR:+x}" ]]; then
-      tkl_declare_global GH_ANNOTATIONS_PRINT_BUF_STR ''
-
-      # update GitHub pipeline variables
-      gh_set_env_var GH_ANNOTATIONS_PRINT_BUF_STR       "$GH_ANNOTATIONS_PRINT_BUF_STR"
+    if [[ -z "${GHWF_ANNOTATIONS_PRINT_BUF_STR:+x}" ]]; then
+      gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR ''
     fi
 
     # to save variables between workflow steps
-    if [[ -z "${GH_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]]; then
-      tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_TYPE ''
-      tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_PREFIX ''
-      tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_MSG ''
-      tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_INDEX 0
-
-      gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_TYPE    "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE"
-      gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$GH_ANNOTATIONS_GROUP_ANNOT_PREFIX"
-      gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_MSG     "$GH_ANNOTATIONS_GROUP_ANNOT_MSG"
-      gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_INDEX   "$GH_ANNOTATIONS_GROUP_ANNOT_INDEX"
+    if [[ -z "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]]; then
+      gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE    ''
+      gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX  ''
+      gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_MSG     ''
+      gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX   0
     fi
   fi
 
@@ -73,23 +65,23 @@ function gh_flush_print_buffers()
   local line
 
   # notices
-  if [[ -n "${PRINT_NOTICE_BUF_STR+x}" ]]; then
-    line="${PRINT_NOTICE_BUF_STR}"
-    unset PRINT_NOTICE_BUF_STR
+  if [[ -n "${GHWF_PRINT_NOTICE_BUF_STR+x}" ]]; then
+    line="${GHWF_PRINT_NOTICE_BUF_STR}"
+    gh_unset_env_var GHWF_PRINT_NOTICE_BUF_STR
     gh_print_notices_buffer "$line"
   fi
 
   # warnings
-  if [[ -n "${PRINT_WARNING_BUF_STR+x}" ]]; then
-    line="${PRINT_WARNING_BUF_STR}"
-    unset PRINT_WARNING_BUF_STR
+  if [[ -n "${GHWF_PRINT_WARNING_BUF_STR+x}" ]]; then
+    line="${GHWF_PRINT_WARNING_BUF_STR}"
+    gh_unset_env_var GHWF_PRINT_WARNING_BUF_STR
     gh_print_warnings_buffer "$line"
   fi
 
   # errors
-  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
-    line="${PRINT_ERROR_BUF_STR}"
-    unset PRINT_ERROR_BUF_STR
+  if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
+    line="${GHWF_PRINT_ERROR_BUF_STR}"
+    gh_unset_env_var GHWF_PRINT_ERROR_BUF_STR
     gh_print_errors_buffer "$line"
   fi
 }
@@ -100,10 +92,7 @@ function gh_write_to_changelog_text_ln()
 
   local changelog_msg="$1"
 
-  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}${changelog_msg}"$'\r\n'
-
-  # update GitHub pipeline variable
-  gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
+  gh_set_env_var GHWF_CHANGELOG_BUF_STR "${GHWF_CHANGELOG_BUF_STR}${changelog_msg}"$'\r\n'
 }
 
 function gh_print_args()
@@ -129,17 +118,15 @@ function gh_print_annotation()
   local msg="$3"
 
   #gh_decode_line_return_chars "$msg"
+  RETURN_VALUE="${RETURN_VALUE//%0D%0A/$'\r\n'\| }"
 
   # stdout redirection must be issued outside
   echo "::$annot_type $annot_prefix::$msg"
 
   gh_process_annotation_print "$annot_type" "$annot_prefix" "$msg"
 
-  # duplicate output into `GH_ANNOTATIONS_PRINT_BUF_STR` variable to reuse later
-  GH_ANNOTATIONS_PRINT_BUF_STR="${GH_ANNOTATIONS_PRINT_BUF_STR}${GH_ANNOTATIONS_PRINT_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
-
-  # update GitHub pipeline variable
-  gh_set_env_var GH_ANNOTATIONS_PRINT_BUF_STR "$GH_ANNOTATIONS_PRINT_BUF_STR"
+  # duplicate output into `GHWF_ANNOTATIONS_PRINT_BUF_STR` variable to reuse later
+  gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR "${GHWF_ANNOTATIONS_PRINT_BUF_STR}${GHWF_ANNOTATIONS_PRINT_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
 }
 
 function gh_flush_print_annotations()
@@ -151,10 +138,11 @@ function gh_flush_print_annotations()
 
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
 
-  IFS=$'\n'; for line in "$GH_ANNOTATIONS_PRINT_BUF_STR"; do
+  IFS=$'\n'; for line in "$GHWF_ANNOTATIONS_PRINT_BUF_STR"; do
     gh_trim_trailing_line_return_chars "$line"
 
-    #gh_decode_line_return_chars "$RETURN_VALUE"
+    # gh_decode_line_return_chars "$RETURN_VALUE"
+    RETURN_VALUE="${RETURN_VALUE//%0D%0A/$'\r\n'\| }"
 
     IFS=':' read -r empty empty annot_type <<< "$RETURN_VALUE"
     IFS=$'\t ' read -r annot_type empty <<< "$annot_type"
@@ -165,10 +153,7 @@ function gh_flush_print_annotations()
     esac
   done
 
-  unset GH_ANNOTATIONS_PRINT_BUF_STR
-
-  # update GitHub pipeline variable
-  gh_set_env_var GH_ANNOTATIONS_PRINT_BUF_STR "$GH_ANNOTATIONS_PRINT_BUF_STR"
+  gh_unset_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR
 }
 
 # NOTE: Groups only annotations with the same type.
@@ -200,7 +185,7 @@ function gh_flush_print_annotations()
 function gh_begin_print_annotation_group()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
-  [[ -n "${GH_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]] && return 0 # ignore if previous group is not closed/ended
+  [[ -n "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]] && return 0 # ignore if previous group is not closed/ended
 
   local annot_type="$1"         # required
   local annot_prefix="$2"
@@ -208,32 +193,20 @@ function gh_begin_print_annotation_group()
 
   [[ -z "$annot_type" ]] && return 0
 
-  tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_TYPE    "$annot_type"
-  tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$annot_prefix"
-  tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_MSG     "$msg"
-  tkl_declare_global GH_ANNOTATIONS_GROUP_ANNOT_INDEX   0
-
-  # update GitHub pipeline variable
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_TYPE    "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$GH_ANNOTATIONS_GROUP_ANNOT_PREFIX"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_MSG     "$GH_ANNOTATIONS_GROUP_ANNOT_MSG"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_INDEX   "$GH_ANNOTATIONS_GROUP_ANNOT_INDEX"
+  gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE    "$annot_type"
+  gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$annot_prefix"
+  gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_MSG     "$msg"
+  gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX   0
 }
 
 function gh_end_print_annotation_group()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
 
-  unset GH_ANNOTATIONS_GROUP_ANNOT_TYPE
-  unset GH_ANNOTATIONS_GROUP_ANNOT_PREFIX
-  unset GH_ANNOTATIONS_GROUP_ANNOT_MSG
-  unset GH_ANNOTATIONS_GROUP_ANNOT_INDEX
-
-  # update GitHub pipeline variable
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_TYPE    "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$GH_ANNOTATIONS_GROUP_ANNOT_PREFIX"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_MSG     "$GH_ANNOTATIONS_GROUP_ANNOT_MSG"
-  gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_INDEX   "$GH_ANNOTATIONS_GROUP_ANNOT_INDEX"
+  gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE
+  gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX
+  gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_MSG
+  gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX
 }
 
 # prefixes a print message with annotation data
@@ -243,26 +216,22 @@ function gh_process_annotation_print()
   local annot_prefix="$2"
   local msg="$3"
 
-  if [[ -n "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE" && "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE" == "$annot_type" ]]; then
-    if (( GH_ANNOTATIONS_GROUP_ANNOT_INDEX )); then
-      tkl_declare_global_array RETURN_VALUES "%0A" "$msg"
+  if [[ -n "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" && "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" == "$annot_type" ]]; then
+    if (( GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX )); then
+      tkl_declare_global_array RETURN_VALUES "%0D%0A" "$msg"
     else
-      tkl_declare_global_array RETURN_VALUES $'\r\n' "::$GH_ANNOTATIONS_GROUP_ANNOT_TYPE $GH_ANNOTATIONS_GROUP_ANNOT_PREFIX::${GH_ANNOTATIONS_GROUP_ANNOT_MSG}${GH_ANNOTATIONS_GROUP_ANNOT_MSG:+"%0A"}$msg"
+      tkl_declare_global_array RETURN_VALUES $'\r\n' "::$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE $GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX::${GHWF_ANNOTATIONS_GROUP_ANNOT_MSG}${GHWF_ANNOTATIONS_GROUP_ANNOT_MSG:+"%0D%0A"}$msg"
     fi
 
-    (( GH_ANNOTATIONS_GROUP_ANNOT_INDEX++ ))
+    (( GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX++ ))
+
+    gh_update_github_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX
   else
-    if [[ -n "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE" ]]; then
-      # reset index only to group next prints
-      GH_ANNOTATIONS_GROUP_ANNOT_INDEX=0
+    if [[ -n "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" ]]; then
+      gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX 0
     fi
 
     tkl_declare_global_array RETURN_VALUES $'\r\n' "::$annot_type $annot_prefix::$msg"
-  fi
-
-  if [[ -n "$GH_ANNOTATIONS_GROUP_ANNOT_TYPE" ]]; then
-    # update GitHub pipeline variable
-    gh_set_env_var GH_ANNOTATIONS_GROUP_ANNOT_INDEX   "$GH_ANNOTATIONS_GROUP_ANNOT_INDEX"
   fi
 }
 

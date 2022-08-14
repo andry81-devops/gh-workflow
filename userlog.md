@@ -2,6 +2,12 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.14:
+* fixed: bash/github: utils.sh, set-env-from-args.sh: missed to ignore `GITHUB_*` builtin variables, execution fixup
+* new: bash/github: init-basic-workflow.sh, enable-github-env-autoeval.sh: Ability to apply GitHub Actions job environment variables by the `GITHUB_ENV` file path automatically on each GitHub Actions job step line instead of on the next step only. A workflow does require to enable this explicitly using the `enable-github-env-autoeval.sh` script run.
+* changed: bash/github: utils.sh, set-env-from-args.sh: added global bash variables assign additionally to `GITHUB_ENV` file update to apply variables assign immediately for the same GitHub Actions job step line
+* refactor: bash/github: `GH_*` global environment variables renamed into `GHWF_*`, added prefix to the rest
+
 ## 2022.08.13:
 * fixed: bash/github/print-*.sh: execution fixup
 * new: bash/github: init-print-workflow.sh, print-*.sh, *-print-annotation-group.sh: ability to group sequence of prints with the same annotation type into single annotation to prevent too many annotations because of the limit in the GitHub Actions job summary (currently is 10)

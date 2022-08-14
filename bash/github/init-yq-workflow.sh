@@ -34,13 +34,16 @@
 # Usage example:
 #
 # >
-# yq_edit '<prefix-name>' 'edit' "<input-yaml>" "$TEMP_DIR/<output-yaml-edited>" \
+# yq_edit "<prefix-name>" "<suffix-name>" "<input-yaml>" "$TEMP_DIR/<output-yaml-edited>" \
 #   <list-of-yq-eval-strings> && \
 #   yq_diff "$TEMP_DIR/<output-yaml-edited>" "<input-yaml>" "$TEMP_DIR/<output-diff-edited>" && \
 #   yq_restore_edited_uniform_diff "$TEMP_DIR/<output-diff-edited>" "$TEMP_DIR/<output-diff-edited-restored>" && \
 #   yq_patch "$TEMP_DIR/<output-yaml-edited>" "$TEMP_DIR/<output-diff-edited-restored>" "$TEMP_DIR/<output-yaml-edited-restored>" "<output-yaml>" ["<input-yaml>"]
 #
 # , where:
+#
+#   <prefix-name> - prefix name part for files in the temporary directory
+#   <suffix-name> - suffix name part for files in the temporary directory
 #
 #   <input-yaml>  - input yaml file path
 #   <output-yaml> - output yaml file path

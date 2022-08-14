@@ -21,8 +21,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 
 function gh_enable_print_error_buffering()
 {
-  if [[ -z "${PRINT_ERROR_BUF_STR+x}" ]]; then
-    tkl_declare_global PRINT_ERROR_BUF_STR ''
+  if [[ -z "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
+    gh_set_env_var GHWF_PRINT_ERROR_BUF_STR ''
   fi
 }
 
@@ -52,10 +52,10 @@ function gh_print_error_ln()
   local line=''
   local arg
 
-  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
+  if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       local IFS=$'\n'; for arg in "$@"; do
-        line="${line}${line:+"%0A"}$arg"
+        line="${line}${line:+"%0D%0A"}$arg"
       done
 
       gh_trim_trailing_line_return_chars "$line"
@@ -65,9 +65,9 @@ function gh_print_error_ln()
 
       gh_process_annotation_print error '' "$RETURN_VALUE"
 
-      PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
+      GHWF_PRINT_ERROR_BUF_STR="${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
     else
-      PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}$*"
+      GHWF_PRINT_ERROR_BUF_STR="${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+$'\r\n'}$*"
     fi
   else
     # with check on integer value
@@ -86,7 +86,7 @@ function gh_print_error_ln_nobuf_nolag()
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     local IFS=$'\n'; for arg in "$@"; do
-      line="${line}${line:+"%0A"}$arg"
+      line="${line}${line:+"%0D%0A"}$arg"
     done
 
     gh_trim_trailing_line_return_chars "$line"
@@ -155,7 +155,7 @@ function gh_print_errors()
   local IFS
   local arg
 
-  if [[ -n "${PRINT_ERROR_BUF_STR+x}" ]]; then
+  if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       IFS=$'\n'; for arg in "$@"; do
         gh_trim_trailing_line_return_chars "$arg"
@@ -165,11 +165,11 @@ function gh_print_errors()
 
         gh_process_annotation_print error '' "$RETURN_VALUE"
 
-        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
+        GHWF_PRINT_ERROR_BUF_STR="${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
       done
     else
       IFS=$'\n'; for arg in "$@"; do
-        PRINT_ERROR_BUF_STR="${PRINT_ERROR_BUF_STR}${PRINT_ERROR_BUF_STR:+$'\r\n'}$arg"
+        GHWF_PRINT_ERROR_BUF_STR="${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+$'\r\n'}$arg"
       done
     fi
   else
@@ -190,10 +190,7 @@ function gh_write_error_to_changelog_text_bullet_ln()
 
   local changelog_msg="$1"
 
-  CHANGELOG_BUF_STR="${CHANGELOG_BUF_STR}* error: ${changelog_msg}"$'\r\n'
-
-  # update GitHub pipeline variable
-  gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
+  gh_set_env_var GHWF_CHANGELOG_BUF_STR "${GHWF_CHANGELOG_BUF_STR}* error: ${changelog_msg}"$'\r\n'
 }
 
 # format: <message> | <error_message> <changelog_message>

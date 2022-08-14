@@ -53,14 +53,19 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
+# does not enable or disable by default, just does include a functionality
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/enable-github-env-autoeval.sh"
+
 
 function init_basic_workflow()
 {
-  if [[ -z "${CHANGELOG_BUF_STR:+x}" ]]; then # to save buffer between workflow steps
-    tkl_declare_global CHANGELOG_BUF_STR ''
+  # load GitHub Actions variables at first
+  if (( GHWF_GITHUB_ENV_AUTOEVAL )); then
+    gh_eval_github_env
+  fi
 
-    # update GitHub pipeline variable
-    gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
+  if [[ -z "${GHWF_CHANGELOG_BUF_STR:+x}" ]]; then # to save buffer between workflow steps
+    gh_set_env_var GHWF_CHANGELOG_BUF_STR  ''
   fi
 
   [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
@@ -83,20 +88,17 @@ init_basic_workflow || exit $?
 function gh_prepend_changelog_file()
 {
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
-  [[ -z "$CHANGELOG_BUF_STR" ]] && return 0
+  [[ -z "$GHWF_CHANGELOG_BUF_STR" ]] && return 0
 
   if [[ -f "$CHANGELOG_FILE" && -s "$CHANGELOG_FILE" ]]; then
-    local changelog_buf="${CHANGELOG_BUF_STR}"$'\r\n'"$(< "$CHANGELOG_FILE")"
+    local changelog_buf="${GHWF_CHANGELOG_BUF_STR}"$'\r\n'"$(< "$CHANGELOG_FILE")"
   else
-    local changelog_buf="${CHANGELOG_BUF_STR}"
+    local changelog_buf="${GHWF_CHANGELOG_BUF_STR}"
   fi
 
   echo -n "$changelog_buf" > "$CHANGELOG_FILE"
 
-  CHANGELOG_BUF_STR=''
-
-  # update GitHub pipeline variable
-  gh_set_env_var CHANGELOG_BUF_STR "$CHANGELOG_BUF_STR"
+  gh_set_env_var GHWF_CHANGELOG_BUF_STR ''
 }
 
 tkl_set_return
