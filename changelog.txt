@@ -1,3 +1,6 @@
+2022.08.16:
+* changed: bash/github/accum-rate-limits.sh: removed usage of a print annotation group because works as not expected (a print does truncate by first `\n` characters and the `%0A` sequence does not work as line return in the job summary annotations)
+
 2022.08.14:
 * fixed: bash/github: utils.sh, set-env-from-args.sh: missed to ignore `GITHUB_*` builtin variables, execution fixup
 * new: bash/github: init-basic-workflow.sh, enable-github-env-autoeval.sh: Ability to apply GitHub Actions job environment variables by the `GITHUB_ENV` file path automatically on each GitHub Actions job step line instead of on the next step only. A workflow does require to enable this explicitly using the `enable-github-env-autoeval.sh` script run.

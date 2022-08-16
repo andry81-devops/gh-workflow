@@ -14,7 +14,6 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/traplib.sh"
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
@@ -39,11 +38,6 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
 current_date_utc="${current_date_time_utc/%T*}"
-
-# begin local annotation print group
-gh_begin_print_annotation_group notice
-
-tkl_push_trap 'gh_end_print_annotation_group' EXIT
 
 # stats between previous/next script execution (dependent to the pipeline scheduler times)
 
