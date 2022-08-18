@@ -1,3 +1,6 @@
+2022.08.18:
+* fixed: bash/github: init-print-workflow.sh, print-*.sh: execution fixup
+
 2022.08.16:
 * changed: bash/github/accum-rate-limits.sh: removed usage of a print annotation group because works as not expected (a print does truncate by first `\n` characters and the `%0A` sequence does not work as line return in the job summary annotations)
 

@@ -118,15 +118,35 @@ function gh_print_annotation()
   local msg="$3"
 
   #gh_decode_line_return_chars "$msg"
-  RETURN_VALUE="${RETURN_VALUE//%0D%0A/$'\r\n'\| }"
+  msg="${msg//%0D%0A/$'\r\n'\| }"
 
-  # stdout redirection must be issued outside
+  # NOTE:
+  #   The stdout redirection must be issued outside.
+  #
   echo "::$annot_type $annot_prefix::$msg"
 
   gh_process_annotation_print "$annot_type" "$annot_prefix" "$msg"
 
   # duplicate output into `GHWF_ANNOTATIONS_PRINT_BUF_STR` variable to reuse later
   gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR "${GHWF_ANNOTATIONS_PRINT_BUF_STR}${GHWF_ANNOTATIONS_PRINT_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
+}
+
+function gh_print_annotation_line()
+{
+  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+
+  local line="$1"
+
+  #gh_decode_line_return_chars "$msg"
+  line="${line//%0D%0A/$'\r\n'\| }"
+
+  # NOTE:
+  #   The stdout redirection must be issued outside.
+  #
+  echo "$line"
+
+  # duplicate output into `GHWF_ANNOTATIONS_PRINT_BUF_STR` variable to reuse later
+  gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR "${GHWF_ANNOTATIONS_PRINT_BUF_STR}${GHWF_ANNOTATIONS_PRINT_BUF_STR:+$'\r\n'}$line"
 }
 
 function gh_flush_print_annotations()

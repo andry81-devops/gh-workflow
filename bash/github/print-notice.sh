@@ -131,6 +131,8 @@ function gh_print_notices_buffer()
 {
   local buf="$1"
 
+  [[ -z "$buf" ]] && return 0
+
   local line
 
   # with check on integer value
@@ -143,7 +145,7 @@ function gh_print_notices_buffer()
       # fix multiline text in a single argument
       gh_encode_line_return_chars "$RETURN_VALUE"
 
-      gh_print_annotation notice '' "$RETURN_VALUE"
+      gh_print_annotation_line "$RETURN_VALUE"
     done
   else
     gh_print_args "$buf"
