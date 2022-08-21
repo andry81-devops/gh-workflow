@@ -118,7 +118,6 @@ function gh_print_annotation()
   local msg="$3"
 
   #gh_decode_line_return_chars "$msg"
-  msg="${msg//%0D%0A/$'\r\n'\| }"
 
   # NOTE:
   #   The stdout redirection must be issued outside.
@@ -138,7 +137,6 @@ function gh_print_annotation_line()
   local line="$1"
 
   #gh_decode_line_return_chars "$msg"
-  line="${line//%0D%0A/$'\r\n'\| }"
 
   # NOTE:
   #   The stdout redirection must be issued outside.
@@ -162,7 +160,6 @@ function gh_flush_print_annotations()
     gh_trim_trailing_line_return_chars "$line"
 
     # gh_decode_line_return_chars "$RETURN_VALUE"
-    RETURN_VALUE="${RETURN_VALUE//%0D%0A/$'\r\n'\| }"
 
     IFS=':' read -r empty empty annot_type <<< "$RETURN_VALUE"
     IFS=$'\t ' read -r annot_type empty <<< "$annot_type"

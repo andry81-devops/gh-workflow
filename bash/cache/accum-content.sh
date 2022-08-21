@@ -19,6 +19,7 @@
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-yq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
@@ -92,7 +93,7 @@ if [[ ! -f "$content_index_file" ]]; then
     # CAUTION:
     #   We must use '' as an empty value placeholder to leave single quotes for it.
     #   If try to leave a value empty without quotes, then for a value with `:` character the `yq` parser will replace it with double-quotes or
-    #   even change it in case of the UTC timestamp value.
+    #   even change it, for example, in case of the UTC timestamp value.
     #
     echo \
 "# This file is automatically updated by the GitHub action script: https://github.com/andry81-devops/gh-action--accum-content
@@ -178,6 +179,18 @@ if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
   tkl_push_trap 'rm -rf "$TEMP_DIR"' EXIT
 fi
 
+gh_begin_print_annotation_group notice
+
+function end_print_annotation_group_handler()
+{
+  gh_end_print_annotation_group
+
+  # self update
+  function end_print_annotation_group_handler() { :; }
+}
+
+tkl_push_trap 'end_print_annotation_group_handler' EXIT
+
 stats_failed_inc=0
 stats_skipped_inc=0
 stats_expired_inc=0
@@ -211,7 +224,11 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
   fi
 
   if [[ "$config_index_dir" != "$index_dir" ]]; then
-    gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'"  config_dir=\`$config_dir\`"$'\n'"  index_dir=\`$index_dir\`"$'\n'"  content_index_dir=\`$content_index_dir\`"$'\n'"  config_index_dir=\`$config_index_dir\`"
+    gh_print_warning_ln "$0: warning: invalid index file directory entry: dirs[$i]:"$'\n'\
+"  config_dir=\`$config_dir\`"$'\n'\
+"  index_dir=\`$index_dir\`"$'\n'\
+"  content_index_dir=\`$content_index_dir\`"$'\n'\
+"  config_index_dir=\`$config_index_dir\`"
 
     (( stats_failed_inc++ ))
 
@@ -227,8 +244,14 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     IFS=$'\n' read -r -d '' config_file config_query_url <<< \
       $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files[$j].file,.\"content-config\".entries[0].dirs[$i].files[$j].\"query-url\"" $content_config_file) 2>/dev/null
 
-    IFS=$'\n' read -r -d '' index_file index_queried_url index_file_prev_md5_hash index_file_prev_timestamp <<< \
-      $("${YQ_CMDLINE_READ[@]}" ".\"content-index\".entries[0].dirs[$i].files[$j].file,.\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\",.\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\",.\"content-index\".entries[0].dirs[$i].files[$j].timestamp" "$content_index_file") 2>/dev/null
+    IFS=$'\n' read -r -d '' index_file index_queried_url index_file_prev_size index_file_prev_md5_hash index_file_prev_timestamp <<< \
+      $("${YQ_CMDLINE_READ[@]}" "\
+.\"content-index\".entries[0].dirs[$i].files[$j].file,\
+.\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\",\
+.\"content-index\".entries[0].dirs[$i].files[$j].size,\
+.\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\",\
+.\"content-index\".entries[0].dirs[$i].files[$j].timestamp" \
+        "$content_index_file") 2>/dev/null
 
     # CAUTION:
     #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -238,6 +261,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       config_query_url \
       index_file \
       index_queried_url \
+      index_file_prev_size \
       index_file_prev_md5_hash \
       index_file_prev_timestamp
 
@@ -267,7 +291,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
     is_file_expired=0
 
-    config_sched_next_update_timestamp_utc=$current_date_time_utc
+    config_sched_next_update_timestamp_utc="$current_date_time_utc"
     index_file_expired_timestamp_delta=0
 
     if [[ -n "$index_file_prev_timestamp" ]]; then
@@ -284,43 +308,51 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       (( index_file_expired_sec = current_date_time_utc_sec - index_file_next_update_timestamp_utc_sec ))
 
       if (( index_file_expired_sec > 0 )); then
-        index_file_expired_timestamp_delta=+$(date --utc -d "@$index_file_expired_sec" +%T)
+        index_file_expired_timestamp_delta="+$(date --utc -d "@$index_file_expired_sec" +%T)"
         is_file_expired=1
       else
         (( index_file_expired_sec = -index_file_expired_sec ))
-        index_file_expired_timestamp_delta=-$(date --utc -d "@$index_file_expired_sec" +%T)
+        index_file_expired_timestamp_delta="-$(date --utc -d "@$index_file_expired_sec" +%T)"
       fi
     else
       is_file_expired=1
     fi
 
-    index_file_next_md5_hash=''
+    index_file_prev_updated_size=-1     # negative is not exist
+    index_file_prev_updated_md5_hash=''
+
     if (( is_index_file_prev_exist )); then
+      # to update the file size in the index file
+      index_file_prev_updated_size="$(stat -c%s "$index_dir/$index_file")"
+
       # to update the file hash in the index file
-      index_file_next_md5_hash=( $(md5sum -b "$index_dir/$index_file") )
+      index_file_prev_updated_md5_hash=( $(md5sum -b "$index_dir/$index_file") )
 
       # drop forwarding backslash: https://unix.stackexchange.com/questions/424628/md5sum-prepends-to-the-checksum
       #
-      index_file_next_md5_hash="${index_file_next_md5_hash#\\}"
+      index_file_prev_updated_md5_hash="${index_file_prev_updated_md5_hash#\\}"
     fi
 
     if (( ! is_file_expired )); then
       if (( ! NO_SKIP_UNEXPIRED_ENTRIES )); then
-        echo "File is skipped: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
+        echo "File is skipped:
+  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  size=\`$index_file_prev_updated_size\` file=\`$index_dir/$index_file\`"
 
         # update existing file hash on skip
-        if [[ -n "$index_file_next_md5_hash" && "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
-          index_file_next_timestamp="$(date --utc +%FT%TZ)"
-
+        if (( index_file_prev_updated_size != index_file_prev_size )) || \
+           [[ -n "$index_file_prev_updated_md5_hash" && "$index_file_prev_updated_md5_hash" != "$index_file_prev_md5_hash" ]]; then
           {
             # update index file fields
             if (( DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND )); then
               yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
-                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].size=$index_file_prev_updated_size" \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_prev_updated_md5_hash\"" && \
                 mv -Tf "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file"
             else
               yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
-                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" && \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].size=$index_file_prev_updated_size" \
+                ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_prev_updated_md5_hash\"" && \
                 yq_diff "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
                 yq_restore_edited_uniform_diff "$TEMP_DIR/content-index-[$i][$j]-edited.diff" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" && \
                 yq_patch "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$TEMP_DIR/content-index-[$i][$j]-edited-restored.diff" "$TEMP_DIR/content-index-[$i][$j].yml" "$content_index_file"
@@ -336,17 +368,22 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
         continue
       else
-        echo "File is forced to download: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
+        echo "File is forced to download:
+  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  size=\`$index_file_prev_updated_size\` file=\`$index_dir/$index_file\`"
       fi
     else
       (( stats_expired_inc++ ))
 
-      echo "File is expired: prev-timestamp=\`$index_file_prev_timestamp\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` expired-delta=\`$index_file_expired_timestamp_delta\` existed=\`$is_index_file_prev_exist\` file=\`$index_dir/$index_file\`"
+      echo "File is expired:
+  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  size=\`$index_file_prev_updated_size\` file=\`$index_dir/$index_file\`"
     fi
 
     if (( is_index_file_prev_exist )); then
       # always reread from existing file
-      index_file_prev_md5_hash=$index_file_next_md5_hash
+      index_file_prev_size="$index_file_prev_updated_size"
+      index_file_prev_md5_hash="$index_file_prev_updated_md5_hash"
     fi
 
     [[ ! -d "$TEMP_DIR/content/$index_dir" ]] &&      mkdir -p "$TEMP_DIR/content/$index_dir"
@@ -360,7 +397,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
     #   This is required for uniform parse the curl output in both verbose or non verbose mode.
     #
-    if eval curl $curl_flags -o "\$TEMP_DIR/content/\$index_dir/\$index_file" "\$config_query_url" 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
+    if eval curl $curl_flags -o '"$TEMP_DIR/content/$index_dir/$index_file"' '"$config_query_url"' 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
       (( stats_downloaded_inc++ ))
 
       echo '---'
@@ -382,8 +419,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       continue
     fi
 
+    index_file_next_size="$(stat -c%s "$TEMP_DIR/content/$index_dir/$index_file")"
+
     # check on empty
-    if [[ ! -s "$TEMP_DIR/content/$index_dir/$index_file" ]]; then
+    if (( ! index_file_next_size )); then
       if [[ -s "$TEMP_DIR/curl_stderr/$index_dir/$index_file" ]]; then
         echo "$(<"$TEMP_DIR/curl_stderr/$index_dir/$index_file")"
         echo '---'
@@ -418,8 +457,12 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       (( stats_changed_inc++ ))
 
       gh_print_notice_and_write_to_changelog_text_ln \
-        "changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`" \
-        "* changed: $index_dir/$index_file: md5-hash=\`$index_file_next_md5_hash\` existed=\`$is_index_file_prev_exist\` sched-timestamp=\`$config_sched_next_update_timestamp_utc\` prev-timestamp=\`$index_file_prev_timestamp\` expired-delta=\`$index_file_expired_timestamp_delta\` prev-md5-hash=\`$index_file_prev_md5_hash\`"
+        "changed: $index_dir/$index_file:
+  size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
+  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`" \
+        "* changed: $index_dir/$index_file:
+  size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
+  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`"
 
       [[ ! -d "$index_dir" ]] && mkdir -p "$index_dir"
 
@@ -433,12 +476,14 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       if (( DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND )); then
         yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\"=\"$config_query_url\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].size=$index_file_next_size" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].timestamp=\"$index_file_next_timestamp\"" && \
           mv -Tf "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file"
       else
         yq_edit 'content-index' 'edit' "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.yml" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].\"queried-url\"=\"$config_query_url\"" \
+          ".\"content-index\".entries[0].dirs[$i].files[$j].size=$index_file_next_size" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].\"md5-hash\"=\"$index_file_next_md5_hash\"" \
           ".\"content-index\".entries[0].dirs[$i].files[$j].timestamp=\"$index_file_next_timestamp\"" && \
           yq_diff "$TEMP_DIR/content-index-[$i][$j]-edited.yml" "$content_index_file" "$TEMP_DIR/content-index-[$i][$j]-edited.diff" && \
@@ -452,6 +497,9 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     echo '---'
   done
 done
+
+# remove grouping
+end_print_annotation_group_handler
 
 content_index_file_next_md5_hash=( $(md5sum -b "$content_index_file") )
 

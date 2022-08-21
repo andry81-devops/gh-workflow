@@ -1,3 +1,8 @@
+2022.08.21:
+* new: bash/cache/accum-content.sh: added prev/next file size print
+* new: bash/cache: init-print-workflow.sh, accum-content.sh: enabled changed file notice messages groupping into a single annotation to fit the GitHub Actions summary maximum limit as 10 annotations (restored, because the message truncation actually was a message shrink into a single line, after expand it does restore back into multiline string)
+* refactor: bash/cache/accum-content.sh: minor refactor
+
 2022.08.18:
 * fixed: bash/github: init-print-workflow.sh, print-*.sh: execution fixup
 

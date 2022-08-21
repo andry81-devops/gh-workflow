@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.21:
+* new: bash/cache/accum-content.sh: added prev/next file size print
+* new: bash/cache: init-print-workflow.sh, accum-content.sh: enabled changed file notice messages groupping into a single annotation to fit the GitHub Actions summary maximum limit as 10 annotations (restored, because the message truncation actually was a message shrink into a single line, after expand it does restore back into multiline string)
+
 ## 2022.08.14:
 * fixed: bash/github: utils.sh, set-env-from-args.sh: missed to ignore `GITHUB_*` builtin variables, execution fixup
 * new: bash/github: init-basic-workflow.sh, enable-github-env-autoeval.sh: Ability to apply GitHub Actions job environment variables by the `GITHUB_ENV` file path automatically on each GitHub Actions job step line instead of on the next step only. A workflow does require to enable this explicitly using the `enable-github-env-autoeval.sh` script run.
