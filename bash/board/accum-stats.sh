@@ -71,16 +71,18 @@ tkl_push_trap 'curl_print_response_if_error "$TEMP_DIR/response.txt"' EXIT
 #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
 #   This is required for uniform parse the curl output in both verbose or non verbose mode.
 #
-if eval curl $curl_flags -o "\$TEMP_DIR/response.txt" "\$topic_query_url" 2>&1 | tee "$TEMP_DIR/response-stderr.txt" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
-  echo '---'
-else
-  echo '---'
+eval curl $curl_flags -o '"$TEMP_DIR/response.txt"' '"$topic_query_url"' 2>&1 | tee "$TEMP_DIR/response-stderr.txt" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'
+last_error=$?
 
-  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
-    echo "$(<"$TEMP_DIR/response-stderr.txt")"
-    echo '---'
-  fi
+echo '---'
 
+# always print stderr unconditionally to a return code
+if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
+  echo "$(<"$TEMP_DIR/response-stderr.txt")"
+  echo '---'
+fi
+
+if (( last_error )); then
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
@@ -88,11 +90,6 @@ fi
 
 # check on empty
 if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
-  if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
-    echo "$(<"$TEMP_DIR/response-stderr.txt")"
-    echo '---'
-  fi
-
   gh_enable_print_buffering
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255

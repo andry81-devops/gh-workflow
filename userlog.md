@@ -2,6 +2,11 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.22:
+* new: bash/cache/accum-content.sh: added `NO_DOWNLOAD_ENTRIES` and `NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD` variables to be able to debug locally without download
+* changed: bash: board/accum-stats.sh, cache/accum-content.sh, inpage/accum-downloads.sh: print-*.sh: always print stderr unconditionally to a return code
+* changed: bash/github/print-*.sh: `GHWF_PRINT_ERROR_BUF_STR` variable assign by `gh_set_env_var` to be able to debug using `GITHUB_ENV` file locally
+
 ## 2022.08.21:
 * new: bash/cache/accum-content.sh: added prev/next file size print
 * new: bash/cache: init-print-workflow.sh, accum-content.sh: enabled changed file notice messages groupping into a single annotation to fit the GitHub Actions summary maximum limit as 10 annotations (restored, because the message truncation actually was a message shrink into a single line, after expand it does restore back into multiline string)

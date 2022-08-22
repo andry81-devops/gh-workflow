@@ -65,9 +65,9 @@ function gh_print_notice_ln()
 
       gh_process_annotation_print notice '' "$RETURN_VALUE"
 
-      GHWF_PRINT_NOTICE_BUF_STR="${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
+      gh_set_env_var GHWF_PRINT_NOTICE_BUF_STR "${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
     else
-      GHWF_PRINT_NOTICE_BUF_STR="${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+$'\r\n'}$*"
+      gh_set_env_var GHWF_PRINT_NOTICE_BUF_STR "${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+$'\r\n'}$*"
     fi
   else
     # with check on integer value
@@ -133,20 +133,21 @@ function gh_print_notices_buffer()
 
   [[ -z "$buf" ]] && return 0
 
+  local IFS
   local line
 
   # with check on integer value
   [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )) && sleep $PRINT_NOTICE_LAG_FSEC
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    local IFS=$'\n'; for line in "$buf"; do
+    while IFS=$'\n' read -r line; do
       gh_trim_trailing_line_return_chars "$line"
 
       # fix multiline text in a single argument
       gh_encode_line_return_chars "$RETURN_VALUE"
 
       gh_print_annotation_line "$RETURN_VALUE"
-    done
+    done < "$buf"
   else
     gh_print_args "$buf"
   fi
@@ -167,11 +168,11 @@ function gh_print_notices()
 
         gh_process_annotation_print notice '' "$RETURN_VALUE"
 
-        GHWF_PRINT_NOTICE_BUF_STR="${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
+        gh_set_env_var GHWF_PRINT_NOTICE_BUF_STR "${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
       done
     else
       IFS=$'\n'; for arg in "$@"; do
-        GHWF_PRINT_NOTICE_BUF_STR="${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+$'\r\n'}$arg"
+        gh_set_env_var GHWF_PRINT_NOTICE_BUF_STR "${GHWF_PRINT_NOTICE_BUF_STR}${GHWF_PRINT_NOTICE_BUF_STR:+$'\r\n'}$arg"
       done
     fi
   else

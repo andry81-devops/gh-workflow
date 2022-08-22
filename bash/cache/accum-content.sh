@@ -6,9 +6,17 @@
 
 # NOTE:
 #
+#   Script specific system variables (to set):
+#
+#     * NO_SKIP_UNEXPIRED_ENTRIES
+#     * NO_DOWNLOAD_ENTRIES
+#     * NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD
+#
 #   Yaml specific user variables (to set):
 #
 #     * DISABLE_YAML_EDIT_FORMAT_RESTORE_BY_DIFF_MERGE_WORKAROUND
+#
+#   The rest of variables is related to other scripts.
 #
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
@@ -393,41 +401,47 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     echo "  file: \`$index_dir/$index_file\`"
     echo "  URL:  $config_query_url"
 
-    # CAUTION:
-    #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
-    #   This is required for uniform parse the curl output in both verbose or non verbose mode.
-    #
-    if eval curl $curl_flags -o '"$TEMP_DIR/content/$index_dir/$index_file"' '"$config_query_url"' 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'; then
-      (( stats_downloaded_inc++ ))
+    if (( ! NO_DOWNLOAD_ENTRIES && ! NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )); then
+      # CAUTION:
+      #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
+      #   This is required for uniform parse the curl output in both verbose or non verbose mode.
+      #
+      eval curl $curl_flags -o '"$TEMP_DIR/content/$index_dir/$index_file"' '"$config_query_url"' 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'
+      last_error=$?
 
       echo '---'
-    else
-      echo '---'
 
+      # always print stderr unconditionally to a return code
       if [[ -s "$TEMP_DIR/curl_stderr/$index_dir/$index_file" ]]; then
         echo "$(<"$TEMP_DIR/curl_stderr/$index_dir/$index_file")"
         echo '---'
       fi
 
-      (( stats_failed_inc++ ))
+      if (( ! last_error )); then
+        (( stats_downloaded_inc++ ))
+      else
+        (( stats_failed_inc++ ))
 
-      gh_enable_print_buffering
+        gh_enable_print_buffering
 
-      gh_print_error_and_write_to_changelog_text_ln \
-        "$0: error: failed to download: \`$index_dir/$index_file\`" \
-        "* error: $index_dir/$index_file: failed to download"
-      continue
+        gh_print_error_and_write_to_changelog_text_ln \
+          "$0: error: failed to download: \`$index_dir/$index_file\`" \
+          "* error: $index_dir/$index_file: failed to download"
+        continue
+      fi
+    else
+      # just copy from the cache if exist or create empty
+      if (( ! NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )) && [[ -f "$index_dir/$index_file" ]]; then
+        cp -T "$index_dir/$index_file" "$TEMP_DIR/content/$index_dir/$index_file"
+      else
+        echo -n '' > "$TEMP_DIR/content/$index_dir/$index_file"
+      fi
     fi
 
     index_file_next_size="$(stat -c%s "$TEMP_DIR/content/$index_dir/$index_file")"
 
     # check on empty
     if (( ! index_file_next_size )); then
-      if [[ -s "$TEMP_DIR/curl_stderr/$index_dir/$index_file" ]]; then
-        echo "$(<"$TEMP_DIR/curl_stderr/$index_dir/$index_file")"
-        echo '---'
-      fi
-
       (( stats_failed_inc++ ))
 
       gh_enable_print_buffering

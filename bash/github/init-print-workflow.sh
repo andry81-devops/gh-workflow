@@ -175,30 +175,21 @@ function gh_flush_print_annotations()
 
 # NOTE: Groups only annotations with the same type.
 #
-# CAUTION:
+
+# NOTE:
 #
-#   Because variable assignment works only between GitHub Actions job steps, then this will NOT work:
-#
-#     - name: head annotations
-#       shell: bash
-#       run: |
-#         $GH_WORKFLOW_ROOT/bash/github/begin-print-annotation-group.sh notice
-#         $GH_WORKFLOW_ROOT/bash/github/print-notice.sh "111" "222"
-#         $GH_WORKFLOW_ROOT/bash/github/end-print-annotation-group.sh
-#
-#   This will work:
+#   Basically variable assignment works only between GitHub Actions job steps.
+#   But the `init-basic-workflow.sh` script does reload the `GITHUB_ENV` file
+#   implicitly, so that must work even if executed from a child process:
 #
 #     - name: head annotations
 #       shell: bash
 #       run: |
 #         $GH_WORKFLOW_ROOT/bash/github/begin-print-annotation-group.sh notice
-#
-#     - name: head annotations
-#       shell: bash
-#       run: |
 #         $GH_WORKFLOW_ROOT/bash/github/print-notice.sh "111" "222"
 #         $GH_WORKFLOW_ROOT/bash/github/end-print-annotation-group.sh # must be last in the step
 #
+
 function gh_begin_print_annotation_group()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0

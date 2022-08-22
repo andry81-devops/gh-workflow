@@ -21,26 +21,29 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 
 function curl_print_response_if_error()
 {
+  local last_error=$?
+
+  (( ! ENABLE_PRINT_CURL_RESPONSE_ON_ERROR )) && return $last_error
+  (( ! last_error )) && return $last_error
+
   if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
     TEMP_DIR="$(mktemp -d)"
 
     tkl_push_trap 'rm -rf "$TEMP_DIR"' RETURN
   fi
 
-  local last_error=$?
   local response_file="${1:-"$TEMP_DIR/response.txt"}"
 
-  (( ! ENABLE_PRINT_CURL_RESPONSE_ON_ERROR )) && return
-  (( ! last_error )) && return
+  [[ ! -f "$response_file" ]] && return 255
 
-  [[ ! -f "$response_file" ]] && return
-
-  read -r -d '' curl_response_file < "$response_file" || return
+  read -r -d '' curl_response_file < "$response_file" || return 255
 
   # CAUTION:
   #   As a single line to reduce probability of mix with the stderr.
   #
   echo "CURL RESPONSE:"$'\r\n'"$curl_response_file"$'\r\n---'
+
+  return $last_error
 }
 
 tkl_set_return
