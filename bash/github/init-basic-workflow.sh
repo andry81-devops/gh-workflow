@@ -14,9 +14,9 @@
 #   absence including residual or algorithmically not actual changes you must
 #   declare these variables:
 #
-#     * CONTINUE_ON_INVALID_INPUT
-#     * CONTINUE_ON_EMPTY_CHANGES
-#     * CONTINUE_ON_RESIDUAL_CHANGES
+#     * CONTINUE_ON_INVALID_INPUT=1
+#     * CONTINUE_ON_EMPTY_CHANGES=1
+#     * CONTINUE_ON_RESIDUAL_CHANGES=1
 #
 #   Because invalid input, empty or residual changes has to be detected and
 #   has to be not trigger a commit, then we must to continue on them
@@ -32,10 +32,10 @@
 #   Other variables:
 #
 #     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
-#     * ENABLE_GENERATE_CHANGELOG_FILE
-#     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR
-#     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME
-#     * CHANGELOG_FILE
+#     * ENABLE_GENERATE_CHANGELOG_FILE=1
+#     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=1
+#     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=1
+#     * CHANGELOG_FILE=repo/owner-of-content/repo-with-content/content-changelog.txt
 #
 
 # Script both for execution and inclusion.

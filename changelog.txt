@@ -1,3 +1,6 @@
+2022.08.23:
+* fixed: bash/github/print-*.sh: execution fixup
+
 2022.08.22:
 * fixed: bash/github/print-*.sh: line returns fixup
 * fixed: bash/github/init-curl-workflow.sh: return code correct handling

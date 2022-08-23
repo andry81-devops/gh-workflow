@@ -147,9 +147,11 @@ function gh_print_notices_buffer()
       gh_encode_line_return_chars "$RETURN_VALUE"
 
       gh_print_annotation_line "$RETURN_VALUE"
-    done < "$buf"
+    done <<< "$buf"
   else
-    gh_print_args "$buf"
+    while IFS=$'\n' read -r line; do
+      gh_print_args "$line"
+    done <<< "$buf"
   fi
 }
 

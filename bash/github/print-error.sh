@@ -147,9 +147,11 @@ function gh_print_errors_buffer()
       gh_encode_line_return_chars "$RETURN_VALUE"
 
       gh_print_annotation_line "$RETURN_VALUE"
-    done < "$buf" >&2
+    done <<< "$buf" >&2
   else
-    gh_print_args "$buf" >&2
+    while IFS=$'\n' read -r line; do
+      gh_print_args "$line"
+    done <<< "$buf" >&2
   fi
 }
 
