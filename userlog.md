@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.26:
+* new: bash/github: added `eval-from-args.sh` with `--eval_github_env` to evaluate set of commands and additionally does evaluate `GITHUB_ENV` file before the execution
+
 ## 2022.08.22:
 * new: bash/cache/accum-content.sh: added `NO_DOWNLOAD_ENTRIES` and `NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD` variables to be able to debug locally without download
 * changed: bash: board/accum-stats.sh, cache/accum-content.sh, inpage/accum-downloads.sh: print-*.sh: always print stderr unconditionally to a return code

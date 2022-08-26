@@ -1,3 +1,8 @@
+2022.08.26:
+* new: bash/github: added `eval-from-args.sh` with `--eval_github_env` to evaluate set of commands and additionally does evaluate `GITHUB_ENV` file before the execution
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+* refactor: bash/github: code refactor
+
 2022.08.23:
 * fixed: bash/github/print-*.sh: execution fixup
 
