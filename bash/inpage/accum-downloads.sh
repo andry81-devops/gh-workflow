@@ -38,6 +38,11 @@ tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
 gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date_time_utc" "$current_date_time_utc:"
 
+if (( ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_GITHUB_ACTIONS_RUN_URL" ]]; then
+  gh_write_notice_to_changelog_text_bullet_ln \
+    "GitHub Actions Run URL: $GHWF_GITHUB_ACTIONS_RUN_URL"
+fi
+
 current_date_utc="${current_date_time_utc/%T*}"
 
 # exit with non 0 code if nothing is changed
