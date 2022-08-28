@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.28:
+* new: bash/cache/accum-content.sh: added `download-validate/shell` and `download-validate/run` config content file fields to run a file download validation script
+* new: bash/github: added `init-xq-workflow.sh` script to intialize workflow for the `xq` utility
+
 ## 2022.08.26:
 * new: bash: use `ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG` and `GHWF_GITHUB_ACTIONS_RUN_URL` variables to print GitHub Actions run URL into the changelog file
 
