@@ -4,6 +4,21 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# NOTE:
+#
+#   Xml specific system variables (to use):
+#
+#     * XQ_CMDLINE_READ
+#
+
+# CAUTION:
+#
+#   An Xml Query command lines designed to be able to run independently to these implementations:
+#
+#   * https://github.com/kislyuk/xq     - a `xq` wrapper (default Cygwin distribution)
+#   * xmlstarlet                        - apt-get module (available for Ubuntu 20.04)
+#
+
 # Script both for execution and inclusion.
 [[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_XQ_WORKFLOW_SH" && SOURCE_GHWF_INIT_XQ_WORKFLOW_SH -ne 0) ]] && return
 
@@ -19,7 +34,33 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 
 function xq_init()
 {
-  which xq > /dev/null || return $?
+  # CAUTION:
+  #   Array instead of string is required here for correct expansion!
+  #
+
+  case "$OSTYPE" in
+    cygwin*)
+      which xq > /dev/null || return $?
+
+      local xq_help="$(yq --help)"
+
+      if grep 'https://github.com/kislyuk/xq[/ ]' - <<< "$xq_help" >/dev/null; then
+        XQ_CMDLINE_READ=(xq -c -r)
+      else
+        XQ_CMDLINE_READ=(xq)
+      fi
+      ;;
+
+    linux*)
+      which xmlstarlet > /dev/null || return $?
+
+      XMLSTARLET_CMDLINE_SEL=(xmlstarlet sel)
+      ;;
+
+    *)
+      return 255
+      ;;
+  esac
 
   return 0
 }

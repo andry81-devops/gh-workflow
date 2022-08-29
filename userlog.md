@@ -2,6 +2,10 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.08.29:
+* new: bash/cache/accum-content.sh: added `entries[0]/init/shell` and `entries[0]/init/run` config content file fields to run entries initialization script
+* new: bash/github/init-xq-workflow.sh: added `XQ_CMDLINE_READ` and `XMLSTARLET_CMDLINE_SEL` variable to be able to use different xml query implementations
+
 ## 2022.08.28:
 * new: bash/cache/accum-content.sh: added `download-validate/shell` and `download-validate/run` config content file fields to run a file download validation script
 * new: bash/github: added `init-xq-workflow.sh` script to intialize workflow for the `xq` utility

@@ -31,6 +31,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-yq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 
 # slashes fix
@@ -78,21 +79,47 @@ current_date_utc="${current_date_time_utc/%T*}"
 
 current_date_utc_sec="$(date --utc -d "${current_date_utc}Z" +%s)" # seconds from epoch to current date
 
-IFS=$'\n' read -r -d '' dirs_num <<< $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|length' $content_config_file)
+IFS=$'\n' read -r -d '' config_dirs_num config_entries_init_shell config_entries_init_run <<< \
+  $("${YQ_CMDLINE_READ[@]}" \
+    '(."content-config".entries[0].dirs|length),."content-config".entries[0].init.shell,."content-config".entries[0].init.run' \
+    "$content_config_file")
 
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
 #
 yq_fix_null \
-  dirs_num:0
+  config_dirs_num:0 \
+  config_entries_init_shell \
+  config_entries_init_run
 
-(( ! dirs_num )) && {
+(( ! config_dirs_num )) && {
   gh_enable_print_buffering
 
   gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: content config is invalid or empty." "content config is invalid or empty"
 
   (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
 }
+
+# CAUTION:
+#   We must use the exact shell file, otherwise the error: `sh: 1: Syntax error: redirection unexpected`
+#
+
+if [[ -z "$config_entries_init_shell" ]]; then
+  config_entries_init_shell='bash'
+fi
+
+if [[ -n "$config_entries_init_run" ]]; then
+  # declare input variables
+  tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
+
+  # execute
+  gh_encode_line_return_chars "$config_entries_init_run"
+
+  if ! "$config_entries_init_shell" -c "$RETURN_VALUE"; then
+    gh_print_error_ln "$0: error: config entries init is failed: \`content-config/entries[0]/init\`"
+    exit 255
+  fi
+fi
 
 if [[ ! -f "$content_index_file" ]]; then
   # CAUTION:
@@ -121,14 +148,14 @@ content-index:
     - dirs:
 "
 
-    for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' $content_config_file); do
+    for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' "$content_config_file"); do
       # CAUTION:
       #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
       #
       yq_is_null i && break
 
       IFS=$'\n' read -r -d '' config_dir <<< \
-        $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir" $content_config_file) 2>/dev/null
+        $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir" "$content_config_file") 2>/dev/null
 
       # CAUTION:
       #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -146,14 +173,14 @@ content-index:
 "        - dir: $config_index_dir
 "
 
-      for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" $content_config_file); do
+      for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" "$content_config_file"); do
         # CAUTION:
         #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
         #
         yq_is_null j && break
 
         IFS=$'\n' read -r -d '' config_file <<< \
-          $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files[$j].file" $content_config_file) 2>/dev/null
+          $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files[$j].file" "$content_config_file") 2>/dev/null
 
         # CAUTION:
         #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
@@ -214,14 +241,14 @@ no_download_entries=0
 
 (( NO_DOWNLOAD_ENTRIES || NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )) && no_download_entries=1
 
-for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' $content_config_file); do
+for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' "$content_config_file"); do
   # CAUTION:
   #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
   #
   yq_is_null i && break
 
   IFS=$'\n' read -r -d '' config_dir config_sched_next_update_timestamp_delta <<< \
-    $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir,.\"content-config\".entries[0].dirs[$i].schedule.\"next-update\".timestamp" $content_config_file) 2>/dev/null
+    $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].dir,.\"content-config\".entries[0].dirs[$i].schedule.\"next-update\".timestamp" "$content_config_file") 2>/dev/null
 
   IFS=$'\n' read -r -d '' index_dir <<< \
     $("${YQ_CMDLINE_READ[@]}" ".\"content-index\".entries[0].dirs[$i].dir" "$content_index_file") 2>/dev/null
@@ -252,7 +279,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     continue
   fi
 
-  for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" $content_config_file); do
+  for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" "$content_config_file"); do
     # CAUTION:
     #   Prevent of invalid values spread if upstream user didn't properly commit completely correct yaml file or didn't commit at all.
     #
@@ -264,7 +291,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 .\"content-config\".entries[0].dirs[$i].files[$j].\"query-url\",\
 .\"content-config\".entries[0].dirs[$i].files[$j].\"download-validate\".\"shell\",\
 .\"content-config\".entries[0].dirs[$i].files[$j].\"download-validate\".\"run\"" \
-        $content_config_file) 2>/dev/null
+        "$content_config_file") 2>/dev/null
 
     IFS=$'\n' read -r -d '' index_file index_queried_url index_file_prev_size index_file_prev_md5_hash index_file_prev_timestamp <<< \
       $("${YQ_CMDLINE_READ[@]}" "\
@@ -443,6 +470,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
         gh_print_error_and_write_to_changelog_text_ln \
           "$0: error: failed to download: \`$index_dir/$index_file\`" \
           "* error: failed to download: \`$index_dir/$index_file\`"
+
         continue
       fi
     else
@@ -506,7 +534,9 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
         fi
 
         # execute
-        if "$config_download_validate_shell" -c "$config_download_validate_run"; then
+        gh_encode_line_return_chars "$config_download_validate_run"
+
+        if "$config_download_validate_shell" -c "$RETURN_VALUE"; then
           (( ! no_download_entries )) && is_index_file_changed=1
         else
           is_index_file_invalid=1
