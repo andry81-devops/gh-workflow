@@ -1,4 +1,7 @@
 2022.09.01:
+* fixed: bash/cache/accum-content.sh: execute content config scripts ina subshell to automatically drop the exported variables
+
+2022.09.01:
 * fixed: bash/cache/accum-content.sh: `expired-delta` always less than 24 hours
 
 2022.08.29:

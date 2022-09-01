@@ -109,11 +109,16 @@ if [[ -z "$config_entries_init_shell" ]]; then
 fi
 
 if [[ -n "$config_entries_init_run" ]]; then
-  # declare input variables
-  tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
+  # execute in subprocess
+  (
+    # declare input variables
+    tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
 
-  # execute
-  if ! "$config_entries_init_shell" -c "$config_entries_init_run"; then
+    # execute
+    "$config_entries_init_shell" -c "$config_entries_init_run"
+  )
+
+  if (( $? )); then
     gh_print_error_ln "$0: error: config entries init is failed: \`content-config/entries[0]/init\`"
     exit 255
   fi
@@ -530,19 +535,6 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     if (( no_download_entries || ! is_index_file_prev_exist )) || [[ "$index_file_next_md5_hash" != "$index_file_prev_md5_hash" ]]; then
       # validate downloaded file
       if [[ -n "$config_download_validate_run" ]]; then
-        # declare input variables
-        tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
-
-        tkl_export IS_STORED_FILE_EXIST "$is_index_file_prev_exist"
-
-        tkl_export STORED_FILE          "$index_dir/$index_file"
-        tkl_export STORED_FILE_SIZE     "$index_file_prev_size"
-        tkl_export STORED_FILE_HASH     "$index_file_prev_md5_hash"
-
-        tkl_export DOWNLOADED_FILE      "$TEMP_DIR/content/$index_dir/$index_file"
-        tkl_export DOWNLOADED_FILE_SIZE "$index_file_next_size"
-        tkl_export DOWNLOADED_FILE_HASH "$index_file_next_md5_hash"
-
         # CAUTION:
         #   We must use the exact shell file, otherwise the error: `sh: 1: Syntax error: redirection unexpected`
         #
@@ -551,8 +543,26 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
           config_download_validate_shell='bash'
         fi
 
-        # execute
-        if "$config_download_validate_shell" -c "$config_download_validate_run"; then
+        # execute in subprocess
+        (
+          # declare input variables
+          tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
+
+          tkl_export IS_STORED_FILE_EXIST "$is_index_file_prev_exist"
+
+          tkl_export STORED_FILE          "$index_dir/$index_file"
+          tkl_export STORED_FILE_SIZE     "$index_file_prev_size"
+          tkl_export STORED_FILE_HASH     "$index_file_prev_md5_hash"
+
+          tkl_export DOWNLOADED_FILE      "$TEMP_DIR/content/$index_dir/$index_file"
+          tkl_export DOWNLOADED_FILE_SIZE "$index_file_next_size"
+          tkl_export DOWNLOADED_FILE_HASH "$index_file_next_md5_hash"
+          
+          # execute
+          "$config_download_validate_shell" -c "$config_download_validate_run"
+        )
+
+        if (( ! $? )); then
           (( ! no_download_entries )) && is_index_file_changed=1
         else
           is_index_file_invalid=1
