@@ -113,9 +113,7 @@ if [[ -n "$config_entries_init_run" ]]; then
   tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
 
   # execute
-  gh_encode_line_return_chars "$config_entries_init_run"
-
-  if ! "$config_entries_init_shell" -c "$RETURN_VALUE"; then
+  if ! "$config_entries_init_shell" -c "$config_entries_init_run"; then
     gh_print_error_ln "$0: error: config entries init is failed: \`content-config/entries[0]/init\`"
     exit 255
   fi
@@ -358,12 +356,32 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
 
       (( index_file_expired_sec = current_date_time_utc_sec - index_file_next_update_timestamp_utc_sec ))
 
-      if (( index_file_expired_sec > 0 )); then
-        index_file_expired_timestamp_delta="+$(date --utc -d "@$index_file_expired_sec" +%T)"
+      index_file_expired_years=''
+      index_file_expired_days=''
+      index_file_expired_positive=1 # including zero
+
+      if (( index_file_expired_sec < 0 )); then
+        index_file_expired_positive=0
+        (( index_file_expired_sec = -index_file_expired_sec ))
+      fi
+
+      if (( index_file_expired_sec >= 60 * 60 * 24 )); then
+        (( index_file_expired_days = index_file_expired_sec / (60 * 60 * 24) ))
+        (( index_file_expired_sec %= 60 * 60 * 24 ))
+      fi
+
+      if (( index_file_expired_days >= 365 )); then
+        (( index_file_expired_years = index_file_expired_days / 365 ))
+        (( index_file_expired_days %= 365 ))
+      fi
+
+      index_file_expired_timestamp_delta="$index_file_expired_years${index_file_expired_years:+"y "}$index_file_expired_days${index_file_expired_days:+"d "}$(date --utc -d "@$index_file_expired_sec" +%T)"
+
+      if (( index_file_expired_positive )); then
+        index_file_expired_timestamp_delta="+$index_file_expired_timestamp_delta"
         is_file_expired=1
       else
-        (( index_file_expired_sec = -index_file_expired_sec ))
-        index_file_expired_timestamp_delta="-$(date --utc -d "@$index_file_expired_sec" +%T)"
+        index_file_expired_timestamp_delta="-$index_file_expired_timestamp_delta"
       fi
     else
       is_file_expired=1
@@ -534,9 +552,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
         fi
 
         # execute
-        gh_encode_line_return_chars "$config_download_validate_run"
-
-        if "$config_download_validate_shell" -c "$RETURN_VALUE"; then
+        if "$config_download_validate_shell" -c "$config_download_validate_run"; then
           (( ! no_download_entries )) && is_index_file_changed=1
         else
           is_index_file_invalid=1

@@ -1,3 +1,6 @@
+2022.09.01:
+* fixed: bash/cache/accum-content.sh: `expired-delta` always less than 24 hours
+
 2022.08.29:
 * new: bash/cache/accum-content.sh: added `entries[0]/init/shell` and `entries[0]/init/run` config content file fields to run entries initialization script
 * new: bash/github/init-xq-workflow.sh: added `XQ_CMDLINE_READ` and `XMLSTARLET_CMDLINE_SEL` variable to be able to use different xml query implementations
