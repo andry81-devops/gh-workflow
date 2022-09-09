@@ -1,5 +1,8 @@
+2022.09.09:
+* fixed: bash/github/accum-stats.sh: incorrect removed dates list in case of more than 1 date
+
 2022.09.01:
-* fixed: bash/cache/accum-content.sh: execute content config scripts ina subshell to automatically drop the exported variables
+* fixed: bash/cache/accum-content.sh: execute content config scripts in a subshell to automatically drop the exported variables
 
 2022.09.01:
 * fixed: bash/cache/accum-content.sh: `expired-delta` always less than 24 hours
