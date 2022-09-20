@@ -331,8 +331,6 @@ uniques_outdated_next=$uniques_outdated_prev
 
 stats_removed_dates=()
 
-echo "stats_accum_timestamps=${stats_accum_timestamps[@]}"
-
 j=0
 for (( i=0; i < ${#stats_accum_timestamps[@]}; i++ )); do
   if [[ -z "$first_stats_timestamp" || "${stats_accum_timestamps[i]}" < "$first_stats_timestamp" ]]; then
