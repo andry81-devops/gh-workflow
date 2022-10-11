@@ -72,7 +72,7 @@ gh_print_notice_and_write_to_changelog_text_ln "current date/time: $current_date
 
 if (( ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_GITHUB_ACTIONS_RUN_URL" ]]; then
   gh_write_notice_to_changelog_text_bullet_ln \
-    "GitHub Actions Run URL: $GHWF_GITHUB_ACTIONS_RUN_URL"
+    "GitHub Actions Run: $GHWF_GITHUB_ACTIONS_RUN_URL # $GITHUB_RUN_NUMBER"
 fi
 
 current_date_utc="${current_date_time_utc/%T*}"
@@ -113,6 +113,11 @@ if [[ -n "$config_entries_init_run" ]]; then
   (
     # declare input variables
     tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
+
+    # export specific GitHub Actions workflow environment variables
+    if [[ -n "${GH_WORKFLOW_FLAGS+x}" ]]; then
+      tkl_export GH_WORKFLOW_FLAGS    "$GH_WORKFLOW_FLAGS"
+    fi
 
     # execute
     "$config_entries_init_shell" -c "$config_entries_init_run"

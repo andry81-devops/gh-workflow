@@ -2,6 +2,12 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.10.12:
+* fixed: bash/github/print-*.sh: multiline annotations print
+* new: bash/_common: added `update-permissions.sh` script to update file permissions by `find` pattern all together (ex: `update-permissions.sh ug+x "$GH_WORKFLOW_ROOT" -iname '*.sh'`)
+* new: bash: print GitHub Actions workflow run number in case of print workflow run URL (`ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG=1`)
+* changed: bash/cache/accum-content.sh: export specific `GH_WORKFLOW_FLAGS` environment variable into nested bash contexts
+
 ## 2022.08.29:
 * new: bash/cache/accum-content.sh: added `entries[0]/init/shell` and `entries[0]/init/run` config content file fields to run entries initialization script
 * new: bash/github/init-xq-workflow.sh: added `XQ_CMDLINE_READ` and `XMLSTARLET_CMDLINE_SEL` variable to be able to use different xml query implementations

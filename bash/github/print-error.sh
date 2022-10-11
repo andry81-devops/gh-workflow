@@ -55,7 +55,7 @@ function gh_print_error_ln()
   if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       local IFS=$'\n'; for arg in "$@"; do
-        line="${line}${line:+"%0D%0A"}$arg"
+        line="${line}${line:+$'\r\n'}$arg"
       done
 
       gh_trim_trailing_line_return_chars "$line"
@@ -86,7 +86,7 @@ function gh_print_error_ln_nobuf_nolag()
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     local IFS=$'\n'; for arg in "$@"; do
-      line="${line}${line:+"%0D%0A"}$arg"
+      line="${line}${line:+$'\r\n'}$arg"
     done
 
     gh_trim_trailing_line_return_chars "$line"

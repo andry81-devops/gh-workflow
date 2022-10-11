@@ -1,3 +1,9 @@
+2022.10.12:
+* fixed: bash/github/print-*.sh: multiline annotations print
+* new: bash/_common: added `update-permissions.sh` script to update file permissions by `find` pattern all together (ex: `update-permissions.sh ug+x "$GH_WORKFLOW_ROOT" -iname '*.sh'`)
+* new: bash: print GitHub Actions workflow run number in case of print workflow run URL (`ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG=1`)
+* changed: bash/cache/accum-content.sh: export specific `GH_WORKFLOW_FLAGS` environment variable into nested bash contexts
+
 2022.09.20:
 * changed: bash/github/accum-stats.sh: code cleanup
 
