@@ -17,6 +17,9 @@ SOURCE_GHWF_UTILS_SH=1 # including guard
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/is-flag-true-in-flags-expr-string.sh"
+
+
 # CAUTION:
 #
 #   By default assignment applies on the next GitHub Actions job step!
