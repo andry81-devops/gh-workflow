@@ -9,6 +9,7 @@
 #   Yaml specific system variables (to use):
 #
 #     * YQ_CMDLINE_READ
+#     * YQ_CMDLINE_READ_AS_YAML
 #     * YQ_CMDLINE_WRITE
 #     * YQ_DIFF_ALL_CMDLINE
 #     * YQ_DIFF_NO_BLANKS_CMDLINE
@@ -82,18 +83,21 @@ function yq_init()
   #
   if grep 'https://github.com/mikefarah/yq[/ ]' - <<< "$yq_help" >/dev/null; then
     YQ_CMDLINE_READ=(yq)
+    YQ_CMDLINE_READ_AS_YAML=(yq)
     YQ_CMDLINE_WRITE=(yq e)
     YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
     YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
     YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   elif grep 'https://github.com/kislyuk/yq[/ ]' - <<< "$yq_help" >/dev/null; then
-    YQ_CMDLINE_READ=(yq -c -r)
+    YQ_CMDLINE_READ=(yq -cr)
+    YQ_CMDLINE_READ_AS_YAML=(yq -ycr)
     YQ_CMDLINE_WRITE=(yq -y)
     YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
     YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
     YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   else
     YQ_CMDLINE_READ=(yq)
+    YQ_CMDLINE_READ_AS_YAML=(yq)
     YQ_CMDLINE_WRITE=(yq)
     YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
     YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
@@ -339,10 +343,10 @@ function yq_reduce_edited_uniform_diff() # NOTE: Exists for tests ONLY
       DiffLineFiltered="${DiffLine%$'\r'}"
 
       DiffLineFiltered="${DiffLineFiltered%%#%%*}" # remove `#%% ...` suffix
-      # trim tail spaces
-      while [[ "${DiffLineFiltered% }" != "$DiffLineFiltered" ]]; do
-        DiffLineFiltered="${DiffLineFiltered% }"
-      done
+
+      # trim tail white spaces
+      gh_trim_trailing_white_space_chars "$DiffLineFiltered"
+      DiffLineFiltered="$RETURN_VALUE"
 
       if [[ "${DiffLineFiltered:0:2}" == "@@" && "${DiffLineFiltered: -2}" == "@@" ]]; then
         IsChunksStarted=1
@@ -474,10 +478,10 @@ function yq_reduce_edited_uniform_diff_chunk() # NOTE: Exists for tests ONLY
         DiffLineFiltered="${DiffLine%$'\r'}"
 
         DiffLineFiltered="${DiffLineFiltered%%#%%*}" # remove `#%% ...` suffix
-        # trim tail spaces
-        while [[ "${DiffLineFiltered% }" != "$DiffLineFiltered" ]]; do
-          DiffLineFiltered="${DiffLineFiltered% }"
-        done
+
+        # trim tail white spaces
+        gh_trim_trailing_white_space_chars "$DiffLineFiltered"
+        DiffLineFiltered="$RETURN_VALUE"
 
         if [[ "${DiffLineFiltered:0:2}" == "@@" && "${DiffLineFiltered: -2}" == "@@" ]]; then
           :
@@ -1006,9 +1010,7 @@ function yq_get_key_line_text()
   RETURN_VALUE="${RETURN_VALUE%%#*}"      # cut off text after `#`
 
   # trim tail white spaces
-  while [[ "${RETURN_VALUE%[$'\t' ]}" != "$RETURN_VALUE" ]]; do
-    RETURN_VALUE="${RETURN_VALUE%[$'\t' ]}"
-  done
+  gh_trim_trailing_white_space_chars "$RETURN_VALUE"
 }
 
 function yq_patch_diff_pause()

@@ -36,9 +36,8 @@ function diff_load_file_to_arr()
         DiffLineFiltered="${DiffLineFiltered%%#%%*}" # cut off `#%% ...` suffix
 
         # trim tail white spaces
-        while [[ "${DiffLineFiltered%[$'\t' ]}" != "$DiffLineFiltered" ]]; do
-          DiffLineFiltered="${DiffLineFiltered%[$'\t' ]}"
-        done
+        gh_trim_trailing_white_space_chars "$DiffLineFiltered"
+        DiffLineFiltered="$RETURN_VALUE"
 
         if [[ "${DiffLineFiltered:0:2}" == "@@" && "${DiffLineFiltered: -2}" == "@@" ]]; then
           IsChunksStarted=1
@@ -80,9 +79,8 @@ function diff_load_string_to_arr()
         DiffLineFiltered="${DiffLineFiltered%%#%%*}" # cut off `#%% ...` suffix
 
         # trim tail white spaces
-        while [[ "${DiffLineFiltered%[$'\t' ]}" != "$DiffLineFiltered" ]]; do
-          DiffLineFiltered="${DiffLineFiltered%[$'\t' ]}"
-        done
+        gh_trim_trailing_white_space_chars "$DiffLineFiltered"
+        DiffLineFiltered="$RETURN_VALUE"
 
         if [[ "${DiffLineFiltered:0:2}" == "@@" && "${DiffLineFiltered: -2}" == "@@" ]]; then
           IsChunksStarted=1
@@ -215,22 +213,20 @@ function diff_read_uniform_chunk_header()
     DiffLineOffsetShift="${DiffLineFiltered#*#%%}"
 
     # trim head white spaces
-    while [[ "${DiffLineOffsetShift#[$'\t' ]}" != "$DiffLineOffsetShift" ]]; do
-      DiffLineOffsetShift="${DiffLineOffsetShift#[$'\t' ]}"
-    done
+    gh_trim_leading_white_space_chars "$DiffLineOffsetShift"
+
     # trim tail white spaces
-    while [[ "${DiffLineOffsetShift%[$'\t' ]}" != "$DiffLineOffsetShift" ]]; do
-      DiffLineOffsetShift="${DiffLineOffsetShift%[$'\t' ]}"
-    done
+    gh_trim_trailing_white_space_chars "$RETURN_VALUE"
+    DiffLineOffsetShift="$RETURN_VALUE"
 
     (( DiffLineOffsetShift = DiffLineOffsetShift )) # drop `+` prefix
   fi
 
   DiffLineFiltered="${DiffLineFiltered%%#%%*}" # cut off `#%% ...` suffix
-  # trim tail spaces
-  while [[ "${DiffLineFiltered%[$'\t' ]}" != "$DiffLineFiltered" ]]; do
-    DiffLineFiltered="${DiffLineFiltered%[$'\t' ]}"
-  done
+
+  # trim tail white spaces
+  gh_trim_trailing_white_space_chars "$DiffLineFiltered"
+  DiffLineFiltered="$RETURN_VALUE"
 
   if [[ "${DiffLineFiltered:0:2}" == "@@" && "${DiffLineFiltered: -2}" == "@@" ]]; then
     DiffLineFiltered="${DiffLineFiltered:2:-2}"

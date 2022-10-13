@@ -5,9 +5,9 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_UTILS_SH" && SOURCE_GHWF_UTILS_SH -ne 0) ]] && return
+[[ -z "$BASH" || (-n "$SOURCE_GHWF_GITHUB_UTILS_SH" && SOURCE_GHWF_GITHUB_UTILS_SH -ne 0) ]] && return
 
-SOURCE_GHWF_UTILS_SH=1 # including guard
+SOURCE_GHWF_GITHUB_UTILS_SH=1 # including guard
 
 [[ -z "$GH_WORKFLOW_ROOT" ]] && {
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
@@ -17,6 +17,7 @@ SOURCE_GHWF_UTILS_SH=1 # including guard
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/_common/utils.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/is-flag-true-in-flags-expr-string.sh"
 
 
@@ -92,46 +93,6 @@ function gh_update_github_env_var()
       eval "echo \"\$__var=\$$__var\""
       ;;
   esac >> "$GITHUB_ENV"
-}
-
-function gh_trim_heading_line_return_chars()
-{
-  local str="$1"
-
-  while [[ "${str#[$'\r\n']}" != "$str" ]]; do
-    str="${str#[$'\r\n']}"
-  done
-
-  RETURN_VALUE="$str"
-}
-
-function gh_trim_trailing_line_return_chars()
-{
-  local str="$1"
-
-  while [[ "${str%[$'\r\n']}" != "$str" ]]; do
-    str="${str%[$'\r\n']}"
-  done
-
-  RETURN_VALUE="$str"
-}
-
-function gh_encode_line_return_chars()
-{
-  local line="$1"
-
-  RETURN_VALUE="${line//%/%25}"
-  RETURN_VALUE="${RETURN_VALUE//$'\r'/%0D}"
-  RETURN_VALUE="${RETURN_VALUE//$'\n'/%0A}"
-}
-
-function gh_decode_line_return_chars()
-{
-  local line="$1"
-
-  RETURN_VALUE="${line//%0D/$'\r'}"
-  RETURN_VALUE="${RETURN_VALUE//%0A/$'\n'}"
-  RETURN_VALUE="${RETURN_VALUE//%25/%}"
 }
 
 tkl_set_return

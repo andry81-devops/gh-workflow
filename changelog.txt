@@ -1,4 +1,8 @@
 2022.10.13:
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+* changed: bash: core refactor
+
+2022.10.13:
 * new: bash/cache/accum-content.sh: added update timestamp into the changelog
 
 2022.10.12:
