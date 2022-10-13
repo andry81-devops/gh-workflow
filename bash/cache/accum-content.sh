@@ -415,7 +415,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     if (( ! is_file_expired )); then
       if (( ! NO_SKIP_UNEXPIRED_ENTRIES )); then
         echo "File is skipped: \`$index_dir/$index_file\`:
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
   size=\`$index_file_prev_updated_size\`"
 
         # update existing file hash on skip
@@ -448,14 +448,14 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
         continue
       else
         echo "File is forced to download: \`$index_dir/$index_file\`:
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
   size=\`$index_file_prev_updated_size\`"
       fi
     else
       (( stats_expired_inc++ ))
 
       echo "File is expired: \`$index_dir/$index_file\`:
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`
   size=\`$index_file_prev_updated_size\`"
     fi
 
@@ -477,7 +477,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       #   The `sed` has to be used to ignore blank lines by replacing `CR` by `LF`.
       #   This is required for uniform parse the curl output in both verbose or non verbose mode.
       #
-      eval curl $curl_flags -o '"$TEMP_DIR/content/$index_dir/$index_file"' '"$config_query_url"' 2>&1 | tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | sed -E 's/\r([^\n])/\n\1/g' | grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'
+      eval curl $curl_flags -o '"$TEMP_DIR/content/$index_dir/$index_file"' '"$config_query_url"' 2>&1 | \
+        tee "$TEMP_DIR/curl_stderr/$index_dir/$index_file" | \
+        sed -E 's/\r([^\n])/\n\1/g' | \
+        grep -P '^(?:  [% ] |(?:  |  \d|\d\d)\d |[<>] )'
       last_error=$?
 
       echo '---'
@@ -610,10 +613,10 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
       gh_print_notice_and_write_to_changelog_text_ln \
         "$msg_prefix: \`$index_dir/$index_file\`:
   size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`" \
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\` update-timestamp=\`$index_file_next_timestamp\`" \
         "* changed: \`$index_dir/$index_file\`:
   size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`"
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\` update-timestamp=\`$index_file_next_timestamp\`"
 
       [[ ! -d "$index_dir" ]] && mkdir -p "$index_dir"
 
@@ -621,7 +624,7 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
     else
       echo "$msg_prefix: \`$index_dir/$index_file\`:
   size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
-  expired-delta=\`$index_file_expired_timestamp_delta\` timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\`"
+  expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\` update-timestamp=\`$index_file_next_timestamp\`"
     fi
 
     {

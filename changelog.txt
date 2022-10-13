@@ -1,3 +1,6 @@
+2022.10.13:
+* new: bash/cache/accum-content.sh: added update timestamp into the changelog
+
 2022.10.12:
 * new: bash/github/is-flag-true-in-flags-expr-string.sh: added `gh_is_flag_true_in_flags_expr_string` function to evaluate flag expression strings
 
