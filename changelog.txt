@@ -1,3 +1,6 @@
+2022.11.08:
+* changed: bash: board, inpage: responce file malform check and message
+
 2022.10.13:
 * changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
 * changed: bash: core refactor

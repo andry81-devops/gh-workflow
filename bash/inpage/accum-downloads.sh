@@ -95,7 +95,13 @@ downloads="$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")"
 # stats between previos/next script execution (dependent to the pipeline scheduler times)
 stats_prev_exec_downloads_inc=0
 
+downloads_malformed=1
+
+# with check on malformed value
 if [[ -n "$downloads" ]]; then
+  if [[ -z "${downloads//[0-9]/}" ]]; then
+    downloads_malformed=0
+  fi
   (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc = downloads - last_downloads ))
 fi
 
@@ -103,8 +109,8 @@ gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 
-# with check on integer value
-[[ -z "$downloads" || -n "${downloads//[0-9]/}" ]] && downloads=0
+# reset on malform
+(( downloads_malformed )) && downloads=$last_downloads
 
 # stats between last date and previous date (independent to the pipeline scheduler times)
 stats_last_changed_date_downloads_inc=0
@@ -155,7 +161,11 @@ fi
 if (( last_downloads >= downloads )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new downloads." "nothing is changed, no new downloads"
+  if (( ! downloads_malformed )); then
+    gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new downloads." "nothing is changed, no new downloads"
+  else
+    gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: responce file is not valid, downloads value is malformed." "responce file is not valid, downloads value is malformed"
+  fi
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi

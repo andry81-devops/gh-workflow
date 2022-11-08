@@ -107,10 +107,20 @@ views="$(sed -rn "$views_sed_regexp" "$TEMP_DIR/response.txt")"
 stats_prev_exec_replies_inc=0
 stats_prev_exec_views_inc=0
 
+replies_malformed=1
+views_malformed=1
+
+# with check on malformed value
 if [[ -n "$replies" ]]; then
+  if [[ -z "${replies//[0-9]/}" ]]; then
+    replies_malformed=0
+  fi
   (( last_replies < replies )) && (( stats_prev_exec_replies_inc = replies - last_replies ))
 fi
 if [[ -n "$views" ]]; then
+  if [[ -z "${views//[0-9]/}" ]]; then
+    views_malformed=0
+  fi
   (( last_views < views )) && (( stats_prev_exec_views_inc = views - last_views ))
 fi
 
@@ -118,9 +128,9 @@ gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
-# with check on integer value
-[[ -z "$replies" || -n "${replies//[0-9]/}" ]] && replies=$last_replies
-[[ -z "$views" || -n "${views//[0-9]/}" ]] && views=$last_views
+# reset on malform
+(( replies_malformed )) && replies=$last_replies
+(( views_malformed )) && views=$last_views
 
 # stats between last date and previous date (independent to the pipeline scheduler times)
 replies_saved=0
@@ -171,7 +181,11 @@ fi
 if (( last_replies >= replies && last_views >= views )); then
   gh_enable_print_buffering
 
-  gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new board replies/views." "nothing is changed, no new board replies/views"
+  if (( ! replies_malformed && ! views_malformed )); then
+    gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new board replies/views." "nothing is changed, no new board replies/views"
+  else
+    gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: responce file is not valid, board replies/views value is malformed." "responce file is not valid, board replies/views value is malformed"
+  fi
 
   (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
 fi
