@@ -1,3 +1,6 @@
+2022.11.11:
+* changed: README.md: readme update
+
 2022.11.08:
 * changed: bash: board, inpage: responce file malform check and message
 

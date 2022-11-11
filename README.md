@@ -59,7 +59,8 @@ Tutorials to use with: https://github.com/andry81/index#tutorials</h4>
 
 ## <a name="dependentees">Dependentees</a>
 
-* https://github.com/orgs/andry81-devops/repositories?q=gh-action--
+* All action scripts:<br />
+  https://github.com/andry81/index#action-scripts
 
 ## <a name="copyright-and-license">Copyright and License</a>
 
