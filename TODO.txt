@@ -1,0 +1,302 @@
+* Add `init` and `download-validate` parameters as global paramers into
+  `content-index.yml` file from `bash/cache/accum-content.sh` script.
+  This will help to run validation for all queries as a single code block
+  branched by a particular path or variable declared for each query entry.
+
+  Examples:
+
+    1.
+
+    content-config:
+
+      entries:
+
+        - init:               # runs for all entries
+            shell: bash
+            # Input variables:
+            #   GH_WORKFLOW_ROOT
+            #
+            # CAUTION:
+            #   First line must be a shebang line, otherwise each script line will run in a child bash process!
+            #
+            run: |
+              #!/bin/bash
+              exit 0
+
+          download-validate:  # runs for each file in each directory
+            # shell globbing match
+            - glob-match:
+                dirs:
+                  - dir: badges/*
+                  #- dir: badges/metrics
+                  #  exclude: true
+
+              shell: bash
+              # Builtin input variables:
+              #   GH_WORKFLOW_ROOT, GH_WORKFLOW_FLAGS,
+              #   IS_STORED_FILE_EXIST, STORED_FILE, STORED_FILE_SIZE, STORED_FILE_HASH,
+              #   DOWNLOADED_FILE, DOWNLOADED_FILE_SIZE, DOWNLOADED_FILE_HASH
+              #
+              # CAUTION:
+              #   First line must be a shebang line, otherwise each script line will run in a child bash process!
+              #
+              run: |
+                #!/bin/bash
+                
+                # user input variables
+                [[ -z "$XPATH_MATCH_TOKEN" ]] && exit 0
+                
+                # validate download unconditionally on first time download
+                (( ! IS_STORED_FILE_EXIST )) && exit 0
+                
+                source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit 255
+                
+                tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-xq-workflow.sh"
+                
+                if (( ${#XQ_CMDLINE_READ[@]} )); then
+                  # replace all `/` by `.`
+                  XPATH_TOKEN="${XPATH_MATCH_TOKEN////.}"
+                  IFS=$'\n' read -r value <<< "$("${XQ_CMDLINE_READ[@]}" '.$XPATH_TOKEN."#text"' "$DOWNLOADED_FILE")" || exit 255
+                elif (( ${#XMLSTARLET_CMDLINE_SEL[@]} )); then
+                  # increment all array indexes, because xpath array index must start from 1 instead of 0
+                  XPATH_TOKEN="$(perl -pe 's/\[(\d+)\]/"[".($1+1)."]"/ge' <<< "$XPATH_MATCH_TOKEN")"
+                  # workaround xmlstarlet svg file parse by removing all attributes from the `svg` tag
+                  value="$(perl -0777pe 's/<svg[ \t][^>]*/<svg/igs' "$DOWNLOADED_FILE" | "${XMLSTARLET_CMDLINE_SEL[@]}" -t -v "//$XPATH_TOKEN")" || exit 255
+                else
+                  exit 255
+                fi
+                
+                value="${value//[ $'\t'a-zA-Z]/}"
+                value_int="${value%.*}"
+                value_fract="${value#*.}"
+                [[ "$value_fract" == "$value" ]] && value_fract=0
+                (( value_int || value_fract )) && exit 0
+                
+                exit 255
+
+    2.
+
+        - init:
+            env:
+              TEST111: 111
+              TEST222: 222
+            shell: bash
+            run: |
+              #!/bin/bash
+              echo "__init__: TEST111=$TEST111"
+              exit 0
+
+          download-validate:
+            # shell globbing match
+            - glob-match:
+                dirs:
+                  - dir: '*'
+                  - dir: '111/*'
+                    files:
+                      - '*[^-]*.svg'
+                  - dir: '*/333'
+                    files:
+                      - '*-*.svg'
+                  - dir: '111/222/*'
+                    exclude: true
+
+              env:
+                TESTAAA: AAA
+              shell: bash
+              run: |
+                #!/bin/bash
+                echo "TEST111=$TEST111"
+                echo "TESTAAA=$TESTAAA"
+                echo "TEST_VAR1=$TEST_VAR1"
+                echo "TEST_VAR2=$TEST_VAR2"
+                echo "TEST_VAR3=$TEST_VAR3"
+                echo "TEST_VAR4=$TEST_VAR4"
+                exit 0
+
+            - glob-match:
+                dirs:
+                  - dir: '*'
+                  - dir: '111/*'
+                    files:
+                      - '*[^-]*.svg'
+                  - dir: '*/333'
+                    files:
+                      - '*-*.svg'
+                  - dir: '111/222/*'
+                    exclude: true
+
+              env:
+                TESTBBB: BBB
+              shell: bash
+              run: |
+                #!/bin/bash
+                echo "TEST111=$TEST111"
+                echo "TESTBBB=$TESTBBB"
+                echo "TEST_VAR1=$TEST_VAR1"
+                echo "TEST_VAR2=$TEST_VAR2"
+                echo "TEST_VAR3=$TEST_VAR3"
+                echo "TEST_VAR4=$TEST_VAR4"
+                exit 255
+
+    3.
+
+          dirs:
+
+            - dir:            111/222/333
+
+              env:
+                XPATH_MATCH_TOKEN:  svg/g[1]/text[3]
+                TEST_VAR1:          111
+
+              files:
+
+                - file:       aaa.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       aaa-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+            - dir:            111/222
+
+              env:
+                XPATH_MATCH_TOKEN:  svg/g[1]/text[3]
+                TEST_VAR2:          222
+
+              files:
+
+                - file:       aaa.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       aaa-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+            - dir:            333/222/111
+
+              files:
+
+                - file:       aaa.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       aaa-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+            - dir:            111
+
+              env:
+                XPATH_MATCH_TOKEN:  svg/g[1]/text[3]
+                TEST_VAR3:          333
+
+              files:
+
+                - file:       aaa.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       aaa-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+            - dir:            333/111/222
+
+              env:
+                XPATH_MATCH_TOKEN:  svg/g[1]/text[3]
+                TEST_VAR4:          444
+
+              files:
+
+                - file:       aaa.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       aaa-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+                - file:       bbb-xxx.svg
+                  query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
+
+* Duplicate commit url into `changelog.txt` additionally to a pipeline log for
+  all `*--gh-stats` repositories. This will add access to a commit from a
+  changelog in case of pipeline log absence because of it's expiration.
+
+  Example:
+
+    YYYY-MM-DD:
+    * notice: GitHub Actions Run: https://github.com/andry81-devops/andry81-devops/actions/runs/3595313872 # 1608
+    * notice: Commit Reference URL: https://github.com/andry81-cache/andry81-devops--gh-content-cache/commit/3ad502b8678204bfe569ecec2e449757ec3528cc
+
+* Modificate `query-url` parameter in the `content-index.yml` file from
+  `bash/cache/accum-content.sh` script to be able to extract it's components
+  into variables and address them in code blocks. Add `expand` parameter to
+  explicitly expand parameters.
+
+  Example:
+
+    content-config:
+
+      entries:
+
+        - dirs:
+
+            - dir:            badges/traffic/views
+              schedule:
+                next-update:
+                  timestamp: 04:00Z
+
+              env:
+                XPATH_MATCH_TOKEN: svg/g[1]/text[3]
+
+              files:
+
+                - file:       all.svg
+                  query-url:  https://img.shields.io/badge/dynamic/json?color=success&label=views|all&query=count&url=${REPO-URL}/raw/${BRANCH}/${FILE}?raw=True&logo=github
+                  expand:     query-url
+
+                  env:
+                    REPO-URL: https://github.com/andry81-stats/gh-workflow--gh-stats
+                    BRANCH:   master
+                    FILE:     traffic/views/latest-accum.json
+                    
+
+                  preprocess-query:
+                    shell: bash
+                    run: |
+                      #!/bin/bash
+                      # ... code here to extract the last commit hash using variables and convert it into something like this:
+                      # https://github.com/andry81-stats/gh-workflow--gh-stats/commit/9aec9f590cff1210a3f01605422c76e427c41b2c#diff-ee24890d2ede88eff8ee647ba88f0515a43751a442945872f89179ba3ba0103f
+                      # , where `diff-ee24890d2ede88eff8ee647ba88f0515a43751a442945872f89179ba3ba0103f` is `diff-<sha256>` of `${FILE}`
+                      #
+                      # Then add `json-stats-*` parameters which references the `${FILE}` file into `changelog.txt` as part of file change to directly reference respective repositories from the changelog file:
+                      #
+                      # 2022-12-01T18:10:16Z:
+                      # * notice: GitHub Actions Run: https://github.com/andry81-devops/andry81-devops/actions/runs/3595313872 # 1608
+                      # * notice: Commit Reference URL: https://github.com/andry81-cache/andry81-devops--gh-content-cache/commit/3ad502b8678204bfe569ecec2e449757ec3528cc
+                      # * changed: `repo/andry81-devops/gh-workflow/badges/traffic/views/all.svg`:
+                      #   size=`2341 -> 2341` md5-hash=`3f1c20cbde264a3c50b5610b1b3732ba -> fb672181b7bd1a17014741fa5ac698ad`
+                      #   expired-delta=`+01:53:52` scheduled-timestamp=`2022-12-01T12:16:24Z -> 2022-12-01T16:16:24Z` update-timestamp=`2022-12-01T18:10:16Z`
+                      #   json-stats-url:      https://github.com/andry81-stats/gh-workflow--gh-stats/blob/master/traffic/views/latest-accum.json
+                      #   json-stats-diff-url: https://github.com/andry81-stats/gh-workflow--gh-stats/commit/9aec9f590cff1210a3f01605422c76e427c41b2c#diff-ee24890d2ede88eff8ee647ba88f0515a43751a442945872f89179ba3ba0103f
+                      #

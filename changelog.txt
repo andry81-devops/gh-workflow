@@ -1,4 +1,7 @@
 2022.12.09:
+* new: added `TODO.txt` file
+
+2022.12.09:
 * fixed: bash/github/accum-stats.sh: 14d `count` and `uniques` decrement by the last day
 
 2022.11.11:
