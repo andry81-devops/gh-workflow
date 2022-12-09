@@ -62,7 +62,8 @@ jq_fix_null \
 
 gh_print_notice_and_write_to_changelog_text_bullet_ln "last 14d: unq all: $uniques $count"
 
-IFS=$'\n' read -r -d '' stats_accum_timestamp_prev count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< "$(jq -c -r ".timestamp,.count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
+IFS=$'\n' read -r -d '' stats_accum_timestamp_prev count_outdated_prev uniques_outdated_prev count_prev uniques_prev <<< \
+  "$(jq -c -r ".timestamp,.count_outdated,.uniques_outdated,.count,.uniques" $stats_accum_json)"
 
 # CAUTION:
 #   Prevent of invalid values spread if upstream user didn't properly commit completely correct json file or didn't commit at all.
@@ -355,8 +356,17 @@ count_next=0
 uniques_next=0
 
 for (( i=0; i < ${#stats_timestamps[@]}; i++ )); do
-  (( count_next += ${stats_counts[i]} ))
-  (( uniques_next += ${stats_uniques[i]} ))
+  # NOTE:
+  #   Use the maximum only for the edge value, even if multiple values is outdated, because only
+  #   edge values has a significant interpolation distortion.
+  #
+  if (( i )); then
+    (( count_next += ${stats_counts[i]} ))
+    (( uniques_next += ${stats_uniques[i]} ))
+  else
+    (( count_next += ${stats_count_max[i]} ))
+    (( uniques_next += ${stats_uniques_max[i]} ))
+  fi
 done
 
 (( count_next += count_outdated_next ))

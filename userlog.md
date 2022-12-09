@@ -2,6 +2,9 @@
 
 > :warning: to find all changes use [changelog.txt](https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt) file in a directory
 
+## 2022.12.09:
+* fixed: bash/github/accum-stats.sh: 14d `count` and `uniques` decrement by the last day
+
 ## 2022.10.12:
 * new: bash/github/is-flag-true-in-flags-expr-string.sh: added `gh_is_flag_true_in_flags_expr_string` function to evaluate flag expression strings
 
