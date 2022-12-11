@@ -144,8 +144,17 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_accum_json); do
   stats_accum_uniques_max[${#stats_accum_uniques_max[@]}]=$uniques_max
 
   stats_timestamp_prev_seq="$stats_timestamp_prev_seq|$timestamp"
-  stats_count_prev_seq="$stats_count_prev_seq|$count"
-  stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques"
+  # NOTE:
+  #   Use the maximum only for the edge value, even if multiple values is outdated, because only
+  #   edge values has a significant interpolation distortion.
+  #
+  if (( i )); then
+    stats_count_prev_seq="$stats_count_prev_seq|$count"
+    stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques"
+  else
+    stats_count_prev_seq="$stats_count_prev_seq|$count_max"
+    stats_uniques_prev_seq="$stats_uniques_prev_seq|$uniques_max"
+  fi
 done
 
 # stats between previos/next script execution (dependent to the pipeline scheduler times)
@@ -201,8 +210,6 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   stats_uniques[${#stats_uniques[@]}]=$uniques
 
   stats_timestamp_next_seq="$stats_timestamp_next_seq|$timestamp"
-  stats_count_next_seq="$stats_count_next_seq|$count"
-  stats_uniques_next_seq="$stats_uniques_next_seq|$uniques"
 
   timestamp_date_utc="${timestamp/%T*}"
   timestamp_year_utc="${timestamp_date_utc/%-*}"
@@ -275,6 +282,18 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
     (( count_min_saved < count_min )) && count_min=$count_min_saved
     (( uniques_max_saved > uniques_max )) && uniques_max=$uniques_max_saved
     (( uniques_min_saved < uniques_min )) && uniques_min=$uniques_min_saved
+  fi
+
+  # NOTE:
+  #   Use the maximum only for the edge value, even if multiple values is outdated, because only
+  #   edge values has a significant interpolation distortion.
+  #
+  if (( i )); then
+    stats_count_next_seq="$stats_count_next_seq|$count"
+    stats_uniques_next_seq="$stats_uniques_next_seq|$uniques"
+  else
+    stats_count_next_seq="$stats_count_next_seq|$count_max"
+    stats_uniques_next_seq="$stats_uniques_next_seq|$uniques_max"
   fi
 
   stats_count_min[${#stats_count_min[@]}]=$count_min
