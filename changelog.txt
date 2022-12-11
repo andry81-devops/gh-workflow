@@ -1,4 +1,8 @@
 2022.12.11:
+* new: bash/_common: added `source-and-call.sh` script to be able to source a script and call a function from another shell script
+* changed: TODO.txt: todo update
+
+2022.12.11:
 * changed: bash/github/accum-stats.sh: duplicate `count_decinc` and `uniques_decinc` fields from `by_year` json into `latest-accum.json`
 
 2022.12.11:

@@ -67,7 +67,7 @@
                 fi
                 
                 value="${value//[ $'\t'a-zA-Z]/}"
-                value_int="${value%.*}"
+                value_int="${value%%.*}"
                 value_fract="${value#*.}"
                 [[ "$value_fract" == "$value" ]] && value_fract=0
                 (( value_int || value_fract )) && exit 0
@@ -237,16 +237,6 @@
 
                 - file:       bbb-xxx.svg
                   query-url:  https://github.com/andry81-cache/andry81-devops--gh-content-cache/blob/master/repo/andry81-devops/gh-workflow/badges/metrics/tokei-lines-of-code.svg
-
-* Duplicate commit url into `changelog.txt` additionally to a pipeline log for
-  all `*--gh-stats` repositories. This will add access to a commit from a
-  changelog in case of pipeline log absence because of it's expiration.
-
-  Example:
-
-    YYYY-MM-DD:
-    * notice: GitHub Actions Run: https://github.com/andry81-devops/andry81-devops/actions/runs/3595313872 # 1608
-    * notice: Commit Reference URL: https://github.com/andry81-cache/andry81-devops--gh-content-cache/commit/3ad502b8678204bfe569ecec2e449757ec3528cc
 
 * Modificate `query-url` parameter in the `content-index.yml` file from
   `bash/cache/accum-content.sh` script to be able to extract it's components
