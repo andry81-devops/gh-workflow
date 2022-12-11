@@ -175,8 +175,13 @@ stats_unique_next_seq=""
 
 stats_count_min=()
 stats_count_max=()
+stats_count_dec=()
+stats_count_inc=()
+
 stats_uniques_min=()
 stats_uniques_max=()
+stats_uniques_dec=()
+stats_uniques_inc=()
 
 stats_changed_data_timestamps=()
 
@@ -318,6 +323,11 @@ for i in $(jq ".$stat_list_key|keys|.[]" $stats_json); do
   (( count_dec += count_dec_saved ))
   (( uniques_inc += uniques_inc_saved ))
   (( uniques_dec += uniques_dec_saved ))
+
+  stats_count_dec[${#stats_count_dec[@]}]=$count_dec
+  stats_count_inc[${#stats_count_inc[@]}]=$count_inc
+  stats_uniques_dec[${#stats_uniques_dec[@]}]=$uniques_dec
+  stats_uniques_inc[${#stats_uniques_inc[@]}]=$uniques_inc
 
   if (( count != count_saved || uniques != uniques_saved || \
         count_min != count_min_saved || count_max != count_max_saved || \
@@ -462,8 +472,10 @@ fi
       \"timestamp\": \"${stats_timestamps[i]}\",
       \"count\": ${stats_counts[i]},
       \"count_minmax\": [ ${stats_count_min[i]}, ${stats_count_max[i]} ],
+      \"count_decinc\": [ ${stats_count_dec[i]}, ${stats_count_inc[i]} ],
       \"uniques\": ${stats_uniques[i]},
-      \"uniques_minmax\": [ ${stats_uniques_min[i]}, ${stats_uniques_max[i]} ]
+      \"uniques_minmax\": [ ${stats_uniques_min[i]}, ${stats_uniques_max[i]} ],
+      \"uniques_decinc\": [ ${stats_uniques_dec[i]}, ${stats_uniques_inc[i]} ]
     }"
   done
 
