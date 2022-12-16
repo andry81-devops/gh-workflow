@@ -31,11 +31,12 @@
 #
 #   Other variables:
 #
-#     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
 #     * ENABLE_GENERATE_CHANGELOG_FILE=1
+#     * CHANGELOG_FILE=repo/owner-of-content/repo-with-content/content-changelog.txt
 #     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=1
 #     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=1
-#     * CHANGELOG_FILE=repo/owner-of-content/repo-with-content/content-changelog.txt
+#     * ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=0   # enabled bu default
+#     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
 #
 
 # Script both for execution and inclusion.
@@ -64,8 +65,22 @@ function init_basic_workflow()
     gh_eval_github_env
   fi
 
-  if [[ -z "${GHWF_CHANGELOG_BUF_STR:+x}" ]]; then # to save buffer between workflow steps
-    gh_set_env_var GHWF_CHANGELOG_BUF_STR  ''
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR:+x}" ]]; then # to save buffer between workflow steps
+      # associated array keys as buffer names
+      gh_set_env_var GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR  ''
+      tkl_declare_array GHWF_CHANGELOG_BUF_KEY_ARR
+      # associated array values as buffer content
+      gh_set_env_var GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR  ''
+      tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
+    fi
+  else
+    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:+x}" ]]; then # to save buffer between workflow steps
+      # associated array keys as buffer names
+      tkl_declare_array GHWF_CHANGELOG_BUF_KEY_ARR
+      # associated array values as buffer content
+      tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
+    fi
   fi
 
   [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
@@ -74,9 +89,10 @@ function init_basic_workflow()
   [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] && ENABLE_GENERATE_CHANGELOG_FILE=0
   [[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] && ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=0
   [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] && ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=0
+  [[ -z "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] && ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=1
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-    [[ -z "$CHANGELOG_FILE" ]] && CHANGELOG_FILE='changelog.txt'
+    [[ -n "$CHANGELOG_FILE" ]] || CHANGELOG_FILE='changelog.txt'
   fi
 
   return 0
@@ -85,20 +101,82 @@ function init_basic_workflow()
 init_basic_workflow || exit $?
 
 
+function gh_find_changelog_buf_arr_index_to_insert_from()
+{
+  RETURN_VALUE=0
+
+  # [+]<name> | -<name>
+  #   * With out the sign or with the plus - insert after.
+  #   * With the minus and less than -1 - insert before (-2 - before first, -3 - before second, and so on).
+  #   * -1 - insert at the end.
+  #
+  local changelog_msg_name_to_insert_from="$1"
+
+  local insert_from_index=-1
+  local changelog_buf_key_arr_len=${#GHWF_CHANGELOG_BUF_KEY_ARR[@]}
+
+  local changelog_msg_name_to_insert_from_sign="${changelog_msg_name_to_insert_from:1}"
+  local insert_from_after=1
+
+  if [[ "$changelog_msg_name_to_insert_from_sign" == "-" ]]; then
+    insert_from_after=0 # insert before
+  fi
+
+  if [[ -n "$changelog_msg_name_to_insert_from" ]]; then
+    changelog_msg_name_to_insert_from="${changelog_msg_name_to_insert_from#-}"
+
+    for (( i=0; i < changelog_buf_key_arr_len; i++ )); do
+      if [[ "${GHWF_CHANGELOG_BUF_KEY_ARR[i]}" == "$changelog_msg_name_to_insert_from" ]]; then
+        insert_from_index=i
+        break
+      fi
+    done
+  fi
+
+  if (( insert_from_index == -1 )); then
+    insert_from_index=$changelog_buf_key_arr_len
+  elif (( insert_from_after )); then
+    (( insert_from_index++ ))
+  fi
+
+  RETURN_VALUE=$insert_from_index
+}
+
 function gh_prepend_changelog_file()
 {
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
-  [[ -z "$GHWF_CHANGELOG_BUF_STR" ]] && return 0
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    [[ -n "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" ]] || return 0
+  else
+    (( "${#GHWF_CHANGELOG_BUF_KEY_ARR[@]}" )) || return 0
+  fi
+
+  local changelog_buf=''
+  local value
+
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    tkl_deserialize_array "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_VALUE_ARR
+  fi
+
+  for value in "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]}"; do
+    if [[ -n "$changelog_buf" ]]; then
+      changelog_buf="$changelog_buf"$'\r\n'"$value"
+    else
+      changelog_buf="$value"
+    fi
+  done
 
   if [[ -f "$CHANGELOG_FILE" && -s "$CHANGELOG_FILE" ]]; then
-    local changelog_buf="${GHWF_CHANGELOG_BUF_STR}"$'\r\n'"$(< "$CHANGELOG_FILE")"
-  else
-    local changelog_buf="${GHWF_CHANGELOG_BUF_STR}"
+    changelog_buf="$changelog_buf"$'\r\n'"$(< "$CHANGELOG_FILE")"
   fi
 
   echo -n "$changelog_buf" > "$CHANGELOG_FILE"
 
-  gh_set_env_var GHWF_CHANGELOG_BUF_STR ''
+  gh_set_env_var GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR ''
+  tkl_declare_array GHWF_CHANGELOG_BUF_KEY_ARR
+
+  gh_set_env_var GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR ''
+  tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
 }
 
 tkl_set_return

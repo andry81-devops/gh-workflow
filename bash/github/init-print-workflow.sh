@@ -88,11 +88,34 @@ function gh_flush_print_buffers()
 
 function gh_write_to_changelog_text_ln()
 {
+  gh_write_to_changelog_named_text_ln '' '' "$@"
+}
+
+function gh_write_to_changelog_named_text_ln()
+{
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
 
-  local changelog_msg="$1"
+  local changelog_msg_name_to_insert_from="$1"
+  local changelog_msg_name="$2"
+  local changelog_msg="$3"
 
-  gh_set_env_var GHWF_CHANGELOG_BUF_STR "${GHWF_CHANGELOG_BUF_STR}${changelog_msg}"$'\r\n'
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    tkl_deserialize_array "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_KEY_ARR
+    tkl_deserialize_array "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_VALUE_ARR
+  fi
+
+  gh_find_changelog_buf_arr_index_to_insert_from "$changelog_msg_name_to_insert_from"
+
+  GHWF_CHANGELOG_BUF_KEY_ARR=("${GHWF_CHANGELOG_BUF_KEY_ARR[@]:0:RETURN_VALUE}" "$changelog_msg_name" "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:RETURN_VALUE}")
+  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "$changelog_msg"$'\r\n' "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
+
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    tkl_serialize_array GHWF_CHANGELOG_BUF_KEY_ARR GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR
+    tkl_serialize_array GHWF_CHANGELOG_BUF_VALUE_ARR GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR
+
+    gh_set_env_var GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR"
+    gh_set_env_var GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR"
+  fi
 }
 
 function gh_print_args()

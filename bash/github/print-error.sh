@@ -191,42 +191,81 @@ function gh_print_errors()
 
 function gh_write_error_to_changelog_text_bullet_ln()
 {
+  gh_write_error_to_changelog_named_text_bullet_ln '' '' "$@"
+}
+
+function gh_write_error_to_changelog_named_text_bullet_ln()
+{
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
 
-  local changelog_msg="$1"
+  local changelog_msg_name_to_insert_from="$1"
+  local changelog_msg_name="$2"
+  local changelog_msg="$3"
 
-  gh_set_env_var GHWF_CHANGELOG_BUF_STR "${GHWF_CHANGELOG_BUF_STR}* error: ${changelog_msg}"$'\r\n'
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    tkl_deserialize_array "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_KEY_ARR
+    tkl_deserialize_array "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_VALUE_ARR
+  fi
+
+  gh_find_changelog_buf_arr_index_to_insert_from "$changelog_msg_name_to_insert_from"
+
+  GHWF_CHANGELOG_BUF_KEY_ARR=("${GHWF_CHANGELOG_BUF_KEY_ARR[@]:0:RETURN_VALUE}" "$changelog_msg_name" "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:RETURN_VALUE}")
+  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "* error: $changelog_msg"$'\r\n' "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
+
+  if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
+    tkl_serialize_array GHWF_CHANGELOG_BUF_KEY_ARR GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR
+    tkl_serialize_array GHWF_CHANGELOG_BUF_VALUE_ARR GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR
+
+    gh_set_env_var GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR"
+    gh_set_env_var GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR"
+  fi
 }
 
 # format: <message> | <error_message> <changelog_message>
 function gh_print_error_and_write_to_changelog_text_ln()
 {
-  local error_msg="$1"
+  gh_print_error_and_write_to_changelog_named_text_ln '' '' "$@"
+}
+
+# format: <message_name> <message> | <message_name> <message> <changelog_message>
+function gh_print_error_and_write_to_changelog_named_text_ln()
+{
+  local error_msg_name_to_insert_from="$1"
+  local error_msg_name="$2"
+  local error_msg="$3"
 
   gh_print_error_ln "$error_msg"
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-    local changelog_msg="$2"
+    local changelog_msg="$4"
 
     (( ${#@} < 2 )) && changelog_msg="$error_msg"
 
-    gh_write_to_changelog_text_ln "$changelog_msg"
+    gh_write_to_changelog_named_text_ln "$error_msg_name_to_insert_from" "$error_msg_name" "$changelog_msg"
   fi
 }
 
 # format: <message> | <error_message> <changelog_message>
 function gh_print_error_and_write_to_changelog_text_bullet_ln()
 {
-  local error_msg="$1"
+  gh_print_error_and_write_to_changelog_named_text_bullet_ln '' '' "$@"
+}
+
+# format: <message_name> <message> | <message_name> <message> <changelog_message>
+function gh_print_error_and_write_to_changelog_named_text_bullet_ln()
+{
+  local error_msg_name_to_insert_from="$1"
+  local error_msg_name="$2"
+  local error_msg="$3"
 
   gh_print_error_ln "$error_msg"
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-    local changelog_msg="$2"
+    local changelog_msg="$4"
 
     (( ${#@} < 2 )) && changelog_msg="$error_msg"
 
-    gh_write_error_to_changelog_text_bullet_ln "$changelog_msg"
+    gh_write_error_to_changelog_named_text_bullet_ln "$error_msg_name_to_insert_from" "$error_msg_name" "$changelog_msg"
   fi
 }
 
