@@ -556,6 +556,11 @@ for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' 
           # declare input variables
           tkl_export GH_WORKFLOW_ROOT     "$GH_WORKFLOW_ROOT"
 
+          # export specific GitHub Actions workflow environment variables
+          if [[ -n "${GH_WORKFLOW_FLAGS+x}" ]]; then
+            tkl_export GH_WORKFLOW_FLAGS    "$GH_WORKFLOW_FLAGS"
+          fi
+
           tkl_export IS_STORED_FILE_EXIST "$is_index_file_prev_exist"
 
           tkl_export STORED_FILE          "$index_dir/$index_file"

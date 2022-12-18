@@ -283,7 +283,6 @@
                       #
                       # 2022-12-01T18:10:16Z:
                       # * notice: GitHub Actions Run: https://github.com/andry81-devops/andry81-devops/actions/runs/3595313872 # 1608
-                      # * notice: Commit Reference URL: https://github.com/andry81-cache/andry81-devops--gh-content-cache/commit/3ad502b8678204bfe569ecec2e449757ec3528cc
                       # * changed: `repo/andry81-devops/gh-workflow/badges/traffic/views/all.svg`:
                       #   size=`2341 -> 2341` md5-hash=`3f1c20cbde264a3c50b5610b1b3732ba -> fb672181b7bd1a17014741fa5ac698ad`
                       #   expired-delta=`+01:53:52` scheduled-timestamp=`2022-12-01T12:16:24Z -> 2022-12-01T16:16:24Z` update-timestamp=`2022-12-01T18:10:16Z`

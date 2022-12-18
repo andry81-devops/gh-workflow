@@ -106,9 +106,8 @@ function gh_find_changelog_buf_arr_index_to_insert_from()
   RETURN_VALUE=0
 
   # [+]<name> | -<name>
-  #   * With out the sign or with the plus - insert after.
-  #   * With the minus and less than -1 - insert before (-2 - before first, -3 - before second, and so on).
-  #   * -1 - insert at the end.
+  #   * [+]<name> - insert after <name>.
+  #   * -<name>   - insert before <name>.
   #
   local changelog_msg_name_to_insert_from="$1"
 

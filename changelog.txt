@@ -1,3 +1,8 @@
+2022.12.18:
+* fixed: bash/cache/accum-content.sh: missed `GH_WORKFLOW_FLAGS` variable export
+* changed: bash/github/init-basic-workflow.sh: minor change
+* changed: TODO.txt: todo update
+
 2022.12.16:
 * new: bash/github: added `gh_write_to_changelog_named_text_ln` function to write named text into changelog buffer as an array of blocks with associated key names to be able to make unordered writes, for example, between blocks
 * new: bash/github: added `ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE` environment variable flag to control changelog buffer array auto serialization into and from `GHWF_CHANGELOG_BUF_*_ARR` variables in all dependent functions
