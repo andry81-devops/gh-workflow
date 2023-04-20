@@ -1,3 +1,6 @@
+2023.04.20:
+* fixed: README.md: static badges address change
+
 2023.02.15:
 * changed: TODO.txt: todo update
 
