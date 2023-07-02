@@ -43,8 +43,8 @@
 ---
 
 <p align="center">
-  <a href="https://github.com/andry81-devops/gh-workflow/blob/master/userlog.md">Userlog</a>
-• <a href="https://github.com/andry81-devops/gh-workflow/blob/master/changelog.txt">Changelog</a>
+  <a href="https://github.com/andry81-devops/gh-workflow/tree/HEAD/userlog.md">Userlog</a>
+• <a href="https://github.com/andry81-devops/gh-workflow/tree/HEAD/changelog.txt">Changelog</a>
 • <a href="#dependentees">Dependentees</a>
 • <a href="#copyright-and-license"><img src="https://github.com/andry81-cache/gh-content-static-cache/raw/master/common/badges/license/mit-license.svg" valign="middle" alt="copyright and license" />&nbsp;Copyright and License</a>
 </p>
@@ -64,4 +64,4 @@ Tutorials to use with: https://github.com/andry81/index#tutorials</h4>
 
 ## <a name="copyright-and-license">Copyright and License</a>
 
-Code and documentation copyright 2021 Andrey Dibrov. Code released under [MIT License](https://github.com/andry81-devops/gh-workflow/blob/master/license.txt)
+Code and documentation copyright 2021 Andrey Dibrov. Code released under [MIT License](https://github.com/andry81-devops/gh-workflow/tree/HEAD/license.txt)

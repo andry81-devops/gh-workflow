@@ -34,6 +34,10 @@ stat_list_key="$stat_entity"
 
 current_date_time_utc="$(date --utc +%FT%TZ)"
 
+current_date_utc="${current_date_time_utc/%T*}"
+
+current_date_time_utc_sec="$(date --utc -d "${current_date_time_utc}" +%s)" # seconds from epoch to current date with time
+
 # on exit handler
 tkl_push_trap 'gh_flush_print_buffers; gh_prepend_changelog_file' EXIT
 
@@ -44,7 +48,16 @@ if (( ENABLE_GITHUB_ACTIONS_RUN_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_GITHUB
     "GitHub Actions Run: $GHWF_GITHUB_ACTIONS_RUN_URL # $GITHUB_RUN_NUMBER"
 fi
 
-current_date_utc="${current_date_time_utc/%T*}"
+if (( ENABLE_REPO_STATS_COMMITS_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_REPO_STATS_COMMITS_URL" ]]; then
+  (( repo_stats_commits_url_until_date_time_utc_sec = current_date_time_utc_sec + 60 * 5 )) # +5min approximation and truncation to days
+
+  repo_stats_commits_url_until_date_time_utc="$(date --utc -d "@$repo_stats_commits_url_until_date_time_utc_sec" +%FT%TZ)"
+
+  repo_stats_commits_url_until_date_utc_day="${repo_stats_commits_url_until_date_time_utc/%T*}"
+
+  gh_write_notice_to_changelog_text_bullet_ln \
+    "Stats Output Repository: $GHWF_REPO_STATS_COMMITS_URL&until=$repo_stats_commits_url_until_date_utc_day"
+fi
 
 # CAUTION:
 #   Sometimes the json data file comes empty for some reason.
