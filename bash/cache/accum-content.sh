@@ -19,10 +19,10 @@
 #   The rest of variables is related to other scripts.
 #
 
-[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
-}
+fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
@@ -38,20 +38,20 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 content_config_file="${content_config_file//\\//}"
 content_index_file="${content_index_file//\\//}"
 
-[[ -z "$content_config_file" ]] && {
+if [[ -z "$content_config_file" ]]; then
   gh_print_error_ln "$0: error: \`content_config_file\` variable must be defined."
   exit 255
-}
+fi
 
-[[ ! -f "$content_config_file" ]] && {
+if [[ ! -f "$content_config_file" ]]; then
   gh_print_error_ln "$0: error: \`content_config_file\` file is not found: \`$content_config_file\`"
   exit 255
-}
+fi
 
-[[ -z "$content_index_file" ]] && {
+if [[ -z "$content_index_file" ]]; then
   gh_print_error_ln "$0: error: \`content_index_file\` variable must be defined."
   exit 255
-}
+fi
 
 content_index_dir="${content_index_dir%/}"
 

@@ -4,10 +4,10 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
-[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
-}
+fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
@@ -18,20 +18,20 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
 
-[[ -z "$topic_query_url" ]] && {
+if [[ -z "$topic_query_url" ]]; then
   gh_print_error_ln "$0: error: \`topic_query_url\` variable is not defined."
   exit 255
-}
+fi
 
-[[ -z "$replies_sed_regexp" ]] && {
+if [[ -z "$replies_sed_regexp" ]]; then
   gh_print_error_ln "$0: error: \`replies_sed_regexp\` variable is not defined."
   exit 255
-}
+fi
 
-[[ -z "$views_sed_regexp" ]] && {
+if [[ -z "$views_sed_regexp" ]]; then
   gh_print_error_ln "$0: error: \`views_sed_regexp\` variable is not defined."
   exit 255
-}
+fi
 
 [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
 [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"

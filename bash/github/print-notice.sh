@@ -9,10 +9,10 @@
 
 SOURCE_GHWF_PRINT_NOTICE_SH=1 # including guard
 
-[[ -z "$GH_WORKFLOW_ROOT" ]] && {
+if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
-}
+fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
@@ -239,7 +239,7 @@ function gh_print_notice_and_write_to_changelog_named_text_ln()
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$4"
 
-    (( ${#@} < 2 )) && changelog_msg="$notice_msg"
+    (( ${#@} < 4 )) && changelog_msg="$notice_msg"
 
     gh_write_to_changelog_named_text_ln "$notice_msg_name_to_insert_from" "$notice_msg_name" "$changelog_msg"
   fi
@@ -263,7 +263,7 @@ function gh_print_notice_and_write_to_changelog_named_text_bullet_ln()
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$4"
 
-    (( ${#@} < 2 )) && changelog_msg="$notice_msg"
+    (( ${#@} < 4 )) && changelog_msg="$notice_msg"
 
     gh_write_notice_to_changelog_named_text_bullet_ln "$notice_msg_name_to_insert_from" "$notice_msg_name" "$changelog_msg"
   fi

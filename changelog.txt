@@ -1,4 +1,8 @@
 2023.07.03:
+* fixed: bash/github/print-*.sh: minor fixup
+* refactor: bash: replaced `[[ ... ]] && { ... }` expressions by `if [[ ... ]]; then ... fi` statement to reduce places with accidental return code change
+
+2023.07.03:
 * fixed: bash/github/accum-rate-limits.sh: json format update
 
 2023.07.02:
