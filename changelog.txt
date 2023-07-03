@@ -1,3 +1,6 @@
+2023.07.03:
+* fixed: bash/github/accum-rate-limits.sh: json format update
+
 2023.07.02:
 * new: bash: use `ENABLE_REPO_STORE_COMMITS_URL_PRINT_TO_CHANGELOG`/`ENABLE_REPO_STATS_COMMITS_URL_PRINT_TO_CHANGELOG` and `GHWF_REPO_STORE_COMMITS_URL`/`GHWF_REPO_STATS_COMMITS_URL` variables to print `Content Store Repository`/`Statistic Output Repository` commit URL into being committed changelog file
 * refactor: README.md: replaced `blob/master` to `tree/HEAD` in all links as not dependent on specific branch name
