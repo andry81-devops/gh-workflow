@@ -70,11 +70,18 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/traplib.sh"
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-diff-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 
 function yq_init()
 {
   which yq > /dev/null || return $?
+
+  # global variables init
+  [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] &&         gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 0
+  [[ -z "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] &&        gh_set_env_var ENABLE_YAML_PRINT_AFTER_PATCH 0
+  [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] &&    gh_set_env_var ENABLE_YAML_DIFF_PRINT_AFTER_EDIT 0
+  [[ -z "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] &&  gh_set_env_var ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH 0
 
   local yq_help="$(yq --help)"
 
@@ -105,11 +112,6 @@ function yq_init()
     echo "$0: error: \`yq\` implementation is not known." >&2
     return 255
   fi
-
-  [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_PRINT_AFTER_EDIT=0
-  [[ -z "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] && ENABLE_YAML_PRINT_AFTER_PATCH=0
-  [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] && ENABLE_YAML_DIFF_PRINT_AFTER_EDIT=0
-  [[ -z "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] && ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH=0
 
   return 0
 }

@@ -35,7 +35,7 @@
 #     * CHANGELOG_FILE=repo/owner-of-content/repo-with-content/content-changelog.txt
 #     * ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=1
 #     * ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=1
-#     * ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=0   # enabled bu default
+#     * ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=1   # enabled by default
 #     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
 #
 
@@ -65,6 +65,19 @@ function init_basic_workflow()
     gh_eval_github_env
   fi
 
+  # global variables init
+  [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] &&                gh_set_env_var CONTINUE_ON_INVALID_INPUT 0
+  [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] &&                gh_set_env_var CONTINUE_ON_EMPTY_CHANGES 0
+  [[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] &&             gh_set_env_var CONTINUE_ON_RESIDUAL_CHANGES 0
+  [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] &&           gh_set_env_var ENABLE_GENERATE_CHANGELOG_FILE 0
+  [[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] &&      gh_set_env_var ENABLE_PRINT_CURL_RESPONSE_ON_ERROR 0
+  [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] &&     gh_set_env_var ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME 0
+  [[ -z "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] &&  gh_set_env_var ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE 1
+
+  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
+    [[ -z "$CHANGELOG_FILE" ]] && gh_set_env_var CHANGELOG_FILE 'changelog.txt'
+  fi
+
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     if [[ -z "${GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR:+x}" ]]; then # to save buffer between workflow steps
       # associated array keys as buffer names
@@ -81,18 +94,6 @@ function init_basic_workflow()
       # associated array values as buffer content
       tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
     fi
-  fi
-
-  [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] && CONTINUE_ON_INVALID_INPUT=0
-  [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] && CONTINUE_ON_EMPTY_CHANGES=0
-  [[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] && CONTINUE_ON_RESIDUAL_CHANGES=0
-  [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] && ENABLE_GENERATE_CHANGELOG_FILE=0
-  [[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] && ENABLE_PRINT_CURL_RESPONSE_ON_ERROR=0
-  [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] && ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME=0
-  [[ -z "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] && ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=1
-
-  if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-    [[ -n "$CHANGELOG_FILE" ]] || CHANGELOG_FILE='changelog.txt'
   fi
 
   return 0
