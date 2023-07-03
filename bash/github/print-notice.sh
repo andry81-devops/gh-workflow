@@ -199,8 +199,8 @@ function gh_write_notice_to_changelog_named_text_bullet_ln()
   (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
 
   local changelog_msg_name_to_insert_from="$1"
-  local changelog_msg_name="$1"
-  local changelog_msg="$2"
+  local changelog_msg_name="$2"
+  local changelog_msg="$3"
 
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     tkl_deserialize_array "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_KEY_ARR
@@ -210,7 +210,7 @@ function gh_write_notice_to_changelog_named_text_bullet_ln()
   gh_find_changelog_buf_arr_index_to_insert_from "$changelog_msg_name_to_insert_from"
 
   GHWF_CHANGELOG_BUF_KEY_ARR=("${GHWF_CHANGELOG_BUF_KEY_ARR[@]:0:RETURN_VALUE}" "$changelog_msg_name" "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:RETURN_VALUE}")
-  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "* notice: $changelog_msg"$'\r\n' "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
+  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "* notice: $changelog_msg" "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
 
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     tkl_serialize_array GHWF_CHANGELOG_BUF_KEY_ARR GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR

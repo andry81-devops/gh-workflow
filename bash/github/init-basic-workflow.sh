@@ -159,11 +159,7 @@ function gh_prepend_changelog_file()
   fi
 
   for value in "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]}"; do
-    if [[ -n "$changelog_buf" ]]; then
-      changelog_buf="$changelog_buf"$'\r\n'"$value"
-    else
-      changelog_buf="$value"
-    fi
+    changelog_buf="$changelog_buf$value"$'\r\n'
   done
 
   if [[ -f "$CHANGELOG_FILE" && -s "$CHANGELOG_FILE" ]]; then

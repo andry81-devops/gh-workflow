@@ -210,7 +210,7 @@ function gh_write_error_to_changelog_named_text_bullet_ln()
   gh_find_changelog_buf_arr_index_to_insert_from "$changelog_msg_name_to_insert_from"
 
   GHWF_CHANGELOG_BUF_KEY_ARR=("${GHWF_CHANGELOG_BUF_KEY_ARR[@]:0:RETURN_VALUE}" "$changelog_msg_name" "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:RETURN_VALUE}")
-  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "* error: $changelog_msg"$'\r\n' "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
+  GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "* error: $changelog_msg" "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")
 
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     tkl_serialize_array GHWF_CHANGELOG_BUF_KEY_ARR GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR
