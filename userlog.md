@@ -4,6 +4,15 @@
 
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
+## 2023.07.04:
+* :wrench: fixed: bash: UTC timezone for URLs in `GHWF_REPO_STORE_COMMITS_URL`/`GHWF_REPO_STATS_COMMITS_URL` variables
+
+## 2023.07.04:
+* :wrench: fixed: bash/github/print-*.sh: unchanged or empty changelog file
+
+## 2023.07.03:
+* :wrench: fixed: bash/github/accum-rate-limits.sh: json format update
+
 ## 2023.07.02:
 * :new: new: bash: use `ENABLE_REPO_STORE_COMMITS_URL_PRINT_TO_CHANGELOG`/`ENABLE_REPO_STATS_COMMITS_URL_PRINT_TO_CHANGELOG` and `GHWF_REPO_STORE_COMMITS_URL`/`GHWF_REPO_STATS_COMMITS_URL` variables to print `Content Store Repository`/`Statistic Output Repository` commit URL into being committed changelog file
 

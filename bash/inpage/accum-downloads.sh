@@ -55,7 +55,7 @@ if (( ENABLE_REPO_STATS_COMMITS_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_REPO_S
   repo_stats_commits_url_until_date_utc_day="${repo_stats_commits_url_until_date_time_utc/%T*}"
 
   gh_write_notice_to_changelog_text_bullet_ln \
-    "Stats Output Repository: $GHWF_REPO_STATS_COMMITS_URL&until=$repo_stats_commits_url_until_date_utc_day"
+    "Stats Output Repository: $GHWF_REPO_STATS_COMMITS_URL&time_zone=utc&until=$repo_stats_commits_url_until_date_utc_day"
 fi
 
 # exit with non 0 code if nothing is changed

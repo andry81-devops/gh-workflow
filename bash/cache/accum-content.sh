@@ -89,7 +89,7 @@ if (( ENABLE_REPO_STORE_COMMITS_URL_PRINT_TO_CHANGELOG )) && [[ -n "$GHWF_REPO_S
   repo_store_commits_url_until_date_utc_day="${repo_store_commits_url_until_date_time_utc/%T*}"
 
   gh_write_notice_to_changelog_text_bullet_ln \
-    "Content Store Repository: $GHWF_REPO_STORE_COMMITS_URL&until=$repo_store_commits_url_until_date_utc_day"
+    "Content Store Repository: $GHWF_REPO_STORE_COMMITS_URL&time_zone=utc&until=$repo_store_commits_url_until_date_utc_day"
 fi
 
 IFS=$'\n' read -r -d '' config_dirs_num config_entries_init_shell config_entries_init_run <<< \
