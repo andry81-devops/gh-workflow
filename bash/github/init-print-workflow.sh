@@ -134,11 +134,10 @@ function gh_write_to_changelog_named_text_ln()
 
 function gh_print_args()
 {
-  local IFS
   local arg
   local RETURN_VALUE
 
-  IFS=$'\n'; for arg in "$@"; do
+  for arg in "$@"; do
     gh_trim_trailing_line_return_chars "$arg"
 
     echo "$RETURN_VALUE"

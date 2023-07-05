@@ -54,7 +54,7 @@ function gh_print_error_ln()
 
   if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      local IFS=$'\n'; for arg in "$@"; do
+      for arg in "$@"; do
         line="${line}${line:+$'\r\n'}$arg"
       done
 
@@ -85,7 +85,7 @@ function gh_print_error_ln_nobuf_nolag()
   # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    local IFS=$'\n'; for arg in "$@"; do
+    for arg in "$@"; do
       line="${line}${line:+$'\r\n'}$arg"
     done
 
@@ -104,13 +104,12 @@ function gh_print_error_ln_nobuf_nolag()
 
 function gh_print_errors_nobuf_nolag()
 {
-  local IFS
   local arg
 
   # fix GitHub log issue when a trailing line return charcter in the message does convert into blank line
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
-    IFS=$'\n'; for arg in "$@"; do
+    for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
 
       # fix multiline text in a single argument
@@ -119,7 +118,7 @@ function gh_print_errors_nobuf_nolag()
       gh_print_annotation error '' "$RETURN_VALUE"
     done >&2
   else
-    IFS=$'\n'; for arg in "$@"; do
+    for arg in "$@"; do
       gh_trim_trailing_line_return_chars "$arg"
 
       echo "$RETURN_VALUE"
@@ -157,12 +156,11 @@ function gh_print_errors_buffer()
 
 function gh_print_errors()
 {
-  local IFS
   local arg
 
   if [[ -n "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
     if [[ -n "$GITHUB_ACTIONS" ]]; then
-      IFS=$'\n'; for arg in "$@"; do
+      for arg in "$@"; do
         gh_trim_trailing_line_return_chars "$arg"
 
         # fix multiline text in a single argument
@@ -173,7 +171,7 @@ function gh_print_errors()
         gh_set_env_var GHWF_PRINT_ERROR_BUF_STR "${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+"${RETURN_VALUES[0]}"}${RETURN_VALUES[1]}"
       done
     else
-      IFS=$'\n'; for arg in "$@"; do
+      for arg in "$@"; do
         gh_set_env_var GHWF_PRINT_ERROR_BUF_STR "${GHWF_PRINT_ERROR_BUF_STR}${GHWF_PRINT_ERROR_BUF_STR:+$'\r\n'}$arg"
       done
     fi

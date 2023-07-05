@@ -1,3 +1,6 @@
+2023.07.06:
+* changed: bash: code cleanup, removed useless `IFS` assign before `for` statement
+
 2023.07.05:
 * fixed: bash/github/init-print-workflow.sh: annotations print duplication
 

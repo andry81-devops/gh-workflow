@@ -32,7 +32,6 @@ function gh_set_env_var()
   local __var="$1"
   local __value="$2"
 
-  local IFS
   local __line
 
   case "$__var" in
@@ -47,11 +46,7 @@ function gh_set_env_var()
       #
       if [[ "${__value/[$'\r\n']/}" != "$__value" ]]; then
         echo "$__var<<::EOF::"
-
-        IFS=$'\n'; for __line in "$__value"; do
-          echo "$__line"
-        done
-
+        echo "$__value"
         echo "::EOF::"
       else
         echo "$__var=$__value"
@@ -66,7 +61,6 @@ function gh_unset_env_var()
 
   local __var="$1"
 
-  local IFS
   local __line
 
   case "$__var" in
