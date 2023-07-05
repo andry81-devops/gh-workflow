@@ -4,6 +4,9 @@
 
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
+## 2023.07.05:
+* :wrench: fixed: bash/github/init-print-workflow.sh: annotations print duplication
+
 ## 2023.07.04:
 * :wrench: fixed: bash: UTC timezone for URLs in `GHWF_REPO_STORE_COMMITS_URL`/`GHWF_REPO_STATS_COMMITS_URL` variables
 

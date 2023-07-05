@@ -4,6 +4,17 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# NOTE:
+#   Available global variables to use:
+#
+#     * ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH=0  # Disabled by default.
+#
+#       # If not enabled, then prints only into stdout/stderr.
+#       #
+#       # See the details:
+#       #   https://github.com/andry81-devops/gh-known-issues#annotations-from-composite-actions-are-not-correctly-created
+#
+
 # Script both for execution and inclusion.
 [[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH" && SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH -ne 0) ]] && return
 
@@ -25,6 +36,9 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 function init_print_workflow()
 {
+  # global variables init
+  [[ -z "$ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH" ]] && gh_set_env_var ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH 0
+
   gh_set_print_warning_lag  .025 # 25 msec
   gh_set_print_error_lag    .025
 
@@ -170,28 +184,47 @@ function gh_print_annotation_line()
   gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR "${GHWF_ANNOTATIONS_PRINT_BUF_STR}${GHWF_ANNOTATIONS_PRINT_BUF_STR:+$'\r\n'}$line"
 }
 
+# CAUTION:
+#   Does not execute annotation prints by default anymore, only prints into
+#   stdout/stderr.
+#   To enable annotations print on flush use
+#   `ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH=1`.
+#
+#   See the details:
+#     https://github.com/andry81-devops/gh-known-issues#annotations-from-composite-actions-are-not-correctly-created
+#
 function gh_flush_print_annotations()
 {
+  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+
   local IFS
   local empty
   local annot_type
   local line
+  local msg
 
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  gh_trim_trailing_line_return_chars "$GHWF_ANNOTATIONS_PRINT_BUF_STR"
 
-  IFS=$'\n'; for line in "$GHWF_ANNOTATIONS_PRINT_BUF_STR"; do
-    gh_trim_trailing_line_return_chars "$line"
-
-    # gh_decode_line_return_chars "$RETURN_VALUE"
-
-    IFS=':' read -r empty empty annot_type <<< "$RETURN_VALUE"
+  while IFS=$'\n' read -r line; do
+    IFS=':' read -r empty empty annot_type <<< "$line"
     IFS=$'\t ' read -r annot_type empty <<< "$annot_type"
 
+    if (( ! ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH )); then
+      # cut off annotation prefix from message
+      line="${line#::$annot_type[$'\t' ]*::}"
+
+      gh_decode_line_return_chars "$line"
+
+      msg="$RETURN_VALUE"
+    else
+      msg="$line"
+    fi
+
     case "$annot_type" in
-      'notice') echo "$RETURN_VALUE";;
-      *) echo "$RETURN_VALUE" >&2;;
+      'notice') echo "$msg";;
+      *) echo "$msg" >&2;;
     esac
-  done
+  done <<< "$RETURN_VALUE"
 
   gh_unset_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR
 }

@@ -1,4 +1,7 @@
 2023.07.05:
+* fixed: bash/github/init-print-workflow.sh: annotations print duplication
+
+2023.07.05:
 * changed: README.md: cleanup
 
 2023.07.04:
