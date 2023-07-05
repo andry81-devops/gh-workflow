@@ -57,11 +57,11 @@ Tutorials to use with: https://github.com/andry81/index#tutorials</h4>
 
 # gh-workflow@master
 
-## <a name="dependentees">Dependentees</a>
+## Dependentees
 
 * All action scripts:<br />
   https://github.com/andry81/index#action-scripts
 
-## <a name="copyright-and-license">Copyright and License</a>
+## Copyright and License
 
 Code and documentation copyright 2021 Andrey Dibrov. Code released under [MIT License](https://github.com/andry81-devops/gh-workflow/tree/HEAD/license.txt)
