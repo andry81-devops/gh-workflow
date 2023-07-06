@@ -5,6 +5,9 @@
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
 ## 2023.07.06:
+* :new: new: bash/github/enable-print-buffering.sh: added script to explicitly enable print buffering
+
+## 2023.07.06:
 * :new: new: bash/github/utils.sh: `gh_unset_github_env_var`, `gh_push*_var_to_stack`, `gh_pop_var_from_stack` to be able to use variables stack between GitHub Action steps
 * :pencil: changed: bash/github/utils.sh: `gh_set_env_var` now does export a variable instead of declare because `GITHUB_ENV` variables does export too
 * :twisted_rightwards_arrows: refactor: bash/github/utils.sh: `gh_update_github_env_var` renamed to `gh_set_github_env_var`
