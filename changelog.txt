@@ -1,4 +1,10 @@
 2023.07.06:
+* fixed: bash/github/utils.sh: wrong include order
+* new: bash/github/utils.sh: `gh_unset_github_env_var`, `gh_push*_var_to_stack`, `gh_pop_var_from_stack` to be able to use variables stack between GitHub Action steps
+* changed: bash/github/utils.sh: `gh_set_env_var` now does export a variable instead of declare because `GITHUB_ENV` variables does export too
+* refactor: bash/github/utils.sh: `gh_update_github_env_var` renamed to `gh_set_github_env_var`
+
+2023.07.06:
 * changed: bash: code cleanup, removed useless `IFS` assign before `for` statement
 
 2023.07.05:

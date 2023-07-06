@@ -65,7 +65,7 @@ init_print_workflow || exit $?
 
 function gh_enable_print_buffering()
 {
-  local enable_print_notice_buffering=${1:-0}   # by default is not buffered, printfs at first
+  local enable_print_notice_buffering=${1:-0}   # by default is not buffered, prints at first
   local enable_print_warning_buffering=${1:-1}  # by default is buffered, prints at second
   local enable_print_error_buffering=${1:-1}    # by default is buffered, prints at third
 
@@ -288,7 +288,7 @@ function gh_process_annotation_print()
 
     (( GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX++ ))
 
-    gh_update_github_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX
+    gh_set_github_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX
   else
     if [[ -n "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" ]]; then
       gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX 0
