@@ -52,18 +52,26 @@ fi
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-github-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
-
-# does not enable or disable by default, just does include a functionality
-tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/enable-github-env-autoeval.sh"
 
 
 function init_basic_workflow()
 {
-  # load GitHub Actions variables at first
-  if (( GHWF_GITHUB_ENV_AUTOEVAL )); then
-    gh_eval_github_env
-  fi
+  # CAUTION:
+  #   You must always load unconditionally all the `GITHUB_ENV` variables!
+  #
+  #   The reason is in the method of the bash script execution inside a
+  #   GitHub Action step. While the GitHub Action loads the `GITHUB_ENV`
+  #   variables only in the next step, the variables can be already dropped in
+  #   the current step.
+  #
+  #   If a bash script inside GitHub Action step does not have a shebang line,
+  #   then each line of it does run as a bash subprocess. This means that the
+  #   all variables would be dropped after a subprocess exit. This function
+  #   reloads the `GITHUB_ENV` on each such subprocess execution.
+  #
+  gh_eval_github_env
 
   # global variables init
   [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] &&                gh_set_env_var CONTINUE_ON_INVALID_INPUT 0

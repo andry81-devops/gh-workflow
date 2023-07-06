@@ -5,6 +5,9 @@
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
 ## 2023.07.06:
+* :wrench: fixed: bash/github/init-basic-workflow.sh: completely removed `GITHUB_ENV` variables conditional load feature, because must always be loaded unconditionally, otherwise variables may be lost on the next shell line of the same GitHub Action step
+
+## 2023.07.06:
 * :new: new: bash/github/enable-print-buffering.sh: added script to explicitly enable print buffering
 
 ## 2023.07.06:

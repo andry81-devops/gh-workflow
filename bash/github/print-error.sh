@@ -22,7 +22,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-print-workflow.sh"
 function gh_enable_print_error_buffering()
 {
   if [[ -z "${GHWF_PRINT_ERROR_BUF_STR+x}" ]]; then
-    gh_set_env_var GHWF_PRINT_ERROR_BUF_STR ''
+    gh_set_env_var GHWF_PRINT_ERROR_BUF_STR '' # sets to empty to show the variable is initialized
   fi
 }
 

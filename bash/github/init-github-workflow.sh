@@ -80,6 +80,19 @@ function gh_eval_github_env_file()
   done < "$__vars_file"
 }
 
+# CAUTION:
+#   You must always load unconditionally all the `GITHUB_ENV` variables!
+#
+#   The reason is in the method of the bash script execution inside a
+#   GitHub Action step. While the GitHub Action loads the `GITHUB_ENV`
+#   variables only in the next step, the variables can be already dropped in
+#   the current step.
+#
+#   If a bash script inside GitHub Action step does not have a shebang line,
+#   then each line of it does run as a bash subprocess. This means that the
+#   all variables would be dropped after a subprocess exit. This function
+#   reloads the `GITHUB_ENV` on each such subprocess execution.
+#
 function gh_eval_github_env()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
