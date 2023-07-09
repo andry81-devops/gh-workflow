@@ -4,6 +4,9 @@
 
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
+## 2023.07.10:
+* :wrench: fixed: bash/github/init-github-workflow.sh: `gh_eval_github_env_file` function rewrite to ignore value last line return
+
 ## 2023.07.09:
 * :wrench: fixed: bash: `tkl_include*` correct nest level value
 * :new: new: bash: Added usage of `tkl_register_call`/`tkl_execute_calls` and implemented postponed gh-workflow initialization, when the first `init_*` function calls only after the last `init-*.sh` script is included. This shall avoid recursed initialization execution in `init-*.sh` scripts, when one script is loaded, but another one is not yet.

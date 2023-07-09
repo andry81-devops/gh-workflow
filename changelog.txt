@@ -1,3 +1,6 @@
+2023.07.10:
+* fixed: bash/github/init-github-workflow.sh: `gh_eval_github_env_file` function rewrite to ignore value last line return
+
 2023.07.09:
 * fixed: bash: minor fixup
 

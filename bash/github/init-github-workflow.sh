@@ -33,33 +33,31 @@ function gh_eval_github_env_file()
 
   local IFS
   local __line
-  local __line_filtered
+  local __line_no_cr
   local __empty
   local __prefix
   local __var
   local __value
+  local __value_no_cr
   local __eof
   local __read_var=0
 
-  while IFS=$'\r\n' read -r __line; do
-    if [[ -z "$__line" ]]; then
+  while IFS=$'\n' read -r __line; do
+    __line_no_cr="${__line%$'\r'}" # trim last CR
+
+    if [[ -z "$__line_no_cr" ]]; then
       continue
     fi
 
-    gh_trim_trailing_line_return_chars "$__line"
-
-    __line_filtered="$RETURN_VALUE"
-
     if (( ! __read_var )); then
-      IFS='<' read -r __var __empty __eof <<< "$__line_filtered"
+      IFS='<' read -r __var __empty __eof <<< "$__line_no_cr"
       if [[ -z "$__eof" ]]; then
-        IFS='=' read -r __var empty <<< "$__line_filtered"
-        IFS='=' read -r empty __value <<< "$__line"
+        IFS='=' read -r __var __value_no_cr <<< "$__line_no_cr"
 
         case "$__var" in
           # ignore system and builtin variables
           __* | GITHUB_* | 'IFS') ;;
-          *) tkl_declare_global "$__var" "$__value" ;;
+          *)tkl_declare_global "$__var" "$__value_no_cr" ;;
         esac
       else
         case "$__var" in
@@ -71,8 +69,8 @@ function gh_eval_github_env_file()
             ;;
         esac
       fi
-    elif [[ "$__line_filtered" != "$__eof" ]]; then
-      __value="$__value$__line"$'\n'
+    elif [[ "$__line_no_cr" != "$__eof" ]]; then
+      __value="$__value${__value:+$'\r\n'}$__line_no_cr"
     else
       tkl_declare_global "$__var" "$__value"
       __read_var=0
