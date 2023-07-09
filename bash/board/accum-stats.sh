@@ -17,6 +17,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
+tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+
 
 if [[ -z "$topic_query_url" ]]; then
   gh_print_error_ln "$0: error: \`topic_query_url\` variable is not defined."

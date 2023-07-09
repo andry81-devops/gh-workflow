@@ -33,6 +33,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
+tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+
 
 # slashes fix
 content_config_file="${content_config_file//\\//}"

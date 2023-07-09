@@ -107,9 +107,6 @@ function init_basic_workflow()
   return 0
 }
 
-init_basic_workflow || exit $?
-
-
 function gh_find_changelog_buf_arr_index_to_insert_from()
 {
   RETURN_VALUE=0
@@ -182,5 +179,7 @@ function gh_prepend_changelog_file()
   gh_set_env_var GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR ''
   tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
 }
+
+tkl_register_call gh init_basic_workflow
 
 tkl_set_return

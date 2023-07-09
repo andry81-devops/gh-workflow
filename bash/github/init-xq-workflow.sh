@@ -65,9 +65,6 @@ function xq_init()
   return 0
 }
 
-xq_init || exit $?
-
-
 function xq_is_null()
 {
   (( ! ${#@} )) && return 255
@@ -89,5 +86,7 @@ function xq_fix_null()
       fi
   done
 }
+
+tkl_register_call gh xq_init
 
 tkl_set_return

@@ -46,4 +46,6 @@ function gh_decode_line_return_chars()
   RETURN_VALUE="${RETURN_VALUE//%25/%}"
 }
 
+tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+
 tkl_set_return

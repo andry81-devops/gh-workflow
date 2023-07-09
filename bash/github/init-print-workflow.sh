@@ -60,9 +60,6 @@ function init_print_workflow()
   return 0
 }
 
-init_print_workflow || exit $?
-
-
 function gh_enable_print_buffering()
 {
   local enable_print_notice_buffering=${1:-0}   # by default is not buffered, prints at first
@@ -297,5 +294,7 @@ function gh_process_annotation_print()
     tkl_declare_global_array RETURN_VALUES $'\r\n' "::$annot_type $annot_prefix::$msg"
   fi
 }
+
+tkl_register_call gh init_print_workflow
 
 tkl_set_return

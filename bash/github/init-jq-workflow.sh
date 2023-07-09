@@ -24,9 +24,6 @@ function jq_init()
   return 0
 }
 
-jq_init || exit $?
-
-
 function jq_is_null()
 {
   (( ! ${#@} )) && return 255
@@ -48,5 +45,7 @@ function jq_fix_null()
       fi
   done
 }
+
+tkl_register_call gh jq_init
 
 tkl_set_return

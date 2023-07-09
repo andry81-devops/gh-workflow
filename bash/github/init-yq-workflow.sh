@@ -116,9 +116,6 @@ function yq_init()
   return 0
 }
 
-yq_init || exit $?
-
-
 function yq_is_null()
 {
   (( ! ${#@} )) && return 255
@@ -1070,5 +1067,7 @@ function yq_patch()
 
   return $last_error
 }
+
+tkl_register_call gh yq_init
 
 tkl_set_return

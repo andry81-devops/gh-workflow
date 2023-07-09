@@ -4,6 +4,11 @@
 
 > :information_source: Legend: :shield: - security; :wrench: - fixed; :new: - new; :pencil: - changed; :twisted_rightwards_arrows: - refactor
 
+## 2023.07.09:
+* :wrench: fixed: bash: `tkl_include*` correct nest level value
+* :new: new: bash: Added usage of `tkl_register_call`/`tkl_execute_calls` and implemented postponed gh-workflow initialization, when the first `init_*` function calls only after the last `init-*.sh` script is included. This shall avoid recursed initialization execution in `init-*.sh` scripts, when one script is loaded, but another one is not yet.
+* :pencil: changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+
 ## 2023.07.06:
 * :wrench: fixed: bash/github/init-basic-workflow.sh: completely removed `GITHUB_ENV` variables conditional load feature, because must always be loaded unconditionally, otherwise variables may be lost on the next shell line of the same GitHub Action step
 
