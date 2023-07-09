@@ -44,12 +44,12 @@ function init_print_workflow()
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     # to save variables between workflow steps
-    if [[ -z "${GHWF_ANNOTATIONS_PRINT_BUF_STR:+x}" ]]; then
-      gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR ''
+    if [[ -z "${GHWF_ANNOTATIONS_PRINT_BUF_STR+x}" ]]; then
+      gh_set_env_var GHWF_ANNOTATIONS_PRINT_BUF_STR '' # sets to empty to show the variable is initialized
     fi
 
     # to save variables between workflow steps
-    if [[ -z "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]]; then
+    if [[ -z "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE+x}" ]]; then
       gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE    ''
       gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX  ''
       gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_MSG     ''
@@ -75,15 +75,19 @@ function gh_flush_print_buffers()
 {
   local line
 
+  # CAUTION:
+  #   Because `GHWF_PRINT_*_BUF_STR` can be initialized as empty, we must check on empty.
+  #
+
   # notices
-  if [[ -n "${GHWF_PRINT_NOTICE_BUF_STR+x}" ]]; then
+  if [[ -n "${GHWF_PRINT_NOTICE_BUF_STR:+x}" ]]; then
     line="${GHWF_PRINT_NOTICE_BUF_STR}"
     gh_unset_env_var GHWF_PRINT_NOTICE_BUF_STR
     gh_print_notices_buffer "$line"
   fi
 
   # warnings
-  if [[ -n "${GHWF_PRINT_WARNING_BUF_STR+x}" ]]; then
+  if [[ -n "${GHWF_PRINT_WARNING_BUF_STR:+x}" ]]; then
     line="${GHWF_PRINT_WARNING_BUF_STR}"
     gh_unset_env_var GHWF_PRINT_WARNING_BUF_STR
     gh_print_warnings_buffer "$line"
@@ -276,7 +280,7 @@ function gh_process_annotation_print()
   local annot_prefix="$2"
   local msg="$3"
 
-  if [[ -n "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" && "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" == "$annot_type" ]]; then
+  if [[ -n "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" && "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" == "$annot_type" ]]; then
     if (( GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX )); then
       tkl_declare_global_array RETURN_VALUES "%0D%0A" "$msg"
     else
@@ -287,7 +291,7 @@ function gh_process_annotation_print()
 
     gh_set_github_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX
   else
-    if [[ -n "$GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE" ]]; then
+    if [[ -n "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]]; then
       gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_INDEX 0
     fi
 

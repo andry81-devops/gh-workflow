@@ -87,7 +87,7 @@ function init_basic_workflow()
   fi
 
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
-    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR:+x}" ]]; then # to save buffer between workflow steps
+    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR+x}" ]]; then # to save buffer between workflow steps
       # associated array keys as buffer names
       gh_set_env_var GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR  ''
       tkl_declare_array GHWF_CHANGELOG_BUF_KEY_ARR
@@ -96,7 +96,7 @@ function init_basic_workflow()
       tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
     fi
   else
-    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:+x}" ]]; then # to save buffer between workflow steps
+    if [[ -z "${GHWF_CHANGELOG_BUF_KEY_ARR[@]+x}" ]]; then # to save buffer between workflow steps
       # associated array keys as buffer names
       tkl_declare_array GHWF_CHANGELOG_BUF_KEY_ARR
       # associated array values as buffer content
