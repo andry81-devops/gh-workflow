@@ -1,3 +1,6 @@
+2024.05.27:
+* changed: _externals, bash: back merge
+
 2023.07.10:
 * fixed: bash/github/init-github-workflow.sh: `gh_eval_github_env_file` function rewrite to ignore value last line return
 

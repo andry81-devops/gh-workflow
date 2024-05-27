@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script can be ONLY executed.
-[[ -z "$BASH" || (-n "$BASH_LINENO" && BASH_LINENO[0] -gt 0) ]] && return
+[[ -n "$BASH" && (-z "$BASH_LINENO" || BASH_LINENO[0] -le 0) ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
