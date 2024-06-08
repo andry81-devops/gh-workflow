@@ -1,3 +1,6 @@
+2024.06.08:
+* fixed: bash/github/init-yq-workflow.sh: missed to detect `jq` existence in case of `https://github.com/kislyuk/yq` implementation
+
 2024.05.27:
 * changed: _externals, bash: back merge
 

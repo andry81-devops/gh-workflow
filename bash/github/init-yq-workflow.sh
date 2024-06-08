@@ -96,6 +96,8 @@ function yq_init()
     YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
     YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   elif grep 'https://github.com/kislyuk/yq[/ ]' - <<< "$yq_help" >/dev/null; then
+    # CAUTION: jq must be installed too
+    which jq > /dev/null || return $?
     YQ_CMDLINE_READ=(yq -cr)
     YQ_CMDLINE_READ_AS_YAML=(yq -ycr)
     YQ_CMDLINE_WRITE=(yq -y)
