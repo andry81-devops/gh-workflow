@@ -49,9 +49,9 @@
 • <a href="#copyright-and-license"><img src="https://github.com/andry81-cache/gh-content-static-cache/raw/master/common/badges/license/mit-license.svg" valign="middle" alt="copyright and license" />&nbsp;Copyright and License</a>
 </p>
 
-<h4 align="center">GitHub workflow support scripts.<br/>
-<br/>
-Tutorials to use with: https://github.com/andry81/index#tutorials</h4>
+<h4 align="center">GitHub workflow support scripts.</h4>
+
+Tutorials to use with: https://github.com/andry81/index#tutorials
 
 ##
 
