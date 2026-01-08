@@ -1,58 +1,39 @@
 #!/bin/bash
 
-# Author:   Andrey Dibrov (andry at inbox dot ru)
-
-# Tacklelib project library bash shell script module
+# Tacklelib project library bash shell script module with a generic set of
+# functionality.
 #
-# Repositories:
-#
-#   * https://github.com/andry81/tacklelib
-#   * https://sf.net/p/tacklelib
-#   * https://gitlab.com/andry81/tacklelib
-#
-# Base bash shell library module with a basic set of functionality.
-# Designed to be included through the absolute path and the source command:
+# Designed to be included through the source command:
 #
 #   >
-#   source '/bin/bash_tacklelib'
+#   (( SOURCE_TACKLELIB_BASH_TACKLELIB_SH )) || source bash_tacklelib || return 255 || exit 255 # exit to avoid continue if the return can not be called
 #
-# Or by using a builtin search paths logic with include guards:
-#
-#   >
-#   if [[ -z "$SOURCE_TACKLELIB_BASH_TACKLELIB_SH" || SOURCE_TACKLELIB_BASH_TACKLELIB_SH -eq 0 ]]; then
-#     # builtin search
-#     for BASH_SOURCE_DIR in "/usr/local/bin" "/usr/bin" "/bin"; do
-#       if [[ -f "$BASH_SOURCE_DIR/bash_tacklelib" ]]; then
-#         source "$BASH_SOURCE_DIR/bash_tacklelib" || exit $?
-#         break
-#       fi
-#     done
-#   fi
-#
-# After that all other scripts can be included through the alternative
-# inclusion function:
+# After that a script can be included through the alternative inclusion
+# function:
 #
 #   >
-#   tkl_include <path>
-#
-# Or:
+#   tkl_include[_or_abort] <path-relative-to-script-directory>
 #
 #   >
-#   tkl_include_or_abort <path>
+#   tkl_include[_or_abort] :<path-relative-to-BASH_SOURCE_PATH-or-to-script-directory>
 #
-# The `tkl_include*` function does use an improved search paths logic and
-# instead of a current directory path a being included shell script is searched
-# through the inclusion path variable - `BASH_SOURCE_PATH` or a current script
-# directory in case if a relative inclusion path is not applicable to
-# paths from the `BASH_SOURCE_PATH` variable.
-#
+# NOTE:
+#   The leading `:` character is chosen to leave the completion feature in the
+#   console working because of the `:` character is a separator for a list of
+#   paths in the Bash shell.
 
 # Script can be ONLY included by "source" command.
-[[ -n "$BASH" && (-z "$BASH_LINENO" || BASH_LINENO[0] -gt 0) && (-z "$SOURCE_TACKLELIB_BASH_TACKLELIB_SH" || SOURCE_TACKLELIB_BASH_TACKLELIB_SH -eq 0) ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+[[ -n "$BASH" && (-z "$BASH_LINENO" || BASH_LINENO[0] -gt 0) ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
-if (( BASH_VERSINFO[0] < 3 )); then
-  echo "$0: error: script designed only for the Bash version 3.x or higher." >&2
+(( BASH_VERSINFO[0] >= 3 )) || {
+  echo "$0: error: Bash version 3+ is required." >&2
   exit 253
+}
+
+if (( SOURCE_TACKLELIB_BASH_TACKLELIB_SH )); then
+  # reregister on include
+  tkl_make_source_file_components "$@"
+  return 0 || exit 0 # exit to avoid continue if the return can not be called
 fi
 
 SOURCE_TACKLELIB_BASH_TACKLELIB_SH=1 # including guard
@@ -60,7 +41,7 @@ SOURCE_TACKLELIB_BASH_TACKLELIB_SH=1 # including guard
 function tkl_debug_echo()
 {
   local last_error=$?
-  echo "$@"
+  echo "$*"
   return $last_error
 }
 
@@ -190,18 +171,16 @@ function tkl_declare_array_as_expr_from_args()
 
 function tkl_if_math_expr()
 {
-  (( "$*" || ! "$*" )) 2> /dev/null && return 0
-  return 1
+  (( "$*" || ! "$*" )) 2> /dev/null || return 1
 }
 
 function tkl_if_int()
 {
-  if (( "$*" || ! "$*" )) 2> /dev/null; then
-    local __tmp
-    (( __tmp = "$*" )) 2> /dev/null # assignment with evaluation and deduction
-    [[ "$__tmp" == "$*" || "+$__tmp" == "$*" ]] && return 0 # test on not deduced expression
-  fi
-  return 1
+  (( "$*" || ! "$*" )) 2> /dev/null || return 1
+
+  local __tmp
+  (( __tmp = "$*" )) 2> /dev/null # assignment with evaluation and deduction
+  [[ "$__tmp" == "$*" || "+$__tmp" == "$*" ]] || return 1 # test on not deduced expression
 }
 
 # casts any not integer and not deduced value to 0, otherwise leave as is
@@ -403,14 +382,12 @@ function tkl_export_path_eval()
 
 function tkl_eval_if()
 {
-  eval "[[ $@ ]]" && return 0
-  return 1
+  eval "[[ $@ ]]" || return 1
 }
 
 function tkl_eval_if_expr()
 {
-  eval "(( $@ ))" && return 0
-  return 1
+  eval "(( $@ ))" || return 1
 }
 
 # replacement of the `true` command, as it can be an external process
@@ -432,8 +409,8 @@ function tkl_false()
 #
 function tkl_set_return()
 {
-  [[ -z "${1//[0-9]/}" ]] && return ${1:-0}
-  return 255
+  tkl_if_int "${1:-0}" || return 255
+  return ${1:-0}
 }
 
 function tkl_unset_and_set_return()
@@ -514,9 +491,9 @@ function tkl_abort()
     echo "${FUNCNAME[0]}: code=$last_error" >&2
   fi
 
-  tkl_dump_call_stack >&2
-
   echo
+
+  tkl_dump_call_stack >&2
 
   tkl_dump_includes_stack >&2
 
@@ -528,13 +505,14 @@ function tkl_abort()
 function tkl_dump_call_stack()
 {
   local stack_size=${#FUNCNAME[@]}
-  local i
+  local i j
   local zeros=0
 
   echo 'Call stack dump:'
 
   for (( i=1; i < stack_size; i++ )); do
-    echo "  [${zeros:${#i}-1}$i] ${FUNCNAME[i]}:"$'\n'"         ${BASH_SOURCE[i+1]:-.} : ${BASH_LINENO[i]}"
+    (( j = i - 1 ))
+    echo "  [${zeros:${#j}-1}$j] ${FUNCNAME[i]}:"$'\n'"         ${BASH_SOURCE[i+1]:-.} : ${BASH_LINENO[i]}"
   done
 
   echo '---'
@@ -553,14 +531,14 @@ function tkl_dump_includes_stack()
 
   echo "  [00] ${BASH_SOURCE_CMD_LINE_ARR[0]}:"
   for (( i=1; i < ${#BASH_SOURCE_CMD_LINE_ARR[@]}; i++ )); do
-    echo "          [${zeros:${#k}-1}$k]=\`${BASH_SOURCE_CMD_LINE_ARR[k]}\`"
+    echo "       [${zeros:${#k}-1}$k]=\`${BASH_SOURCE_CMD_LINE_ARR[k]}\`"
   done
 
-  for (( i=0; i < stack_size; i++ )); do
+  for (( i=stack_size; --i >= 0; )); do
     if (( tkl__vars_stack__global__BASH_SOURCE_CMD_LINE__${i}__defined )); then
       eval tkl_deserialize_array "\${tkl__vars_stack__global__BASH_SOURCE_CMD_LINE__$i}" cmd_line_arr
 
-      (( j = i + 1 ))
+      (( j = stack_size - i ))
       echo "  [${zeros:${#j}-1}$j] ${cmd_line_arr[0]}:"
       for (( j=1; j < ${#cmd_line_arr[@]}; j++ )); do
         (( k = j - 1 ))
@@ -773,10 +751,10 @@ function tkl_is_abs_path()
 
   [[ -z "$file_path" ]] && return 1
 
-  if [[ "${file_path:0:1}" == "/" || "${file_path:0:1}" == "\\" ]]; then
+  if [[ "${file_path:0:1}" == '/' || "${file_path:0:1}" == '\' ]]; then
     RETURN_VALUE=1
     return 0
-  elif [[ "${file_path:1:1}" == ":" ]]; then
+  elif [[ "${file_path:1:1}" == ':' ]]; then
     RETURN_VALUE=1
     return 0
   fi
@@ -790,13 +768,24 @@ function tkl_get_source_file_path()
   # drop return value
   RETURN_VALUE=''
 
-  if (( ${#BASH_LINENO[@]} && BASH_LINENO[${#BASH_LINENO[@]}-1] > 0 )); then
-    local ScriptFilePath="${BASH_SOURCE[${#BASH_LINENO[@]}-1]//\\//}"
-  else
-    local ScriptFilePath="${0//\\//}"
-  fi
+  # search source first difference
+  local this_source="${BASH_SOURCE[0]}"
+  local num_funcs=${#FUNCNAME[@]}
+  local i=1
 
-  tkl_get_abs_path "$ScriptFilePath" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s
+  for (( ; i < num_funcs; i++ )); do
+    if [[ "$this_source" != "${BASH_SOURCE[i]}" ]]; then
+      break
+    fi
+  done
+
+  local prev_source="${BASH_SOURCE[i]}"
+
+  tkl_get_abs_path "$PWD" "$prev_source" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s
+
+  if [[ -z "$prev_source" ]]; then
+    RETURN_VALUE="$RETURN_VALUE/."
+  fi
 }
 
 function tkl_make_source_file_components()
@@ -817,7 +806,9 @@ function tkl_make_source_file_components()
   tkl_export BASH_SOURCE_FILE "$RETURN_VALUE"
 
   local bash_source_file_name="${BASH_SOURCE_FILE##*[/]}"
-  [[ -z "$bash_source_file_name" ]] && bash_source_file_name="$BASH_SOURCE_FILE"
+  if [[ -z "$bash_source_file_name" ]]; then
+    bash_source_file_name="$BASH_SOURCE_FILE"
+  fi
 
   tkl_export BASH_SOURCE_FILE_NAME "$bash_source_file_name"
   tkl_export BASH_SOURCE_DIR "${BASH_SOURCE_FILE%[/]*}"
@@ -829,30 +820,9 @@ function tkl_make_source_file_components()
   tkl_serialize_array BASH_SOURCE_CMD_LINE_ARR BASH_SOURCE_CMD_LINE
 }
 
-function tkl_declare_source_file_components_from_args()
-{
-  [[ -z "$BASH_SOURCE_NEST_LVL" ]] && tkl_export BASH_SOURCE_NEST_LVL 0
-
-  tkl_export BASH_SOURCE_FILE "$1"
-
-  local bash_source_file_name="${BASH_SOURCE_FILE##*[/]}"
-  [[ -z "$bash_source_file_name" ]] && bash_source_file_name="$BASH_SOURCE_FILE"
-
-  tkl_export BASH_SOURCE_FILE_NAME "$bash_source_file_name"
-  tkl_export BASH_SOURCE_DIR "${BASH_SOURCE_FILE%[/]*}"
-
-  tkl_declare_global_array BASH_SOURCE_CMD_LINE_ARR "$@"
-
-  tkl_export BASH_SOURCE_CMD_LINE ''
-
-  tkl_serialize_array BASH_SOURCE_CMD_LINE_ARR BASH_SOURCE_CMD_LINE
-}
-
 function tkl_pushset_source_file_components()
 {
-  if [[ -z "$BASH_SOURCE_NEST_LVL" ]]; then
-    tkl_export BASH_SOURCE_NEST_LVL 0
-  fi
+  [[ -n "$BASH_SOURCE_NEST_LVL" ]] || tkl_export BASH_SOURCE_NEST_LVL 0
 
   (( BASH_SOURCE_NEST_LVL++ ))
 
@@ -865,7 +835,9 @@ function tkl_pushset_source_file_components()
   tkl_pushset_var_to_stack global BASH_SOURCE_FILE "$1"
 
   local bash_source_file_name="${BASH_SOURCE_FILE##*[/]}"
-  [[ -z "$bash_source_file_name" ]] && bash_source_file_name="$BASH_SOURCE_FILE"
+  if [[ -z "$bash_source_file_name" ]]; then
+    bash_source_file_name="$BASH_SOURCE_FILE"
+  fi
 
   tkl_pushset_var_to_stack global BASH_SOURCE_FILE_NAME "$bash_source_file_name"
   tkl_pushset_var_to_stack global BASH_SOURCE_DIR "${BASH_SOURCE_FILE%[/]*}"
@@ -919,22 +891,23 @@ function tkl_include()
   #   1. All variables from here must be unique irrespective to the function scope,
   #      because `source "..."` still can remove or change a local variable!
 
-  local _84CB4B34_is_first_time_include=0
-  if [[ -z "$BASH_SOURCE_NEST_LVL" ]]; then
-    tkl_export BASH_SOURCE_NEST_LVL 0
-    _84CB4B34_is_first_time_include=1
-  fi
+  # reregister on include
+  tkl_make_source_file_components "${@:2}"
 
   if tkl_is_abs_path "$1"; then
     if tkl_get_abs_path "$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
       tkl_set_return $_84CB4B34_last_error
       tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
       _84CB4B34_last_error=$?
+    else
+      echo "${FUNCNAME[0]}: error: invalid inclusion path: \`$1\`." >&2
+      tkl_abort "$_84CB4B34_last_error"
     fi
   else
     local _84CB4B34_included=0
 
-    if [[ -n "$BASH_SOURCE_PATH" ]]; then
+    # a path must begins by ':' string to enable search in the `BASH_SOURCE_PATH` variable first
+    if [[ "${1:0:1}" == ':' && -n "$BASH_SOURCE_PATH" ]]; then
       local _84CB4B34_path_prefix
       case "$OSTYPE" in
         cygwin* | msys* | mingw*)
@@ -945,24 +918,24 @@ function tkl_include()
         ;;
       esac
       for _84CB4B34_path_prefix in $BASH_SOURCE_PATH; do
-        if tkl_get_abs_path "$_84CB4B34_path_prefix/$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
-          if [[ -f "$RETURN_VALUE" ]]; then
-            _84CB4B34_included=1
-            tkl_set_return $_84CB4B34_last_error
-            tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
-            _84CB4B34_last_error=$?
-            break
-          fi
+        if tkl_get_abs_path "$_84CB4B34_path_prefix/${1#:}" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s && [[ -f "$RETURN_VALUE" ]]; then
+          _84CB4B34_included=1
+          tkl_set_return $_84CB4B34_last_error
+          tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
+          _84CB4B34_last_error=$?
+          break
         fi
       done
     fi
 
     if (( ! _84CB4B34_included )); then
-      (( ! _84CB4B34_is_first_time_include )) || tkl_make_source_file_components "${@:2}"
-      if tkl_get_abs_path "$BASH_SOURCE_DIR" "$1" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
+      if tkl_get_abs_path "$BASH_SOURCE_DIR" "${1#:}" && tkl_convert_backend_path_to_native "$RETURN_VALUE" -s; then
         tkl_set_return $_84CB4B34_last_error
         tkl_include_local_impl "$RETURN_VALUE" "${@:2}"
         _84CB4B34_last_error=$?
+      else
+        echo "${FUNCNAME[0]}: error: invalid inclusion path: \`$1\`." >&2
+        tkl_abort "$_84CB4B34_last_error"
       fi
     fi
   fi
@@ -1058,7 +1031,7 @@ function tkl_get_native_parent_dir()
 
   case "$OSTYPE" in
     cygwin* | msys* | mingw*)
-      if [[ "${RETURN_VALUE: -1}" == ":" ]]; then
+      if [[ "${RETURN_VALUE: -1}" == ':' ]]; then
         RETURN_VALUE='' # root directory does not have a parent directory
         return 2
       fi
@@ -1108,12 +1081,17 @@ function tkl_get_abs_path()
   local BasePath="$1"
   local RelativePath="$2"
 
+  # check on globbing characters
+  if [[ "${BasePath//\*/}" != "$BasePath" || "${BasePath//\?/}" != "$BasePath" ]]; then
+    return 1
+  fi
+
   # drop line returns
   BasePath="${BasePath//[$'\r\n']}"
   RelativePath="${RelativePath//[$'\r\n']}"
 
   if [[ -n "$BasePath" ]]; then
-    if [[ "${RelativePath:0:1}" != '/' ]]; then
+    if [[ "${RelativePath:0:1}" != '/' && "${RelativePath:1:1}" != ':' ]]; then
       tkl_normalize_path -a -- "$BasePath${RelativePath:+/}$RelativePath" || return 2
     else
       tkl_normalize_path -a -- "$RelativePath" || return 3
@@ -1148,7 +1126,7 @@ function tkl_convert_backend_path_to_native()
 
   tkl_normalize_path "$PathToConvert" || return 1
 
-  if (( ${#RETURN_VALUE} >= 2 )) && [[ "${RETURN_VALUE:1:1}" != ":" ]]; then
+  if (( ${#RETURN_VALUE} >= 2 )) && [[ "${RETURN_VALUE:1:1}" != ':' ]]; then
     case "$OSTYPE" in
       msys* | mingw*)
         while true; do
@@ -1162,7 +1140,7 @@ function tkl_convert_backend_path_to_native()
           RETURN_VALUE="${RETURN_VALUE%/}/"
           tkl_escape_string "$RETURN_VALUE" '' 2
           # msys automatically converts argument to the native path if it begins from '/' character
-          ConvertedPath="`"$ComSpecInternal" '^/C' \(echo.$RETURN_VALUE\)`"
+          ConvertedPath="`"$ComSpecInternal" '^/C' \(echo;$RETURN_VALUE\)`"
           # remove last slash
           RETURN_VALUE="${ConvertedPath%[/\\]}"
           break
@@ -1462,7 +1440,12 @@ function tkl_normalize_path()
   # set return value to input value
   RETURN_VALUE="$path_to_normalize"
 
-  [[ -z "$path_to_normalize" ]] && return 1
+  # with check on globbing characters
+  if [[ -z "$path_to_normalize" ]]; then
+    return 1
+  elif [[ "${BasePath//\*/}" != "$BasePath" || "${BasePath//\?/}" != "$BasePath" ]]; then
+    return 2
+  fi
 
   local num_reductions
   local path_prefix
@@ -1754,7 +1737,7 @@ function tkl_exctract_path_ignoring_user_mount_points()
         RETURN_VALUE="${PathPrefix%/}/"
         tkl_escape_string "$RETURN_VALUE" '' 2
         # msys automatically converts argument to the native path if it begins from '/' character
-        ConvertedPath="$("$ComSpecInternal" '^/C' \(echo.$RETURN_VALUE\))"
+        ConvertedPath="$("$ComSpecInternal" '^/C' \(echo;$RETURN_VALUE\))"
         break
       done
       ;;
@@ -1931,8 +1914,6 @@ function tkl_unregister_call()
 tkl_declare_global tkl__last_error 0
 
 # register on first include
-if [[ -z "$BASH_SOURCE_NEST_LVL" ]]; then
-  tkl_make_source_file_components "$@"
-fi
+tkl_make_source_file_components "$@"
 
 tkl_set_return

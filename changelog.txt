@@ -1,3 +1,6 @@
+2026.01.08:
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+
 2025.02.03:
 * refactor: README.md: minor refactor
 
