@@ -168,6 +168,4 @@ function gh_pop_var_from_stack()
   }
 }
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
-
 tkl_set_return

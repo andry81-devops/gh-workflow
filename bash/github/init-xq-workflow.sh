@@ -31,9 +31,13 @@ fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+
 
 function xq_init()
 {
+  echo "${FUNCNAME[0]}:"
+
   # CAUTION:
   #   Array instead of string is required here for correct expansion!
   #
@@ -42,19 +46,12 @@ function xq_init()
 
   case "$OSTYPE" in
     cygwin*)
-      local xq_which="$(which xq 2> /dev/null)"
-
-      if [[ -z "$xq_which" ]]; then
+      if ! gh_call which xq; then
         echo "${FUNCNAME[0]}: \`xq\` is not found."
         return 255
       fi
 
-      echo "${FUNCNAME[0]}:"$'\n'"$xq_which"
-      echo
-
-      echo '>xq --version'
-      xq --version
-      echo '<'
+      gh_call xq --version
 
       local xq_help="$(yq --help)"
 
@@ -66,19 +63,12 @@ function xq_init()
       ;;
 
     linux*)
-      local xmlstarlet_which="$(which xmlstarlet 2> /dev/null)"
-
-      if [[ -z "$xmlstarlet_which" ]]; then
+      if ! gh_call which xmlstarlet; then
         echo "${FUNCNAME[0]}: \`xmlstarlet\` is not found."
         return 255
       fi
 
-      echo "${FUNCNAME[0]}:"$'\n'"$xmlstarlet_which"
-      echo
-
-      echo '>xmlstarlet --version'
-      xmlstarlet --version
-      echo '<'
+      gh_call xmlstarlet --version
 
       XMLSTARLET_CMDLINE_SEL=(xmlstarlet sel)
       ;;

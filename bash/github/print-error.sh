@@ -267,9 +267,9 @@ function gh_print_error_and_write_to_changelog_named_text_bullet_ln()
   fi
 }
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
-
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
+  tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+
   gh_print_errors "$@"
 fi

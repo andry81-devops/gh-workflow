@@ -2,7 +2,7 @@
 
 function call()
 {
-  echo ">$@"
+  echo ">$*"
   "$@"
 }
 

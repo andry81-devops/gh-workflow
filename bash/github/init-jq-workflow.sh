@@ -16,24 +16,21 @@ fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+
 
 function jq_init()
 {
+  echo "${FUNCNAME[0]}:"
+
   # always print the path and version of all tools to compare it between pipeline runs
 
-  local jq_which="$(which jq 2> /dev/null)"
-
-  if [[ -z "$jq_which" ]]; then
+  if ! gh_call which jq; then
     echo "${FUNCNAME[0]}: \`jq\` is not found."
     return 255
   fi
 
-  echo "${FUNCNAME[0]}:"$'\n'"$jq_which"
-  echo
-
-  echo '>jq --version'
-  jq --version
-  echo '<'
+  gh_call jq --version
 }
 
 function jq_is_null()

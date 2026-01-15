@@ -1,4 +1,11 @@
 2026.01.15:
+* fixed: bash/github/init-diff-workflow.sh: missed to check `patch` existence
+* fixed: bash: minor fixup
+* changed: bash/github/init-*-workflow.sh: code improvement
+* changed: bash: removed `tkl_execute_calls` calls in inclusion scripts, moved `tkl_execute_calls` calls into a condition block in executable scripts
+* changed: bash/*/accum-*.sh: moved main script code into a function to be able to test script includes only
+
+2026.01.15:
 * new: bash/github/init-*-workflow.sh: always print the path and version of used tools
 * new: bash/github/init-yq-workflow.sh: `ENABLE_YAML_PRINT_ALL` variable to enable all prints altogether
 * changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes

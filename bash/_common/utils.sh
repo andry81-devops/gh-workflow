@@ -8,6 +8,13 @@ SOURCE_GHWF_COMMON_UTILS_SH=1 # including guard
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+function gh_call()
+{
+  echo ">$*"
+  "$@"
+  echo "<"
+}
+
 function gh_trim_leading_line_return_chars()
 {
   tkl_ltrim_chars "$1" $'\n\r'
@@ -45,7 +52,5 @@ function gh_decode_line_return_chars()
   RETURN_VALUE="${RETURN_VALUE//%0A/$'\n'}"
   RETURN_VALUE="${RETURN_VALUE//%25/%}"
 }
-
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
 
 tkl_set_return

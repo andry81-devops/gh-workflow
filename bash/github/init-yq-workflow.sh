@@ -77,21 +77,16 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 function yq_init()
 {
+  echo "${FUNCNAME[0]}:"
+
   # always print the path and version of all tools to compare it between pipeline runs
 
-  local yq_which="$(which yq 2> /dev/null)"
-
-  if [[ -z "$yq_which" ]]; then
+  if ! gh_call which yq; then
     echo "${FUNCNAME[0]}: \`yq\` is not found."
     return 255
   fi
 
-  echo "${FUNCNAME[0]}:"$'\n'"$yq_which"
-  echo
-
-  echo '>yq --version'
-  yq --version
-  echo '<'
+  gh_call yq --version
 
   # global variables init
   [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] &&         gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 0

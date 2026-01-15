@@ -12,24 +12,28 @@ fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
+tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
+
 
 function diff_init()
 {
+  echo "${FUNCNAME[0]}:"
+
   # always print the path and version of all tools to compare it between pipeline runs
 
-  local diff_which="$(which diff 2> /dev/null)"
-
-  if [[ -z "$diff_which" ]]; then
+  if ! gh_call which diff; then
     echo "${FUNCNAME[0]}: \`diff\` is not found."
     return 255
   fi
 
-  echo "${FUNCNAME[0]}:"$'\n'"$diff_which"
-  echo
+  gh_call diff --version
 
-  echo '>diff --version'
-  diff --version
-  echo '<'
+  if ! gh_call which patch; then
+    echo "${FUNCNAME[0]}: \`patch\` is not found."
+    return 255
+  fi
+
+  gh_call patch --version
 }
 
 function diff_load_file_to_arr()

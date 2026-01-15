@@ -36,6 +36,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 function init_print_workflow()
 {
+  echo "${FUNCNAME[0]}:"
+
   # global variables init
   [[ -z "$ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH" ]] && gh_set_env_var ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH 0
 
