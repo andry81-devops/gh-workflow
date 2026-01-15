@@ -23,6 +23,8 @@
 #     * ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH         # has priority over `ENABLE_YAML_DIFF_PRINT_AFTER_EDIT` variable
 #     * ENABLE_YAML_PATCH_DIFF_PAUSE_MODE
 #
+#     * ENABLE_YAML_PRINT_ALL                       # debug: to enable all prints altogether
+#
 
 # CAUTION:
 #
@@ -75,13 +77,35 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 function yq_init()
 {
-  which yq > /dev/null || return $?
+  # always print the path and version of all tools to compare it between pipeline runs
+
+  local yq_which="$(which yq 2> /dev/null)"
+
+  if [[ -z "$yq_which" ]]; then
+    echo "${FUNCNAME[0]}: \`yq\` is not found."
+    return 255
+  fi
+
+  echo "${FUNCNAME[0]}:"$'\n'"$yq_which"
+  echo
+
+  echo '>yq --version'
+  yq --version
+  echo '<'
 
   # global variables init
   [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] &&         gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 0
   [[ -z "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] &&        gh_set_env_var ENABLE_YAML_PRINT_AFTER_PATCH 0
   [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] &&    gh_set_env_var ENABLE_YAML_DIFF_PRINT_AFTER_EDIT 0
   [[ -z "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] &&  gh_set_env_var ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH 0
+  [[ -z "$ENABLE_YAML_PRINT_ALL" ]] &&                gh_set_env_var ENABLE_YAML_PRINT_ALL 0                # disabled by default
+
+  if (( ENABLE_YAML_PRINT_ALL )); then
+    gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 1
+    gh_set_env_var ENABLE_YAML_PRINT_AFTER_PATCH 1
+    gh_set_env_var ENABLE_YAML_DIFF_PRINT_AFTER_EDIT 1
+    gh_set_env_var ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH 1
+  fi
 
   local yq_help="$(yq --help)"
 
@@ -97,7 +121,9 @@ function yq_init()
     YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   elif grep 'https://github.com/kislyuk/yq[/ ]' - <<< "$yq_help" >/dev/null; then
     # CAUTION: jq must be installed too
-    which jq > /dev/null || return $?
+    tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
+    jq_init || return $?
+
     YQ_CMDLINE_READ=(yq -cr)
     YQ_CMDLINE_READ_AS_YAML=(yq -ycr)
     YQ_CMDLINE_WRITE=(yq -y)

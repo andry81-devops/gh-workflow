@@ -167,7 +167,7 @@ function gh_prepend_changelog_file()
     changelog_buf="$changelog_buf$value"$'\r\n'
   done
 
-  if [[ -f "$CHANGELOG_FILE" && -s "$CHANGELOG_FILE" ]]; then
+  if [[ -s "$CHANGELOG_FILE" ]]; then
     changelog_buf="$changelog_buf"$'\r\n'"$(< "$CHANGELOG_FILE")"
   fi
 

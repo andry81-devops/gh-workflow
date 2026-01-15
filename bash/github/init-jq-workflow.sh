@@ -19,9 +19,21 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 
 function jq_init()
 {
-  which jq > /dev/null || return $?
+  # always print the path and version of all tools to compare it between pipeline runs
 
-  return 0
+  local jq_which="$(which jq 2> /dev/null)"
+
+  if [[ -z "$jq_which" ]]; then
+    echo "${FUNCNAME[0]}: \`jq\` is not found."
+    return 255
+  fi
+
+  echo "${FUNCNAME[0]}:"$'\n'"$jq_which"
+  echo
+
+  echo '>jq --version'
+  jq --version
+  echo '<'
 }
 
 function jq_is_null()

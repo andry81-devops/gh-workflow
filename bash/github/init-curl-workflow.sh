@@ -19,6 +19,25 @@ source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" ||
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 
 
+function curl_init()
+{
+  # always print the path and version of all tools to compare it between pipeline runs
+
+  local curl_which="$(which curl 2> /dev/null)"
+
+  if [[ -z "$curl_which" ]]; then
+    echo "${FUNCNAME[0]}: \`curl\` is not found."
+    return 255
+  fi
+
+  echo "${FUNCNAME[0]}:"$'\n'"$curl_which"
+  echo
+
+  echo '>curl --version'
+  curl --version
+  echo '<'
+}
+
 function curl_print_response_if_error()
 {
   local last_error=$?
@@ -45,5 +64,7 @@ function curl_print_response_if_error()
 
   return $last_error
 }
+
+tkl_register_call gh curl_init
 
 tkl_set_return

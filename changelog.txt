@@ -1,3 +1,9 @@
+2026.01.15:
+* new: bash/github/init-*-workflow.sh: always print the path and version of used tools
+* new: bash/github/init-yq-workflow.sh: `ENABLE_YAML_PRINT_ALL` variable to enable all prints altogether
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+* changed: bash/github/init-basic-workflow.sh: code cleanup
+
 2026.01.08:
 * changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
 

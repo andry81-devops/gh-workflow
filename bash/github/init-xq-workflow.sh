@@ -38,9 +38,23 @@ function xq_init()
   #   Array instead of string is required here for correct expansion!
   #
 
+  # always print the path and version of all tools to compare it between pipeline runs
+
   case "$OSTYPE" in
     cygwin*)
-      which xq > /dev/null || return $?
+      local xq_which="$(which xq 2> /dev/null)"
+
+      if [[ -z "$xq_which" ]]; then
+        echo "${FUNCNAME[0]}: \`xq\` is not found."
+        return 255
+      fi
+
+      echo "${FUNCNAME[0]}:"$'\n'"$xq_which"
+      echo
+
+      echo '>xq --version'
+      xq --version
+      echo '<'
 
       local xq_help="$(yq --help)"
 
@@ -52,12 +66,25 @@ function xq_init()
       ;;
 
     linux*)
-      which xmlstarlet > /dev/null || return $?
+      local xmlstarlet_which="$(which xmlstarlet 2> /dev/null)"
+
+      if [[ -z "$xmlstarlet_which" ]]; then
+        echo "${FUNCNAME[0]}: \`xmlstarlet\` is not found."
+        return 255
+      fi
+
+      echo "${FUNCNAME[0]}:"$'\n'"$xmlstarlet_which"
+      echo
+
+      echo '>xmlstarlet --version'
+      xmlstarlet --version
+      echo '<'
 
       XMLSTARLET_CMDLINE_SEL=(xmlstarlet sel)
       ;;
 
     *)
+      echo "${FUNCNAME[0]}: not implemented."
       return 255
       ;;
   esac

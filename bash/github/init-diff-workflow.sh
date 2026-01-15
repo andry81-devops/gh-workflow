@@ -13,6 +13,25 @@ fi
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
 
+function diff_init()
+{
+  # always print the path and version of all tools to compare it between pipeline runs
+
+  local diff_which="$(which diff 2> /dev/null)"
+
+  if [[ -z "$diff_which" ]]; then
+    echo "${FUNCNAME[0]}: \`diff\` is not found."
+    return 255
+  fi
+
+  echo "${FUNCNAME[0]}:"$'\n'"$diff_which"
+  echo
+
+  echo '>diff --version'
+  diff --version
+  echo '<'
+}
+
 function diff_load_file_to_arr()
 {
   local input_file_diff="$1"
@@ -282,5 +301,7 @@ function diff_make_uniform_chunk_header()
     RETURN_VALUE="$RETURN_VALUE #%% $OffsetShift"
   fi
 }
+
+tkl_register_call gh diff_init
 
 tkl_set_return

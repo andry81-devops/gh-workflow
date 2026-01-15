@@ -62,6 +62,38 @@ Tutorials to use with: https://github.com/andry81/index#tutorials
 * All action scripts:<br />
   https://github.com/andry81/index#action-scripts
 
+## Usage
+
+### Local
+
+1. Open Cygwin console, for example, in `bash/github` directory.
+
+2. Set workflow root variables:
+
+   ```console
+   GH_WORKFLOW_ROOT=$(realpath ../..)
+   ```
+
+3. Run an initialization script:
+
+   ```console
+   . ./init-yq-workflow.sh
+   ```
+
+4. Run postponed initialization functions:
+
+   ```console
+   tkl_execute_calls gh
+   ```
+
+5. Run other functions...
+
+To start over:
+
+```console
+tkl_unset_all_include_guards
+```
+
 ## Copyright and License
 
 Code and documentation copyright 2021 Andrey Dibrov. Code released under [MIT License](https://github.com/andry81-devops/gh-workflow/tree/HEAD/license.txt)
