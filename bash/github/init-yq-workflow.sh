@@ -262,7 +262,7 @@ function yq_diff()
   last_error=$?
 
   if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT )); then
-    yq_print_file "$output_diff_file"
+    yq_print_file "$3"
   fi
 
   return $last_error
