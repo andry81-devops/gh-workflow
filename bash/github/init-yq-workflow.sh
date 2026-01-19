@@ -18,9 +18,9 @@
 #   Yaml specific user variables (to set):
 #
 #     * ENABLE_YAML_PRINT_AFTER_EDIT
-#     * ENABLE_YAML_PRINT_AFTER_PATCH               # has priority over `ENABLE_YAML_PRINT_AFTER_EDIT` variable
+#     * ENABLE_YAML_PRINT_AFTER_PATCH
 #     * ENABLE_YAML_DIFF_PRINT_AFTER_EDIT
-#     * ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH         # has priority over `ENABLE_YAML_DIFF_PRINT_AFTER_EDIT` variable
+#     * ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH
 #     * ENABLE_YAML_PATCH_DIFF_PAUSE_MODE
 #
 #     * ENABLE_YAML_PRINT_ALL                       # debug: to enable all prints altogether
@@ -111,9 +111,6 @@ function yq_init()
     YQ_CMDLINE_READ=(yq)
     YQ_CMDLINE_READ_AS_YAML=(yq)
     YQ_CMDLINE_WRITE=(yq e)
-    YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
-    YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
-    YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   elif grep 'https://github.com/kislyuk/yq[/ ]' - <<< "$yq_help" >/dev/null; then
     # CAUTION: jq must be installed too
     tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
@@ -122,19 +119,14 @@ function yq_init()
     YQ_CMDLINE_READ=(yq -cr)
     YQ_CMDLINE_READ_AS_YAML=(yq -ycr)
     YQ_CMDLINE_WRITE=(yq -y)
-    YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
-    YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
-    YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
   else
-    YQ_CMDLINE_READ=(yq)
-    YQ_CMDLINE_READ_AS_YAML=(yq)
-    YQ_CMDLINE_WRITE=(yq)
-    YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
-    YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
-    YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
     echo "$0: error: \`yq\` implementation is not known." >&2
     return 255
   fi
+
+  YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
+  YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
+  YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
 
   return 0
 }
@@ -191,7 +183,7 @@ function yq_edit()
 
   function on_return_handler()
   {
-    if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+    if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
       yq_print_file "$TEMP_DIR/${prefix_name}-${suffix_name}-0.yml"
     fi
   }
@@ -207,7 +199,7 @@ function yq_edit()
   for arg in "${edit_list[@]:1}"; do
     function on_return_handler()
     {
-      if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+      if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
         yq_print_file "$TEMP_DIR/${prefix_name}-${suffix_name}-${j}.yml"
       fi
     }
@@ -226,7 +218,7 @@ function yq_edit()
   if [[ ! -f "$TEMP_DIR/${prefix_name}-${suffix_name}-${i}.yml" ]]; then
     function on_return_handler()
     {
-      if (( ENABLE_YAML_PRINT_AFTER_EDIT && ! ENABLE_YAML_PRINT_AFTER_PATCH )); then
+      if (( ENABLE_YAML_PRINT_AFTER_EDIT )); then
         yq_print_file "$output_yaml_edited_file"
       fi
     }
@@ -269,7 +261,7 @@ function yq_diff()
   yq_diff_impl "$@"
   last_error=$?
 
-  if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT && ! ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH )); then
+  if (( ENABLE_YAML_DIFF_PRINT_AFTER_EDIT )); then
     yq_print_file "$output_diff_file"
   fi
 
@@ -773,6 +765,7 @@ function yq_merge_formatted_and_edited_uniform_diffs() # NOTE: Exists for tests 
 # PROs:
 #   * Can restore blank lines together with standalone comment lines: `  # ... `
 #   * Can restore line end comments: `  key: value # ...`
+#   * Can restore quotes around values
 #   * Can detect a line remove/change/add altogether.
 #
 # CONs:

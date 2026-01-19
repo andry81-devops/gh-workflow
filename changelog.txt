@@ -1,3 +1,6 @@
+2026.01.19:
+* fixed: bash/github/init-yq-workflow.sh: `ENABLE_YAML_PRINT_ALL` didn't print all
+
 2026.01.15:
 * fixed: bash/github/init-diff-workflow.sh: missed to check `patch` existence
 * fixed: bash: minor fixup
