@@ -1,3 +1,6 @@
+2026.01.20:
+* new: README.md: tests link
+
 2026.01.19:
 * fixed: bash/github/init-yq-workflow.sh: empty print
 

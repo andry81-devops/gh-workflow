@@ -66,7 +66,7 @@ Tutorials to use with: https://github.com/andry81/index#tutorials
 
 ### Local
 
-1. Open Cygwin console, for example, in `bash/github` directory.
+1. Open Linux or Cygwin console, for example, in `bash/github` directory.
 
 2. Set workflow root variables:
 
@@ -93,6 +93,10 @@ To start over:
 ```console
 tkl_unset_all_include_guards
 ```
+
+### Tests
+
+https://github.com/andry81-devops/gh-workflow--tests
 
 ## Copyright and License
 
