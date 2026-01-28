@@ -57,6 +57,8 @@ function gh_accum_content()
     exit 255
   fi
 
+  local IFS
+
   content_index_dir="${content_index_dir%/}"
 
   if [[ -z "$content_index_dir" ]]; then

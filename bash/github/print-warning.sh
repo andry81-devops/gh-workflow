@@ -132,8 +132,9 @@ function gh_print_warnings_buffer()
 
   [[ -z "$buf" ]] && return 0
 
-  local IFS
   local line
+
+  local IFS
 
   # with check on integer value
   [[ -n "$PRINT_WARNING_LAG_FSEC" && -z "${PRINT_WARNING_LAG_FSEC//[0-9]/}" ]] && (( PRINT_WARNING_LAG_FSEC > 0 )) && sleep $PRINT_WARNING_LAG_FSEC

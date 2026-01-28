@@ -39,6 +39,7 @@ function gh_is_flag_true_in_flags_expr_string()
   local __arg
   local __name
   local __value
+
   local IFS
 
   eval __flags=($__flags_expr_string)

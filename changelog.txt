@@ -1,3 +1,8 @@
+2026.01.28:
+* fixed: bash/github/init-yq-workflow.sh: workaround for `Spurious comment line duplication in yq v4.50.1` : https://github.com/mikefarah/yq/issues/2578
+* changed: bash/github/init-yq-workflow.sh: code cleanup
+* changed: *.sh: code improvement
+
 2026.01.20:
 * new: README.md: tests link
 

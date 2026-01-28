@@ -47,6 +47,8 @@ function diff_load_file_to_arr()
   local DiffLineFiltered
   local IsChunksStarted=0
 
+  local IFS
+
   {
     tkl_declare_array $output_arr_var
 
@@ -89,6 +91,8 @@ function diff_load_string_to_arr()
   local DiffLinesIndex
   local DiffLineFiltered
   local IsChunksStarted=0
+
+  local IFS
 
   {
     tkl_declare_array $output_arr_var

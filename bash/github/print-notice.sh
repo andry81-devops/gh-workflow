@@ -132,8 +132,9 @@ function gh_print_notices_buffer()
 
   [[ -z "$buf" ]] && return 0
 
-  local IFS
   local line
+
+  local IFS
 
   # with check on integer value
   [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )) && sleep $PRINT_NOTICE_LAG_FSEC

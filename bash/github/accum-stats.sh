@@ -28,6 +28,8 @@ function gh_accum_stats()
     exit 255
   fi
 
+  local IFS
+
   stat_list_key="$stat_entity"
 
   [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"

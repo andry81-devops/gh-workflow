@@ -24,10 +24,11 @@ function gh_set_env_from_args()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
 
-  local IFS
   local __arg
   local __var
   local __value
+
+  local IFS
 
   for __arg in "$@"; do
     IFS='=' read -r __var __value <<< "$__arg"

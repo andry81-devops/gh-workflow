@@ -28,6 +28,8 @@ function gh_accum_rate_limits()
     exit 255
   fi
 
+  local IFS
+
   [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
   [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
   [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"

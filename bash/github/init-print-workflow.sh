@@ -199,11 +199,12 @@ function gh_flush_print_annotations()
 {
   [[ -z "$GITHUB_ACTIONS" ]] && return 0
 
-  local IFS
   local empty
   local annot_type
   local line
   local msg
+
+  local IFS
 
   gh_trim_trailing_line_return_chars "$GHWF_ANNOTATIONS_PRINT_BUF_STR"
 

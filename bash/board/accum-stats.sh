@@ -37,6 +37,8 @@ function gh_accum_board_stats()
     exit 255
   fi
 
+  local IFS
+
   [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
   [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
 

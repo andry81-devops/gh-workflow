@@ -132,8 +132,9 @@ function gh_print_errors_buffer()
 
   [[ -z "$buf" ]] && return 0
 
-  local IFS
   local line
+
+  local IFS
 
   # with check on integer value
   [[ -n "$PRINT_ERROR_LAG_FSEC" && -z "${PRINT_ERROR_LAG_FSEC//[0-9]/}" ]] && (( PRINT_ERROR_LAG_FSEC > 0 )) && sleep $PRINT_ERROR_LAG_FSEC

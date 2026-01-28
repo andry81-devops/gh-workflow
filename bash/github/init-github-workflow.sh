@@ -31,7 +31,6 @@ function gh_eval_github_env_file()
 {
   local __vars_file="$1"
 
-  local IFS
   local __line
   local __line_no_cr
   local __empty
@@ -41,6 +40,8 @@ function gh_eval_github_env_file()
   local __value_no_cr
   local __eof
   local __read_var=0
+
+  local IFS
 
   while IFS=$'\n' read -r __line; do
     __line_no_cr="${__line%$'\r'}" # trim last CR
