@@ -77,6 +77,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 function yq_init()
 {
+  ! tkl_is_call_registered gh yq_init || return 255
+
   echo "${FUNCNAME[0]}:"
 
   # always print the path and version of all tools to compare it between pipeline runs

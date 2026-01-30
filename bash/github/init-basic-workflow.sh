@@ -58,6 +58,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 function init_basic_workflow()
 {
+  ! tkl_is_call_registered gh init_basic_workflow || return 255
+
   # CAUTION:
   #   You must always load unconditionally all the `GITHUB_ENV` variables!
   #

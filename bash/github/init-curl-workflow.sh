@@ -21,6 +21,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 
 function curl_init()
 {
+  ! tkl_is_call_registered gh curl_init || return 255
+
   # always print the path and version of all tools to compare it between pipeline runs
 
   local curl_which="$(which curl 2> /dev/null)"
@@ -36,6 +38,8 @@ function curl_init()
   echo '>curl --version'
   curl --version
   echo '<'
+
+  return 0
 }
 
 function curl_print_response_if_error()

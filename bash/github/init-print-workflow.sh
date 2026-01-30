@@ -36,6 +36,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/print-error.sh"
 
 function init_print_workflow()
 {
+  ! tkl_is_call_registered gh init_print_workflow || return 255
+
   echo "${FUNCNAME[0]}:"
 
   # global variables init

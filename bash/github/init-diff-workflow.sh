@@ -17,6 +17,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 
 function diff_init()
 {
+  ! tkl_is_call_registered gh diff_init || return 255
+
   echo "${FUNCNAME[0]}:"
 
   # always print the path and version of all tools to compare it between pipeline runs
@@ -34,6 +36,8 @@ function diff_init()
   fi
 
   gh_call patch --version
+
+  return 0
 }
 
 function diff_load_file_to_arr()

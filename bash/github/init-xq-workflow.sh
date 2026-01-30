@@ -36,6 +36,8 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 
 function xq_init()
 {
+  ! tkl_is_call_registered gh xq_init || return 255
+
   echo "${FUNCNAME[0]}:"
 
   # CAUTION:
