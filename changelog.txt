@@ -1,3 +1,6 @@
+2026.01.31:
+* fixed: bash/github/init-yq-workflow.sh: improved workaround for `Spurious comment line duplication in yq v4.50.1`
+
 2026.01.30:
 * changed: bash/github/init-*.sh: conditional protection from a direct call of an init function
 * changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes

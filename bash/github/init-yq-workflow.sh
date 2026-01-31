@@ -276,6 +276,7 @@ function yq_diff()
 #   * Can restore blank lines together with standalone comment lines: `  # ... `
 #   * Can restore line end comments: `  key: value # ...`
 #   * Can restore quotes around values
+#   * Can restore line endings
 #   * Can detect a line remove/change/add altogether.
 #
 # CONs:
@@ -283,13 +284,28 @@ function yq_diff()
 #   * Does not restore line end comments, where the yaml data is changed.
 #
 # Note
-#   YQ implementation may not remove or add some comments. So the function must
-#   correctly process these.
+#   YQ implementation may not remove or add some comments. So the function must correctly process these.
+#
+# Flags:
+#   -no-workarounds
+#     Disable all workarounds.
 #
 function yq_restore_edited_uniform_diff() # NOTE: Experimental
 {
   local input_file_edited_diff="$1"
   local output_file_restored_diff="$2"
+  local flags="$3"
+
+  local flag_args=("${@:3}")
+
+  local flag_no_workarounds=0
+  local flag
+
+  for flag in "${flag_args[@]}"; do
+    if [[ "${flag//-no-workarounds/}" != "$flag" ]]; then
+      flag_no_workarounds=1
+    fi
+  done
 
   local DiffChunkLines
   local DiffChunkLinesIndex
@@ -306,22 +322,29 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
   local DiffRemoveChunkLineFiltered
   local DiffRemoveChunkLineFilteredLen
   local DiffRemoveChunkLineBlanked
+
   local DiffRemoveChunkLines
   local DiffRemoveChunkLinesLen
   local DiffRemoveChunkLinesIndex
 
   local DiffAddChunkLine
   local DiffAddChunkLineKeyText
+  local DiffAddChunkLineEnd
   local DiffAddChunkLineFiltered
   local DiffAddChunkLineFilteredLen
+  local DiffAddChunkLineBlanked
+
   local DiffAddChunkLines
   local DiffAddChunkLinesLen
   local DiffAddChunkLinesIndex
+
   local DiffAddChunkLinesToRemove
 
   local MergedDiffChunkLineLen
   local MergeDiffAddChunkLineNextIndex
   local IsDiffAddChunkLineProcessed
+
+  local DiffRemoveChunkFirstYamlTokenLineIndex=0 # to remove `# ` prefixed lines before first yaml token, 0 - not yet found
 
   diff_load_file_to_arr "$input_file_edited_diff" DiffChunkLines 1 || return 255
 
@@ -332,6 +355,12 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
   DiffAddChunkLines=()
   DiffAddChunkLinesIndex=0
   AccumDiffChunkOffsetShift=0
+
+  # WORKAROUND #1:
+  #   `Spurious comment line duplication in yq v4.50.1` : https://github.com/mikefarah/yq/issues/2578
+  #
+  #   Remove comment prefix (`# `) from all `-` diff lines (the remove chunk) before first yaml token in all diff hunks.
+  #   To do so we must detect the line number of first yaml token directly from diff hunks by reading only `-` lines (not changed lines must be already stripped).
 
   while (( DiffChunkLinesIndex < ${#DiffChunkLines[@]} )); do
     diff_read_next_uniform_chunk_from_arr DiffChunkLines DiffChunkLinesIndex DiffRemoveChunkLines DiffAddChunkLines || return 255
@@ -358,13 +387,20 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
         # remove all white spaces
         DiffRemoveChunkLineBlanked="${DiffRemoveChunkLineFiltered//[$'\t' ]/}"
 
-        # WORKAROUND:
-        #   `Spurious comment line duplication in yq v4.50.1` : https://github.com/mikefarah/yq/issues/2578
-        #
-        #   Treat line as empty if consisted only of a single `#` character.
+        yq_get_key_line_text "$DiffRemoveChunkLineFiltered"
 
-        if [[ -z "$DiffRemoveChunkLineBlanked" || "$DiffRemoveChunkLineBlanked" == '#' ]]; then
+        DiffRemoveChunkLineKeyText="$RETURN_VALUE"
+
+        if (( ! DiffRemoveChunkFirstYamlTokenLineIndex )); then
+          [[ -z "$DiffRemoveChunkLineKeyText" ]] || (( DiffRemoveChunkFirstYamlTokenLineIndex = DiffChunkRemoveLineOffset + DiffRemoveChunkLinesIndex ))
+        fi
+
+        if [[ -z "$DiffRemoveChunkLineBlanked" ]]; then
           DiffRemoveChunkLineFiltered=''
+        elif (( ! flag_no_workarounds && ( ! DiffRemoveChunkFirstYamlTokenLineIndex || DiffRemoveChunkLinesIndex < DiffRemoveChunkFirstYamlTokenLineIndex ) )) then
+          if [[ "${DiffRemoveChunkLines[DiffRemoveChunkLinesIndex]:0:2}" == '# ' ]]; then
+            continue # workaround #1
+          fi
         fi
 
         IsDiffAddChunkLineProcessed=0
@@ -373,6 +409,9 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
           DiffAddChunkLine="${DiffAddChunkLines[DiffAddChunkLinesIndex]}"
 
           DiffAddChunkLineFiltered="${DiffAddChunkLine%$'\r'}"
+
+          # save the line ending to restore too
+          DiffAddChunkLineEnd="${DiffAddChunkLine:${#DiffAddChunkLineFiltered}}"
 
           (( DiffRemoveChunkLineFilteredLen = ${#DiffRemoveChunkLineFiltered} ))
           (( DiffAddChunkLineFilteredLen = ${#DiffAddChunkLineFiltered} ))
@@ -409,10 +448,6 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
 
               break
             else
-              yq_get_key_line_text "$DiffRemoveChunkLineFiltered"
-
-              DiffRemoveChunkLineKeyText="$RETURN_VALUE"
-
               yq_get_key_line_text "$DiffAddChunkLineFiltered"
 
               DiffAddChunkLineKeyText="$RETURN_VALUE"
@@ -423,7 +458,8 @@ function yq_restore_edited_uniform_diff() # NOTE: Experimental
                 #   +    test123: 789
                 #
 
-                DiffAddChunkLines[DiffAddChunkLinesIndex]="${DiffRemoveChunkLines[DiffRemoveChunkLinesIndex]}" # restore line end comment (CAUTION: can be inaccurate)
+                # restore line end comment and the line ending (CAUTION: can be inaccurate)
+                DiffAddChunkLines[DiffAddChunkLinesIndex]="${DiffRemoveChunkLines[DiffRemoveChunkLinesIndex]}$DiffAddChunkLineEnd"
 
                 (( MergeDiffAddChunkLineNextIndex = DiffAddChunkLinesIndex + 1 ))
 
