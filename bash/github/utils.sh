@@ -4,8 +4,8 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
-# Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_GITHUB_UTILS_SH" && SOURCE_GHWF_GITHUB_UTILS_SH -ne 0) ]] && return
+# Script can be ONLY included by "source" command.
+[[ -n "$BASH" && (-z "$BASH_LINENO" || BASH_LINENO[0] -gt 0) ]] && (( ! SOURCE_GHWF_GITHUB_UTILS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_GITHUB_UTILS_SH=1 # including guard
 
@@ -15,7 +15,6 @@ if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
 fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
-
 
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/_common/utils.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/is-flag-true-in-flags-expr-string.sh"
@@ -27,7 +26,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/is-flag-true-in-flags-expr-s
 #
 function gh_set_env_var()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local __var="$1"
   local __value="$2"
@@ -57,7 +56,7 @@ function gh_set_env_var()
 
 function gh_unset_env_var()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local __var="$1"
 
@@ -76,7 +75,7 @@ function gh_unset_env_var()
 
 function gh_set_github_env_var()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local __var="$1"
 
@@ -91,7 +90,7 @@ function gh_set_github_env_var()
 
 function gh_unset_github_env_var()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local __var="$1"
 

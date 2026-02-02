@@ -5,7 +5,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH" && SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_TACKLELIB_WORKFLOW_SH=1 # including guard
 

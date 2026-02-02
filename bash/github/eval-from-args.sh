@@ -5,7 +5,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_EVAL_FROM_ARGS_SH" && SOURCE_GHWF_EVAL_FROM_ARGS_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_EVAL_FROM_ARGS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_EVAL_FROM_ARGS_SH=1 # including guard
 
@@ -24,7 +27,7 @@ function gh_eval_from_args()
   local flag_args=()
 
   tkl_read_command_line_flags flag_args "$@"
-  (( ${#flag_args[@]} )) && shift ${#flag_args[@]}
+  (( ! ${#flag_args[@]} )) || shift ${#flag_args[@]}
 
   local flag_eval_github_env=0
   local flag_print_cmdline=0
@@ -32,11 +35,11 @@ function gh_eval_from_args()
   local flag
   for flag in "${flag_args[@]}"; do
     if [[ "${flag[1]}" != '-' ]]; then
-      [[ "${flag/p/}" != "$flag" ]] && flag_print_cmdline=1
-      [[ "${flag/E/}" != "$flag" ]] && flag_eval_github_env=1
+      [[ "${flag/p/}" == "$flag" ]] || flag_print_cmdline=1
+      [[ "${flag/E/}" == "$flag" ]] || flag_eval_github_env=1
     else
-      [[ "$flag" == "--print_cmdline" ]] && flag_print_cmdline=1
-      [[ "$flag" == "--eval_github_env" ]] && flag_eval_github_env=1
+      [[ "$flag" != "--print_cmdline" ]] || flag_print_cmdline=1
+      [[ "$flag" != "--eval_github_env" ]] || flag_eval_github_env=1
     fi
   done
 

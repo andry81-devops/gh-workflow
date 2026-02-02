@@ -19,6 +19,14 @@
 #   The rest of variables is related to other scripts.
 #
 
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_ACCUM_CACHE_CONTENT_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+SOURCE_GHWF_ACCUM_CACHE_CONTENT_SH=1 # including guard
+
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -111,13 +119,13 @@ function gh_accum_content()
     config_entries_init_shell \
     config_entries_init_run
 
-  (( ! config_dirs_num )) && {
+  if (( ! config_dirs_num )); then
     gh_enable_print_buffering
 
     gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: content config is invalid or empty." "content config is invalid or empty"
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
-  }
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
+  fi
 
   # CAUTION:
   #   We must use the exact shell file, otherwise the error: `sh: 1: Syntax error: redirection unexpected`
@@ -154,7 +162,7 @@ function gh_accum_content()
     #
     content_index_file_dir="${content_index_file%/*}"
 
-    [[ -n "$content_index_file_dir" && ! -d "$content_index_file_dir" ]] && mkdir -p "$content_index_file_dir"
+    [[ -d "$content_index_file_dir" ]] || mkdir -p "$content_index_file_dir"
 
     {
       # CAUTION:
@@ -266,7 +274,9 @@ content-index:
 
   no_download_entries=0
 
-  (( NO_DOWNLOAD_ENTRIES || NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )) && no_download_entries=1
+  if (( NO_DOWNLOAD_ENTRIES || NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )); then
+    no_download_entries=1
+  fi
 
   for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' "$content_config_file"); do
   # CAUTION:
@@ -484,8 +494,8 @@ content-index:
         index_file_prev_md5_hash="$index_file_prev_updated_md5_hash"
       fi
 
-      [[ ! -d "$TEMP_DIR/content/$index_dir" ]] &&      mkdir -p "$TEMP_DIR/content/$index_dir"
-      [[ ! -d "$TEMP_DIR/curl_stderr/$index_dir" ]] &&  mkdir -p "$TEMP_DIR/curl_stderr/$index_dir"
+      [[ -d "$TEMP_DIR/content/$index_dir" ]] ||      mkdir -p "$TEMP_DIR/content/$index_dir"
+      [[ -d "$TEMP_DIR/curl_stderr/$index_dir" ]] ||  mkdir -p "$TEMP_DIR/curl_stderr/$index_dir"
 
       echo "Downloading:"
       echo "  File: \`$index_dir/$index_file\`"
@@ -595,14 +605,14 @@ content-index:
           )
 
           if (( ! $? )); then
-            (( ! no_download_entries )) && is_index_file_changed=1
+            (( no_download_entries )) || is_index_file_changed=1
           else
             is_index_file_invalid=1
 
             (( stats_failed_inc++ ))
           fi
         else
-          (( ! no_download_entries )) && is_index_file_changed=1
+          (( no_download_entries )) || is_index_file_changed=1
         fi
 
         if (( is_index_file_changed )); then
@@ -642,7 +652,7 @@ content-index:
   size=\`$index_file_prev_size -> $index_file_next_size\` md5-hash=\`$index_file_prev_md5_hash -> $index_file_next_md5_hash\`
   expired-delta=\`$index_file_expired_timestamp_delta\` scheduled-timestamp=\`$index_file_prev_timestamp -> $config_sched_next_update_timestamp_utc\` update-timestamp=\`$index_file_next_timestamp\`"
 
-        [[ ! -d "$index_dir" ]] && mkdir -p "$index_dir"
+        [[ -d "$index_dir" ]] || mkdir -p "$index_dir"
 
         mv -Tf "$TEMP_DIR/content/$index_dir/$index_file" "$index_dir/$index_file"
       else
@@ -729,10 +739,10 @@ content-index:
 
     gh_print_warning_ln "$0: warning: nothing is changed, no new downloads."
 
-    (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+    (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
 
     if (( ! stats_failed_inc )); then
-      (( ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS )) && exit 255
+      (( ! ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS )) || exit 255
     fi
   fi
 

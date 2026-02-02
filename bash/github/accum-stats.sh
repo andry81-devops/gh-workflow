@@ -4,6 +4,14 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_ACCUM_GH_STATS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+SOURCE_GHWF_ACCUM_GH_STATS_SH=1 # including guard
+
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -32,11 +40,11 @@ function gh_accum_stats()
 
   stat_list_key="$stat_entity"
 
-  [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
-  [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
-  [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
+  [[ -n "$stats_by_year_dir" ]] || stats_by_year_dir="$stats_dir/by_year"
+  [[ -n "$stats_json" ]] || stats_json="$stats_dir/latest.json"
+  [[ -n "$stats_accum_json" ]] || stats_accum_json="$stats_dir/latest-accum.json"
 
-  [[ -z "$commit_msg_entity" ]] && commit_msg_entity="$stat_entity"
+  [[ -n "$commit_msg_entity" ]] || commit_msg_entity="$stat_entity"
 
   current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -98,7 +106,7 @@ function gh_accum_stats()
 
   gh_write_notice_to_changelog_text_bullet_ln "prev accum: outdated-unq outdated-all / unq all: $uniques_outdated_prev $count_outdated_prev / $uniques_prev $count_prev"
 
-  (( ! count && ! uniques && ! stats_length )) && {
+  if (( ! count && ! uniques && ! stats_length )); then
     gh_enable_print_buffering
 
     gh_print_error_and_write_to_changelog_text_bullet_ln "$0: error: json data is invalid or empty." "json data is invalid or empty"
@@ -111,12 +119,12 @@ function gh_accum_stats()
       json_url \
       json_documentation_url
 
-    [[ -n "$json_message" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
-    [[ -n "$json_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
-    [[ -n "$json_documentation_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
+    [[ -z "$json_message" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+    [[ -z "$json_url" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+    [[ -z "$json_documentation_url" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
-  }
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
+  fi
 
   stats_accum_timestamps=()
   stats_accum_counts=()
@@ -227,7 +235,7 @@ function gh_accum_stats()
       count:0 \
       uniques:0
 
-    (( ! i )) && first_stats_timestamp="$timestamp"
+    (( i )) || first_stats_timestamp="$timestamp"
 
     stats_timestamps[${#stats_timestamps[@]}]="$timestamp"
     stats_counts[${#stats_counts[@]}]=$count
@@ -241,7 +249,7 @@ function gh_accum_stats()
     timestamp_year_dir="$stats_by_year_dir/$timestamp_year_utc"
     year_date_json="$timestamp_year_dir/$timestamp_date_utc.json"
 
-    [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+    [[ -d "$timestamp_year_dir" ]] || mkdir -p "$timestamp_year_dir"
 
     count_saved=0
     uniques_saved=0
@@ -284,8 +292,8 @@ function gh_accum_stats()
         uniques_dec_saved:0 uniques_inc_saved:0
 
       # min cleanup
-      (( ! count_min_saved )) && count_min_saved=$count
-      (( ! uniques_min_saved )) && uniques_min_saved=$uniques
+      (( count_min_saved )) || count_min_saved=$count
+      (( uniques_min_saved )) || uniques_min_saved=$uniques
 
       # sign cleanup
       (( count_inc_saved = count_inc_saved )) # remove plus sign
@@ -302,10 +310,10 @@ function gh_accum_stats()
         (( uniques_dec_saved = uniques_dec_saved ))
       fi
 
-      (( count_max_saved > count_max )) && count_max=$count_max_saved
-      (( count_min_saved < count_min )) && count_min=$count_min_saved
-      (( uniques_max_saved > uniques_max )) && uniques_max=$uniques_max_saved
-      (( uniques_min_saved < uniques_min )) && uniques_min=$uniques_min_saved
+      if (( count_max_saved > count_max )); then count_max=$count_max_saved; fi
+      if (( count_min_saved < count_min )); then count_min=$count_min_saved; fi
+      if (( uniques_max_saved > uniques_max )); then uniques_max=$uniques_max_saved; fi
+      if (( uniques_min_saved < uniques_min )); then uniques_min=$uniques_min_saved; fi
     fi
 
     # NOTE:
@@ -325,11 +333,11 @@ function gh_accum_stats()
     stats_uniques_min[${#stats_uniques_min[@]}]=$uniques_min
     stats_uniques_max[${#stats_uniques_max[@]}]=$uniques_max
 
-    (( count > count_saved )) && (( count_inc=count-count_saved ))
-    (( uniques > uniques_saved )) && (( uniques_inc=uniques-uniques_saved ))
+    if (( count > count_saved )); then (( count_inc=count-count_saved )); fi
+    if (( uniques > uniques_saved )); then (( uniques_inc=uniques-uniques_saved )); fi
 
-    (( count < count_saved )) && (( count_dec=count_saved-count ))
-    (( uniques < uniques_saved )) && (( uniques_dec=uniques_saved-uniques ))
+    if (( count < count_saved )); then (( count_dec=count_saved-count )); fi
+    if (( uniques < uniques_saved )); then (( uniques_dec=uniques_saved-uniques )); fi
 
     (( stats_prev_exec_count_inc += count_inc ))
     (( stats_prev_exec_count_dec += count_dec ))
@@ -469,7 +477,7 @@ function gh_accum_stats()
 
     gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
-    (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+    (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
   fi
 
   {
@@ -483,7 +491,7 @@ function gh_accum_stats()
   \"$stat_list_key\" : ["
 
     for (( i=0; i < ${#stats_timestamps[@]}; i++ )); do
-      (( i )) && echo -n ','
+      (( ! i )) || echo -n ','
       echo ''
 
       echo -n "\
@@ -498,7 +506,7 @@ function gh_accum_stats()
     }"
     done
 
-    (( i )) && echo -e -n "\n  "
+    (( ! i )) || echo -e -n "\n  "
 
     echo ']
 }'
@@ -574,7 +582,7 @@ function gh_accum_stats()
 
     gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: json data has only residual changes which has no effect and ignored." "json data has only residual changes which has no effect and ignored"
 
-    (( ! CONTINUE_ON_RESIDUAL_CHANGES )) && exit 255
+    (( CONTINUE_ON_RESIDUAL_CHANGES )) || exit 255
   fi
 
   commit_message_date_time_prefix="$current_date_utc"

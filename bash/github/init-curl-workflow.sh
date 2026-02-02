@@ -5,7 +5,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_CURL_WORKFLOW_SH" && SOURCE_GHWF_INIT_CURL_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_CURL_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_CURL_WORKFLOW_SH=1 # including guard
 
@@ -46,8 +49,8 @@ function curl_print_response_if_error()
 {
   local last_error=$?
 
-  (( ! ENABLE_PRINT_CURL_RESPONSE_ON_ERROR )) && return $last_error
-  (( ! last_error )) && return $last_error
+  (( ENABLE_PRINT_CURL_RESPONSE_ON_ERROR )) || return $last_error
+  (( last_error )) || return 0 # no error reset
 
   if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
     TEMP_DIR="$(mktemp -d)"
@@ -57,7 +60,7 @@ function curl_print_response_if_error()
 
   local response_file="${1:-"$TEMP_DIR/response.txt"}"
 
-  [[ ! -f "$response_file" ]] && return 255
+  [[ -f "$response_file" ]] || return 255
 
   read -r -d '' curl_response_file < "$response_file" || return 255
 

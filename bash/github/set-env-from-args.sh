@@ -4,7 +4,11 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_SET_ENV_FROM_ARGS_SH" && SOURCE_GHWF_SET_ENV_FROM_ARGS_SH -ne 0) ]] && return
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_SET_ENV_FROM_ARGS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_SET_ENV_FROM_ARGS_SH=1 # including guard
 
@@ -15,14 +19,13 @@ fi
 
 source "$GH_WORKFLOW_ROOT/_externals/tacklelib/bash/tacklelib/bash_tacklelib" || exit $?
 
-
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-basic-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
 
 function gh_set_env_from_args()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local __arg
   local __var

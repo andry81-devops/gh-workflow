@@ -4,6 +4,14 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_ACCUM_BOARD_STATS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+SOURCE_GHWF_ACCUM_BOARD_STATS_SH=1 # including guard
+
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -39,8 +47,8 @@ function gh_accum_board_stats()
 
   local IFS
 
-  [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
-  [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
+  [[ -n "$stats_by_year_dir" ]] || stats_by_year_dir="$stats_dir/by_year"
+  [[ -n "$stats_json" ]] || stats_json="$stats_dir/latest.json"
 
   current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -80,8 +88,8 @@ function gh_accum_board_stats()
     last_views:0
 
   # with check on integer value
-  [[ -z "$last_replies" || -n "${last_replies//[0-9]/}" ]] && last_replies=0
-  [[ -z "$last_views" || -n "${last_views//[0-9]/}" ]] && last_views=0
+  [[ -n "$last_replies" && -z "${last_replies//[0-9]/}" ]] || last_replies=0
+  [[ -n "$last_views" && -z "${last_views//[0-9]/}" ]] || last_views=0
 
   if [[ -z "$TEMP_DIR" ]]; then # otherwise use exterenal TEMP_DIR
     TEMP_DIR="$(mktemp -d)"
@@ -109,14 +117,14 @@ function gh_accum_board_stats()
   if (( last_error )); then
     gh_enable_print_buffering
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
   fi
 
   # check on empty
   if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
     gh_enable_print_buffering
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
   fi
 
   replies="$(sed -rn "$replies_sed_regexp" "$TEMP_DIR/response.txt")"
@@ -134,13 +142,13 @@ function gh_accum_board_stats()
     if [[ -z "${replies//[0-9]/}" ]]; then
       replies_malformed=0
     fi
-    (( last_replies < replies )) && (( stats_prev_exec_replies_inc = replies - last_replies ))
+    if (( last_replies < replies )); then (( stats_prev_exec_replies_inc = replies - last_replies )); fi
   fi
   if [[ -n "$views" ]]; then
     if [[ -z "${views//[0-9]/}" ]]; then
       views_malformed=0
     fi
-    (( last_views < views )) && (( stats_prev_exec_views_inc = views - last_views ))
+    if (( last_views < views )); then (( stats_prev_exec_views_inc = views - last_views )); fi
   fi
 
   gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
@@ -148,8 +156,8 @@ function gh_accum_board_stats()
   gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: re vi: $last_replies $last_views / ${replies:-"-"} ${views:-"-"} / +$stats_prev_exec_replies_inc +$stats_prev_exec_views_inc"
 
   # reset on malform
-  (( replies_malformed )) && replies=$last_replies
-  (( views_malformed )) && views=$last_views
+  (( ! replies_malformed )) || replies=$last_replies
+  (( ! views_malformed )) || views=$last_views
 
   # stats between last date and previous date (independent to the pipeline scheduler times)
   replies_saved=0
@@ -182,7 +190,7 @@ function gh_accum_board_stats()
   \"views\" : $views
 }" > "$stats_json"
 
-    [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+    [[ -d "$timestamp_year_dir" ]] || mkdir -p "$timestamp_year_dir"
 
     echo "\
 {
@@ -206,7 +214,7 @@ function gh_accum_board_stats()
       gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: responce file is not valid, board replies/views value is malformed." "responce file is not valid, board replies/views value is malformed"
     fi
 
-    (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+    (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
   fi
 
   commit_message_date_time_prefix="$current_date_utc"

@@ -4,6 +4,14 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_ACCUM_DOWNLOADS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+SOURCE_GHWF_ACCUM_DOWNLOADS_SH=1 # including guard
+
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -34,8 +42,8 @@ function gh_accum_inpage_downloads()
 
   local IFS
 
-  [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
-  [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
+  [[ -n "$stats_by_year_dir" ]] || stats_by_year_dir="$stats_dir/by_year"
+  [[ -n "$stats_json" ]] || stats_json="$stats_dir/latest.json"
 
   current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -99,14 +107,14 @@ function gh_accum_inpage_downloads()
   if (( last_error )); then
     gh_enable_print_buffering
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
   fi
 
   # check on empty
   if [[ ! -s "$TEMP_DIR/response.txt" ]]; then
     gh_enable_print_buffering
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
   fi
 
   downloads="$(sed -rn "$downloads_sed_regexp" "$TEMP_DIR/response.txt")"
@@ -121,7 +129,9 @@ function gh_accum_inpage_downloads()
     if [[ -z "${downloads//[0-9]/}" ]]; then
       downloads_malformed=0
     fi
-    (( last_downloads < downloads )) && (( stats_prev_exec_downloads_inc = downloads - last_downloads ))
+    if (( last_downloads < downloads )); then
+      (( stats_prev_exec_downloads_inc = downloads - last_downloads ))
+    fi
   fi
 
   gh_print_notice_and_write_to_changelog_text_bullet_ln "query file size: $(stat -c%s "$TEMP_DIR/response.txt")"
@@ -129,7 +139,9 @@ function gh_accum_inpage_downloads()
   gh_print_notice_and_write_to_changelog_text_bullet_ln "accum prev / next / diff: dl: $last_downloads / ${downloads:-"-"} / +$stats_prev_exec_downloads_inc"
 
   # reset on malform
-  (( downloads_malformed )) && downloads=$last_downloads
+  if (( downloads_malformed )); then
+    downloads=$last_downloads
+  fi
 
   # stats between last date and previous date (independent to the pipeline scheduler times)
   stats_last_changed_date_downloads_inc=0
@@ -163,7 +175,7 @@ function gh_accum_inpage_downloads()
   \"downloads\" : $downloads
 }" > "$stats_json"
 
-    [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+    [[ -d "$timestamp_year_dir" ]] || mkdir -p "$timestamp_year_dir"
 
     echo "\
 {
@@ -186,7 +198,7 @@ function gh_accum_inpage_downloads()
       gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: responce file is not valid, downloads value is malformed." "responce file is not valid, downloads value is malformed"
     fi
 
-    (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+    (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
   fi
 
   commit_message_date_time_prefix="$current_date_utc"

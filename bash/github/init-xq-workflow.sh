@@ -20,7 +20,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_XQ_WORKFLOW_SH" && SOURCE_GHWF_INIT_XQ_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_XQ_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_XQ_WORKFLOW_SH=1 # including guard
 
@@ -86,9 +89,9 @@ function xq_init()
 
 function xq_is_null()
 {
-  (( ! ${#@} )) && return 255
-  eval "[[ -z \"\$$1\" || \"\$$1\" == 'null' ]]" && return 0
-  return 1
+  (( ${#@} )) || return 255
+  eval "[[ -z \"\$$1\" || \"\$$1\" == 'null' ]]" || return 1
+  return 0
 }
 
 function xq_fix_null()

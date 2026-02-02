@@ -4,6 +4,14 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_ACCUM_RATE_LIMITS_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+SOURCE_GHWF_ACCUM_RATE_LIMITS_SH=1 # including guard
+
 if [[ -z "$GH_WORKFLOW_ROOT" ]]; then
   echo "$0: error: \`GH_WORKFLOW_ROOT\` variable must be defined." >&2
   exit 255
@@ -30,11 +38,11 @@ function gh_accum_rate_limits()
 
   local IFS
 
-  [[ -z "$stats_by_year_dir" ]] && stats_by_year_dir="$stats_dir/by_year"
-  [[ -z "$stats_json" ]] && stats_json="$stats_dir/latest.json"
-  [[ -z "$stats_accum_json" ]] && stats_accum_json="$stats_dir/latest-accum.json"
+  [[ -n "$stats_by_year_dir" ]] || stats_by_year_dir="$stats_dir/by_year"
+  [[ -n "$stats_json" ]] || stats_json="$stats_dir/latest.json"
+  [[ -n "$stats_accum_json" ]] || stats_accum_json="$stats_dir/latest-accum.json"
 
-  [[ -z "$commit_msg_entity" ]] && commit_msg_entity="$stat_entity"
+  [[ -n "$commit_msg_entity" ]] || commit_msg_entity="$stat_entity"
 
   current_date_time_utc="$(date --utc +%FT%TZ)"
 
@@ -182,7 +190,7 @@ function gh_accum_rate_limits()
         rate_limit != stats_prev_exec_rate_limit || rate_used != stats_prev_exec_rate_used )); then
     has_changes=1
 
-    [[ ! -d "$timestamp_year_dir" ]] && mkdir -p "$timestamp_year_dir"
+    [[ -d "$timestamp_year_dir" ]] || mkdir -p "$timestamp_year_dir"
 
     cp -f -T $stats_json $stats_accum_json
     cp -f -T $stats_json $year_date_json
@@ -198,17 +206,17 @@ function gh_accum_rate_limits()
   stats_prev_exec_rate_used_inc=0
   stats_prev_exec_rate_used_dec=0
 
-  (( graphql_limit > stats_prev_exec_graphql_limit )) && (( stats_prev_exec_graphql_limit_inc=graphql_limit-stats_prev_exec_graphql_limit ))
-  (( graphql_limit < stats_prev_exec_graphql_limit )) && (( stats_prev_exec_graphql_limit_dec=stats_prev_exec_graphql_limit-graphql_limit ))
+  if (( graphql_limit > stats_prev_exec_graphql_limit )); then (( stats_prev_exec_graphql_limit_inc=graphql_limit-stats_prev_exec_graphql_limit )); fi
+  if (( graphql_limit < stats_prev_exec_graphql_limit )); then (( stats_prev_exec_graphql_limit_dec=stats_prev_exec_graphql_limit-graphql_limit )); fi
 
-  (( graphql_used > stats_prev_exec_graphql_used )) && (( stats_prev_exec_graphql_used_inc=graphql_used-stats_prev_exec_graphql_used ))
-  (( graphql_used < stats_prev_exec_graphql_used )) && (( stats_prev_exec_graphql_used_dec=stats_prev_exec_graphql_used-graphql_used ))
+  if (( graphql_used > stats_prev_exec_graphql_used )); then (( stats_prev_exec_graphql_used_inc=graphql_used-stats_prev_exec_graphql_used )); fi
+  if (( graphql_used < stats_prev_exec_graphql_used )); then (( stats_prev_exec_graphql_used_dec=stats_prev_exec_graphql_used-graphql_used )); fi
 
-  (( rate_limit > stats_prev_exec_rate_limit )) && (( stats_prev_exec_rate_limit_inc=rate_limit-stats_prev_exec_rate_limit ))
-  (( rate_limit < stats_prev_exec_rate_limit )) && (( stats_prev_exec_rate_limit_dec=stats_prev_exec_rate_limit-rate_limit ))
+  if (( rate_limit > stats_prev_exec_rate_limit )); then (( stats_prev_exec_rate_limit_inc=rate_limit-stats_prev_exec_rate_limit )); fi
+  if (( rate_limit < stats_prev_exec_rate_limit )); then (( stats_prev_exec_rate_limit_dec=stats_prev_exec_rate_limit-rate_limit )); fi
 
-  (( rate_used > stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used ))
-  (( rate_used < stats_prev_exec_rate_used )) && (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used ))
+  if (( rate_used > stats_prev_exec_rate_used )); then (( stats_prev_exec_rate_used_inc=rate_used-stats_prev_exec_rate_used )); fi
+  if (( rate_used < stats_prev_exec_rate_used )); then (( stats_prev_exec_rate_used_dec=stats_prev_exec_rate_used-rate_used )); fi
 
   gh_print_notice_and_write_to_changelog_text_bullet_ln \
     "prev exec diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
@@ -231,11 +239,11 @@ function gh_accum_rate_limits()
       json_url \
       json_documentation_url
 
-    [[ -n "$json_message" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
-    [[ -n "$json_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
-    [[ -n "$json_documentation_url" ]] && gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
+    [[ -z "$json_message" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: message: \`$json_message\`"
+    [[ -z "$json_url" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: url: \`$json_url\`"
+    [[ -z "$json_documentation_url" ]] || gh_print_notice_and_write_to_changelog_text_bullet_ln "json generic response: documentation_url: \`$json_documentation_url\`"
 
-    (( ! CONTINUE_ON_INVALID_INPUT )) && exit 255
+    (( CONTINUE_ON_INVALID_INPUT )) || exit 255
   fi
 
   if (( ! has_changes )); then
@@ -243,7 +251,7 @@ function gh_accum_rate_limits()
 
     gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new statistic." "nothing is changed, no new statistic"
 
-    (( ! CONTINUE_ON_EMPTY_CHANGES )) && exit 255
+    (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
   fi
 
   commit_message_date_time_prefix="$current_date_utc"

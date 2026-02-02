@@ -58,7 +58,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_YQ_WORKFLOW_SH" && SOURCE_GHWF_INIT_YQ_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_YQ_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_YQ_WORKFLOW_SH=1 # including guard
 
@@ -91,11 +94,11 @@ function yq_init()
   gh_call yq --version
 
   # global variables init
-  [[ -z "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] &&         gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 0
-  [[ -z "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] &&        gh_set_env_var ENABLE_YAML_PRINT_AFTER_PATCH 0
-  [[ -z "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] &&    gh_set_env_var ENABLE_YAML_DIFF_PRINT_AFTER_EDIT 0
-  [[ -z "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] &&  gh_set_env_var ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH 0
-  [[ -z "$ENABLE_YAML_PRINT_ALL" ]] &&                gh_set_env_var ENABLE_YAML_PRINT_ALL 0                # disabled by default
+  [[ -n "$ENABLE_YAML_PRINT_AFTER_EDIT" ]] ||         gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 0
+  [[ -n "$ENABLE_YAML_PRINT_AFTER_PATCH" ]] ||        gh_set_env_var ENABLE_YAML_PRINT_AFTER_PATCH 0
+  [[ -n "$ENABLE_YAML_DIFF_PRINT_AFTER_EDIT" ]] ||    gh_set_env_var ENABLE_YAML_DIFF_PRINT_AFTER_EDIT 0
+  [[ -n "$ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH" ]] ||  gh_set_env_var ENABLE_YAML_DIFF_PRINT_BEFORE_PATCH 0
+  [[ -n "$ENABLE_YAML_PRINT_ALL" ]] ||                gh_set_env_var ENABLE_YAML_PRINT_ALL 0                # disabled by default
 
   if (( ENABLE_YAML_PRINT_ALL )); then
     gh_set_env_var ENABLE_YAML_PRINT_AFTER_EDIT 1
@@ -135,9 +138,9 @@ function yq_init()
 
 function yq_is_null()
 {
-  (( ! ${#@} )) && return 255
-  eval "[[ -z \"\$$1\" || \"\$$1\" == 'null' ]]" && return 0
-  return 1
+  (( ${#@} )) || return 255
+  eval "[[ -z \"\$$1\" || \"\$$1\" == 'null' ]]" || return 1
+  return 0
 }
 
 function yq_fix_null()
@@ -253,7 +256,7 @@ function yq_diff_impl()
   fi
   last_error=$?
 
-  (( last_error > 1 )) && return $last_error
+  (( last_error <= 1 )) || return $last_error
 
   return 0
 }
@@ -283,14 +286,14 @@ function yq_diff()
 #   * Because of has having a guess logic, may leave artefacts or invalid corrections.
 #   * Does not restore line end comments, where the yaml data is changed.
 #
-# Note
-#   YQ implementation may not remove or add some comments. So the function must correctly process these.
+# NOTE:
+#   YQ implementation may not remove or can add some comments. So the function must correctly process these.
 #
 # Flags:
 #   -no-workarounds
 #     Disable all workarounds.
 #
-function yq_restore_edited_uniform_diff() # NOTE: Experimental
+function yq_restore_edited_uniform_diff()
 {
   local input_file_edited_diff="$1"
   local output_file_restored_diff="$2"

@@ -40,7 +40,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH" && SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_BASIC_WORKFLOW_SH=1 # including guard
 
@@ -76,16 +79,16 @@ function init_basic_workflow()
   gh_eval_github_env
 
   # global variables init
-  [[ -z "$CONTINUE_ON_INVALID_INPUT" ]] &&                gh_set_env_var CONTINUE_ON_INVALID_INPUT 0
-  [[ -z "$CONTINUE_ON_EMPTY_CHANGES" ]] &&                gh_set_env_var CONTINUE_ON_EMPTY_CHANGES 0
-  [[ -z "$CONTINUE_ON_RESIDUAL_CHANGES" ]] &&             gh_set_env_var CONTINUE_ON_RESIDUAL_CHANGES 0
-  [[ -z "$ENABLE_GENERATE_CHANGELOG_FILE" ]] &&           gh_set_env_var ENABLE_GENERATE_CHANGELOG_FILE 0
-  [[ -z "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] &&      gh_set_env_var ENABLE_PRINT_CURL_RESPONSE_ON_ERROR 0
-  [[ -z "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] &&     gh_set_env_var ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME 0
-  [[ -z "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] &&  gh_set_env_var ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE 1
+  [[ -n "$CONTINUE_ON_INVALID_INPUT" ]] ||                gh_set_env_var CONTINUE_ON_INVALID_INPUT 0
+  [[ -n "$CONTINUE_ON_EMPTY_CHANGES" ]] ||                gh_set_env_var CONTINUE_ON_EMPTY_CHANGES 0
+  [[ -n "$CONTINUE_ON_RESIDUAL_CHANGES" ]] ||             gh_set_env_var CONTINUE_ON_RESIDUAL_CHANGES 0
+  [[ -n "$ENABLE_GENERATE_CHANGELOG_FILE" ]] ||           gh_set_env_var ENABLE_GENERATE_CHANGELOG_FILE 0
+  [[ -n "$ENABLE_PRINT_CURL_RESPONSE_ON_ERROR" ]] ||      gh_set_env_var ENABLE_PRINT_CURL_RESPONSE_ON_ERROR 0
+  [[ -n "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] ||     gh_set_env_var ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME 0
+  [[ -n "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] ||  gh_set_env_var ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE 1
 
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
-    [[ -z "$CHANGELOG_FILE" ]] && gh_set_env_var CHANGELOG_FILE 'changelog.txt'
+    [[ -n "$CHANGELOG_FILE" ]] || gh_set_env_var CHANGELOG_FILE 'changelog.txt'
   fi
 
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
@@ -151,7 +154,7 @@ function gh_find_changelog_buf_arr_index_to_insert_from()
 
 function gh_prepend_changelog_file()
 {
-  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return 0
+  (( ENABLE_GENERATE_CHANGELOG_FILE )) || return 0
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     [[ -n "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" ]] || return 0
   else

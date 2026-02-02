@@ -16,7 +16,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH" && SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_INIT_PRINT_WORKFLOW_SH=1 # including guard
 
@@ -41,7 +44,7 @@ function init_print_workflow()
   echo "${FUNCNAME[0]}:"
 
   # global variables init
-  [[ -z "$ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH" ]] && gh_set_env_var ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH 0
+  [[ -n "$ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH" ]] || gh_set_env_var ENABLE_GH_ANNOTATIONS_PRINT_ON_FLUSH 0
 
   gh_set_print_warning_lag  .025 # 25 msec
   gh_set_print_error_lag    .025
@@ -70,9 +73,9 @@ function gh_enable_print_buffering()
   local enable_print_warning_buffering=${1:-1}  # by default is buffered, prints at second
   local enable_print_error_buffering=${1:-1}    # by default is buffered, prints at third
 
-  (( enable_print_notice_buffering )) && gh_enable_print_notice_buffering
-  (( enable_print_warning_buffering )) && gh_enable_print_warning_buffering
-  (( enable_print_error_buffering )) && gh_enable_print_error_buffering
+  (( ! enable_print_notice_buffering )) || gh_enable_print_notice_buffering
+  (( ! enable_print_warning_buffering )) || gh_enable_print_warning_buffering
+  (( ! enable_print_error_buffering )) || gh_enable_print_error_buffering
 }
 
 function gh_flush_print_buffers()
@@ -112,7 +115,7 @@ function gh_write_to_changelog_text_ln()
 
 function gh_write_to_changelog_named_text_ln()
 {
-  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+  (( ENABLE_GENERATE_CHANGELOG_FILE )) || return
 
   local changelog_msg_name_to_insert_from="$1"
   local changelog_msg_name="$2"
@@ -152,7 +155,7 @@ function gh_print_args()
 # always buffered, needs to call `gh_flush_print_annotations` to execute all prints
 function gh_print_annotation()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local annot_type="$1"         # required
   local annot_prefix="$2"
@@ -173,7 +176,7 @@ function gh_print_annotation()
 
 function gh_print_annotation_line()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local line="$1"
 
@@ -199,7 +202,7 @@ function gh_print_annotation_line()
 #
 function gh_flush_print_annotations()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   local empty
   local annot_type
@@ -253,14 +256,14 @@ function gh_flush_print_annotations()
 
 function gh_begin_print_annotation_group()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
-  [[ -n "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]] && return 0 # ignore if previous group is not closed/ended
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
+  [[ -z "${GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE:+x}" ]] || return 0 # ignore if previous group is not closed/ended
 
   local annot_type="$1"         # required
   local annot_prefix="$2"
   local msg="$3"
 
-  [[ -z "$annot_type" ]] && return 0
+  [[ -n "$annot_type" ]] || return 0
 
   gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE    "$annot_type"
   gh_set_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX  "$annot_prefix"
@@ -270,7 +273,7 @@ function gh_begin_print_annotation_group()
 
 function gh_end_print_annotation_group()
 {
-  [[ -z "$GITHUB_ACTIONS" ]] && return 0
+  [[ -n "$GITHUB_ACTIONS" ]] || return 0
 
   gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_TYPE
   gh_unset_env_var GHWF_ANNOTATIONS_GROUP_ANNOT_PREFIX

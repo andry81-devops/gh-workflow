@@ -4,7 +4,11 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_IS_FLAG_TRUE_IN_FLAGS_EXPR_STRING_SH" && SOURCE_GHWF_IS_FLAG_TRUE_IN_FLAGS_EXPR_STRING_SH -ne 0) ]] && return
+# Script both for execution and inclusion.
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_IS_FLAG_TRUE_IN_FLAGS_EXPR_STRING_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_IS_FLAG_TRUE_IN_FLAGS_EXPR_STRING_SH=1 # including guard
 

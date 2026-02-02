@@ -1,3 +1,8 @@
+2026.02.02:
+* changed: *.sh: inverted all not `if` conditions to avoid hidden return code set
+* changed: *.sh: include guards improvement
+* changed: *.sh: global code improvement and refactor
+
 2026.01.31:
 * fixed: bash/github/init-yq-workflow.sh: improved workaround for `Spurious comment line duplication in yq v4.50.1`
 

@@ -5,7 +5,10 @@
 #
 
 # Script both for execution and inclusion.
-[[ -z "$BASH" || (-n "$SOURCE_GHWF_PRINT_NOTICE_SH" && SOURCE_GHWF_PRINT_NOTICE_SH -ne 0) ]] && return
+[[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
+
+# check inclusion guard if script is included
+[[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]] || (( ! SOURCE_GHWF_PRINT_NOTICE_SH )) || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
 SOURCE_GHWF_PRINT_NOTICE_SH=1 # including guard
 
@@ -71,7 +74,9 @@ function gh_print_notice_ln()
     fi
   else
     # with check on integer value
-    [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )) && sleep $PRINT_NOTICE_LAG_FSEC
+    if [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )); then
+      sleep $PRINT_NOTICE_LAG_FSEC
+    fi
 
     gh_print_notice_ln_nobuf_nolag "$@"
   fi
@@ -130,14 +135,16 @@ function gh_print_notices_buffer()
 {
   local buf="$1"
 
-  [[ -z "$buf" ]] && return 0
+  [[ -n "$buf" ]] || return 0
 
   local line
 
   local IFS
 
   # with check on integer value
-  [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )) && sleep $PRINT_NOTICE_LAG_FSEC
+  if [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )); then
+    sleep $PRINT_NOTICE_LAG_FSEC
+  fi
 
   if [[ -n "$GITHUB_ACTIONS" ]]; then
     while IFS=$'\n' read -r line; do
@@ -178,7 +185,9 @@ function gh_print_notices()
     fi
   else
     # with check on integer value
-    [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )) && sleep $PRINT_NOTICE_LAG_FSEC
+    if [[ -n "$PRINT_NOTICE_LAG_FSEC" && -z "${PRINT_NOTICE_LAG_FSEC//[0-9]/}" ]] && (( PRINT_NOTICE_LAG_FSEC > 0 )); then
+      sleep $PRINT_NOTICE_LAG_FSEC
+    fi
 
     if [[ -n "$GITHUB_ACTIONS" ]]; then
       gh_print_notices_nobuf_nolag "$@"
@@ -195,7 +204,7 @@ function gh_write_notice_to_changelog_text_bullet_ln()
 
 function gh_write_notice_to_changelog_named_text_bullet_ln()
 {
-  (( ! ENABLE_GENERATE_CHANGELOG_FILE )) && return
+  (( ENABLE_GENERATE_CHANGELOG_FILE )) || return
 
   local changelog_msg_name_to_insert_from="$1"
   local changelog_msg_name="$2"
@@ -238,7 +247,9 @@ function gh_print_notice_and_write_to_changelog_named_text_ln()
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$4"
 
-    (( ${#@} < 4 )) && changelog_msg="$notice_msg"
+    if (( ${#@} < 4 )); then
+      changelog_msg="$notice_msg"
+    fi
 
     gh_write_to_changelog_named_text_ln "$notice_msg_name_to_insert_from" "$notice_msg_name" "$changelog_msg"
   fi
@@ -262,7 +273,9 @@ function gh_print_notice_and_write_to_changelog_named_text_bullet_ln()
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     local changelog_msg="$4"
 
-    (( ${#@} < 4 )) && changelog_msg="$notice_msg"
+    if (( ${#@} < 4 )); then
+      changelog_msg="$notice_msg"
+    fi
 
     gh_write_notice_to_changelog_named_text_bullet_ln "$notice_msg_name_to_insert_from" "$notice_msg_name" "$changelog_msg"
   fi
