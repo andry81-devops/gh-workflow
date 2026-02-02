@@ -80,9 +80,13 @@ function gh_accum_rate_limits()
     stats_prev_exec_integration_manifest_limit        stats_prev_exec_integration_manifest_used \
     stats_prev_exec_source_import_limit               stats_prev_exec_source_import_used \
     stats_prev_exec_code_scanning_upload_limit        stats_prev_exec_code_scanning_upload_used \
+    stats_prev_exec_code_scanning_autofix_limit       stats_prev_exec_code_scanning_autofix_used \
     stats_prev_exec_actions_runner_registration_limit stats_prev_exec_actions_runner_registration_used \
     stats_prev_exec_scim_limit                        stats_prev_exec_scim_used \
     stats_prev_exec_dependency_snapshots_limit        stats_prev_exec_dependency_snapshots_used \
+    stats_prev_exec_dependency_sbom_limit             stats_prev_exec_dependency_sbom_used \
+    stats_prev_exec_audit_log_limit                   stats_prev_exec_audit_log_used \
+    stats_prev_exec_audit_log_streaming_limit         stats_prev_exec_audit_log_streaming_used \
     stats_prev_exec_code_search_limit                 stats_prev_exec_code_search_used \
     stats_prev_exec_rate_limit                        stats_prev_exec_rate_used \
       <<< $(jq ".resources.core.limit,.resources.core.used,\
@@ -91,9 +95,13 @@ function gh_accum_rate_limits()
                 .resources.integration_manifest.limit,.resources.integration_manifest.used,\
                 .resources.source_import.limit,.resources.source_import.used,\
                 .resources.code_scanning_upload.limit,.resources.code_scanning_upload.used,\
+                .resources.code_scanning_autofix.limit,.resources.code_scanning_autofix.used,\
                 .resources.actions_runner_registration.limit,.resources.actions_runner_registration.used,\
                 .resources.scim.limit,.resources.scim.used,\
                 .resources.dependency_snapshots.limit,.resources.dependency_snapshots.used,\
+                .resources.dependency_sbom.limit,.resources.dependency_sbom.used,\
+                .resources.audit_log.limit,.resources.audit_log.used,\
+                .resources.audit_log_streaming.limit,.resources.audit_log_streaming.used,\
                 .resources.code_search.limit,.resources.code_search.used,\
                 .rate.limit,.rate.used\
                 " $stats_accum_json)
@@ -109,9 +117,13 @@ function gh_accum_rate_limits()
     stats_prev_exec_integration_manifest_limit:0 stats_prev_exec_integration_manifest_used:0 \
     stats_prev_exec_source_import_limit:0 stats_prev_exec_source_import_used:0 \
     stats_prev_exec_code_scanning_upload_limit:0 stats_prev_exec_code_scanning_upload_used:0 \
+    stats_prev_exec_code_scanning_autofix_limit:0 stats_prev_exec_code_scanning_autofix_used:0 \
     stats_prev_exec_actions_runner_registration_limit:0 stats_prev_exec_actions_runner_registration_used:0 \
     stats_prev_exec_scim_limit:0 stats_prev_exec_scim_used:0 \
     stats_prev_exec_dependency_snapshots_limit:0 stats_prev_exec_dependency_snapshots_used:0 \
+    stats_prev_exec_dependency_sbom_limit:0 stats_prev_exec_dependency_sbom_used:0 \
+    stats_prev_exec_audit_log_limit:0 stats_prev_exec_audit_log_used:0 \
+    stats_prev_exec_audit_log_streaming_limit:0 stats_prev_exec_audit_log_streaming_used:0 \
     stats_prev_exec_code_search_limit:0 stats_prev_exec_code_search_used:0 \
     stats_prev_exec_rate_limit:0 stats_prev_exec_rate_used:0
 
@@ -128,9 +140,13 @@ function gh_accum_rate_limits()
     integration_manifest_limit        integration_manifest_used \
     source_import_limit               source_import_used \
     code_scanning_upload_limit        code_scanning_upload_used \
+    code_scanning_autofix_limit       code_scanning_autofix_used \
     actions_runner_registration_limit actions_runner_registration_used \
     scim_limit                        scim_used \
     dependency_snapshots_limit        dependency_snapshots_used \
+    dependency_sbom_limit             dependency_sbom_used \
+    audit_log_limit                   audit_log_used \
+    audit_log_streaming_limit         audit_log_streaming_used \
     code_search_limit                 code_search_used \
     rate_limit                        rate_used \
     resources_length \
@@ -140,9 +156,13 @@ function gh_accum_rate_limits()
                 .resources.integration_manifest.limit,.resources.integration_manifest.used,\
                 .resources.source_import.limit,.resources.source_import.used,\
                 .resources.code_scanning_upload.limit,.resources.code_scanning_upload.used,\
+                .resources.code_scanning_autofix.limit,.resources.code_scanning_autofix.used,\
                 .resources.actions_runner_registration.limit,.resources.actions_runner_registration.used,\
                 .resources.scim.limit,.resources.scim.used,\
                 .resources.dependency_snapshots.limit,.resources.dependency_snapshots.used,\
+                .resources.dependency_sbom.limit,.resources.dependency_sbom.used,\
+                .resources.audit_log.limit,.resources.audit_log.used,\
+                .resources.audit_log_streaming.limit,.resources.audit_log_streaming.used,\
                 .resources.code_search.limit,.resources.code_search.used,\
                 .rate.limit,.rate.used,
                 .resources|length\
@@ -159,9 +179,13 @@ function gh_accum_rate_limits()
     integration_manifest_limit:0 integration_manifest_used:0 \
     source_import_limit:0 source_import_used:0 \
     code_scanning_upload_limit:0 code_scanning_upload_used:0 \
+    code_scanning_autofix_limit:0 code_scanning_autofix_used:0 \
     actions_runner_registration_limit:0 actions_runner_registration_used:0 \
     scim_limit:0 scim_used:0 \
     dependency_snapshots_limit:0 dependency_snapshots_used:0 \
+    dependency_sbom_limit:0 dependency_sbom_used:0 \
+    audit_log_limit:0 audit_log_used:0 \
+    audit_log_streaming_limit:0 audit_log_streaming_used:0 \
     code_search_limit:0 code_search_used:0 \
     rate_limit:0 rate_used:0
 
@@ -183,9 +207,13 @@ function gh_accum_rate_limits()
         integration_manifest_limit != stats_prev_exec_integration_manifest_limit || integration_manifest_used != stats_prev_exec_integration_manifest_used || \
         source_import_limit != stats_prev_exec_source_import_limit || source_import_used != stats_prev_exec_source_import_used || \
         code_scanning_upload_limit != stats_prev_exec_code_scanning_upload_limit || code_scanning_upload_used != stats_prev_exec_code_scanning_upload_used || \
+        code_scanning_autofix_limit != stats_prev_exec_code_scanning_autofix_limit || code_scanning_autofix_used != stats_prev_exec_code_scanning_autofix_used || \
         actions_runner_registration_limit != stats_prev_exec_actions_runner_registration_limit || actions_runner_registration_used != stats_prev_exec_actions_runner_registration_used || \
         scim_limit != stats_prev_exec_scim_limit || scim_used != stats_prev_exec_scim_used || \
         dependency_snapshots_limit != stats_prev_exec_dependency_snapshots_limit || dependency_snapshots_used != stats_prev_exec_dependency_snapshots_used || \
+        dependency_sbom_limit != stats_prev_exec_dependency_sbom_limit || dependency_sbom_used != stats_prev_exec_dependency_sbom_used || \
+        audit_log_limit != stats_prev_exec_audit_log_limit || audit_log_used != stats_prev_exec_audit_log_used || \
+        audit_log_streaming_limit != stats_prev_exec_audit_log_streaming_limit || audit_log_streaming_used != stats_prev_exec_audit_log_streaming_used || \
         code_search_limit != stats_prev_exec_code_search_limit || code_search_used != stats_prev_exec_code_search_used || \
         rate_limit != stats_prev_exec_rate_limit || rate_used != stats_prev_exec_rate_used )); then
     has_changes=1
@@ -221,10 +249,11 @@ function gh_accum_rate_limits()
   gh_print_notice_and_write_to_changelog_text_bullet_ln \
     "prev exec diff: graphql / rate: limit used: +$stats_prev_exec_graphql_limit_inc +$stats_prev_exec_graphql_used_inc -$stats_prev_exec_graphql_limit_dec -$stats_prev_exec_graphql_used_dec / +$stats_prev_exec_rate_limit_inc +$stats_prev_exec_rate_used_inc -$stats_prev_exec_rate_limit_dec -$stats_prev_exec_rate_used_dec"
 
-  if (( resources_length != 10 || \
+  if (( resources_length != 14 || \
         ! core_limit || ! search_limit || ! graphql_limit || ! integration_manifest_limit || ! source_import_limit || \
-        ! code_scanning_upload_limit || ! actions_runner_registration_limit || ! scim_limit || ! dependency_snapshots_limit || ! code_search_limit || \
-        ! rate_limit )); then
+        ! code_scanning_upload_limit || ! code_scanning_autofix_limit || ! actions_runner_registration_limit || ! scim_limit || \
+        ! dependency_snapshots_limit || ! dependency_sbom_limit || ! audit_log_limit || ! audit_log_streaming_limit || \
+        ! code_search_limit || ! rate_limit )); then
     gh_enable_print_buffering
 
     gh_print_warning_and_write_to_changelog_text_bullet_ln \

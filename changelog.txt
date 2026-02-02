@@ -1,4 +1,7 @@
 2026.02.02:
+* fixed: bash/github/accum-rate-limits.sh: json format update
+
+2026.02.02:
 * changed: *.sh: inverted all not `if` conditions to avoid hidden return code set
 * changed: *.sh: include guards improvement
 * changed: *.sh: global code improvement and refactor
