@@ -26,7 +26,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+! tkl_get_include_nest_level || tkl_execute_calls -s gh || exit $? # execute init functions only after the last include and exit on first error
 
 
 function gh_accum_rate_limits()

@@ -26,7 +26,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-stats-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+! tkl_get_include_nest_level || tkl_execute_calls -s gh || exit $? # execute init functions only after the last include and exit on first error
 
 
 function gh_accum_stats()
@@ -370,15 +370,15 @@ function gh_accum_stats()
       stats_last_changed_date_uniques_dec=$uniques_dec
 
       echo "\
-{
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"count\" : $count,
-  \"count_minmax\" : [ $count_min, $count_max ],
-  \"count_decinc\" : [ -$count_dec, +$count_inc ],
-  \"uniques\" : $uniques,
-  \"uniques_minmax\" : [ $uniques_min, $uniques_max ],
-  \"uniques_decinc\" : [ -$uniques_dec, +$uniques_inc ]
-}" > "$year_date_json"
+{$YAML_OUTPUT_LR
+  \"timestamp\" : \"$current_date_time_utc\",$YAML_OUTPUT_LR
+  \"count\" : $count,$YAML_OUTPUT_LR
+  \"count_minmax\" : [ $count_min, $count_max ],$YAML_OUTPUT_LR
+  \"count_decinc\" : [ -$count_dec, +$count_inc ],$YAML_OUTPUT_LR
+  \"uniques\" : $uniques,$YAML_OUTPUT_LR
+  \"uniques_minmax\" : [ $uniques_min, $uniques_max ],$YAML_OUTPUT_LR
+  \"uniques_decinc\" : [ -$uniques_dec, +$uniques_inc ]$YAML_OUTPUT_LR
+}$YAML_OUTPUT_LR" > "$year_date_json"
     fi
   done
 
@@ -482,34 +482,34 @@ function gh_accum_stats()
 
   {
     echo -n "\
-{
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"count_outdated\" : $count_outdated_next,
-  \"uniques_outdated\" : $uniques_outdated_next,
-  \"count\" : $count_next,
-  \"uniques\" : $uniques_next,
-  \"$stat_list_key\" : ["
+{$YAML_OUTPUT_LR
+  \"timestamp\" : \"$current_date_time_utc\",$YAML_OUTPUT_LR
+  \"count_outdated\" : $count_outdated_next,$YAML_OUTPUT_LR
+  \"uniques_outdated\" : $uniques_outdated_next,$YAML_OUTPUT_LR
+  \"count\" : $count_next,$YAML_OUTPUT_LR
+  \"uniques\" : $uniques_next,$YAML_OUTPUT_LR
+  \"$stat_list_key\" : [$YAML_OUTPUT_LR"
 
     for (( i=0; i < ${#stats_timestamps[@]}; i++ )); do
-      (( ! i )) || echo -n ','
+      (( ! i )) || echo -n ",$YAML_OUTPUT_LR"
       echo ''
 
       echo -n "\
-    {
-      \"timestamp\": \"${stats_timestamps[i]}\",
-      \"count\": ${stats_counts[i]},
-      \"count_minmax\": [ ${stats_count_min[i]}, ${stats_count_max[i]} ],
-      \"count_decinc\": [ ${stats_count_dec[i]}, ${stats_count_inc[i]} ],
-      \"uniques\": ${stats_uniques[i]},
-      \"uniques_minmax\": [ ${stats_uniques_min[i]}, ${stats_uniques_max[i]} ],
-      \"uniques_decinc\": [ ${stats_uniques_dec[i]}, ${stats_uniques_inc[i]} ]
-    }"
+    {$YAML_OUTPUT_LR
+      \"timestamp\": \"${stats_timestamps[i]}\",$YAML_OUTPUT_LR
+      \"count\": ${stats_counts[i]},$YAML_OUTPUT_LR
+      \"count_minmax\": [ ${stats_count_min[i]}, ${stats_count_max[i]} ],$YAML_OUTPUT_LR
+      \"count_decinc\": [ ${stats_count_dec[i]}, ${stats_count_inc[i]} ],$YAML_OUTPUT_LR
+      \"uniques\": ${stats_uniques[i]},$YAML_OUTPUT_LR
+      \"uniques_minmax\": [ ${stats_uniques_min[i]}, ${stats_uniques_max[i]} ],$YAML_OUTPUT_LR
+      \"uniques_decinc\": [ ${stats_uniques_dec[i]}, ${stats_uniques_inc[i]} ]$YAML_OUTPUT_LR
+    }$YAML_OUTPUT_LR"
     done
 
-    (( ! i )) || echo -e -n "\n  "
+    (( ! i )) || echo -e -n "$YAML_OUTPUT_LR\n  "
 
-    echo ']
-}'
+    echo "]$YAML_OUTPUT_LR
+}$YAML_OUTPUT_LR"
   } > $stats_accum_json
 
   # CAUTION:

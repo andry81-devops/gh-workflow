@@ -42,7 +42,7 @@ function gh_set_env_from_args()
 
 if [[ -z "$BASH_LINENO" || BASH_LINENO[0] -eq 0 ]]; then
   # Script was not included, then execute it.
-  tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+  ! tkl_get_include_nest_level || tkl_execute_calls -s gh || exit $? # execute init functions only after the last include and exit on first error
 
   gh_set_env_from_args "$@"
 fi

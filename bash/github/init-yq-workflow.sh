@@ -25,6 +25,9 @@
 #
 #     * ENABLE_YAML_PRINT_ALL                       # debug: to enable all prints altogether
 #
+#     * YAML_OUTPUT_LR                              # Yaml output files line return (excluding last LF).
+#                                                   # Can be %-encoded (see `gh_decode_line_return_chars` function)
+#
 
 # CAUTION:
 #
@@ -132,6 +135,10 @@ function yq_init()
   YQ_DIFF_ALL_CMDLINE=(diff -U0 -ad --horizon-lines=0 --suppress-common-lines)
   YQ_DIFF_NO_BLANKS_CMDLINE=(diff -U0 -aBd --horizon-lines=0 --suppress-common-lines)
   YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
+
+  # process external variables
+  gh_decode_line_return_chars "$YAML_OUTPUT_LR"
+  YAML_OUTPUT_LR="$RETURN_VALUE"
 
   return 0
 }
@@ -305,9 +312,7 @@ function yq_restore_edited_uniform_diff()
   local flag
 
   for flag in "${flag_args[@]}"; do
-    if [[ "${flag//-no-workarounds/}" != "$flag" ]]; then
-      flag_no_workarounds=1
-    fi
+    [[ "${flag//-no-workarounds/}" == "$flag" ]] || flag_no_workarounds=1
   done
 
   local DiffChunkLines

@@ -25,7 +25,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-jq-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+! tkl_get_include_nest_level || tkl_execute_calls -s gh || exit $? # execute init functions only after the last include and exit on first error
 
 
 function gh_accum_inpage_downloads()
@@ -170,18 +170,18 @@ function gh_accum_inpage_downloads()
 
   if (( downloads != last_downloads )); then
     echo "\
-{
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"downloads\" : $downloads
-}" > "$stats_json"
+{$YAML_OUTPUT_LR
+  \"timestamp\" : \"$current_date_time_utc\",$YAML_OUTPUT_LR
+  \"downloads\" : $downloads$YAML_OUTPUT_LR
+}$YAML_OUTPUT_LR" > "$stats_json"
 
     [[ -d "$timestamp_year_dir" ]] || mkdir -p "$timestamp_year_dir"
 
     echo "\
-{
-  \"timestamp\" : \"$current_date_time_utc\",
-  \"downloads\" : $downloads_saved
-}" > "$year_date_json"
+{$YAML_OUTPUT_LR
+  \"timestamp\" : \"$current_date_time_utc\",$YAML_OUTPUT_LR
+  \"downloads\" : $downloads_saved$YAML_OUTPUT_LR
+}$YAML_OUTPUT_LR" > "$year_date_json"
   fi
 
   # continue if at least one is valid

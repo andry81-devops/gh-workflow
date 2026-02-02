@@ -41,7 +41,7 @@ tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-curl-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/init-tacklelib-workflow.sh"
 tkl_include_or_abort "$GH_WORKFLOW_ROOT/bash/github/utils.sh"
 
-tkl_get_include_nest_level && tkl_execute_calls gh # execute init functions only after the last include
+! tkl_get_include_nest_level || tkl_execute_calls -s gh || exit $? # execute init functions only after the last include and exit on first error
 
 
 function gh_accum_content()
@@ -171,17 +171,17 @@ function gh_accum_content()
       #   even change it, for example, in case of the UTC timestamp value.
       #
       echo \
-"# This file is automatically updated by the GitHub action script: https://github.com/andry81-devops/gh-action--accum-content
-#
-
-content-index:
-
-  timestamp: ''
-
-  entries:
-
-    - dirs:
-"
+"# This file is automatically updated by the GitHub action script: https://github.com/andry81-devops/gh-action--accum-content$YAML_OUTPUT_LR
+#$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR
+content-index:$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR
+  timestamp: ''$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR
+  entries:$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR
+    - dirs:$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR"
 
       for i in $("${YQ_CMDLINE_READ[@]}" '."content-config".entries[0].dirs|keys|.[]' "$content_config_file"); do
         # CAUTION:
@@ -205,8 +205,8 @@ content-index:
         fi
 
         echo \
-"        - dir: $config_index_dir
-"
+"        - dir: $config_index_dir$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR"
 
         for j in $("${YQ_CMDLINE_READ[@]}" ".\"content-config\".entries[0].dirs[$i].files|keys|.[]" "$content_config_file"); do
           # CAUTION:
@@ -225,16 +225,16 @@ content-index:
 
           if (( ! j )); then
             echo \
-'          files:
-'
+"          files:$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR"
           fi
 
           echo \
-"            - file: $config_file
-              queried-url:
-              md5-hash:
-              timestamp: ''
-"
+"            - file: $config_file$YAML_OUTPUT_LR
+              queried-url:$YAML_OUTPUT_LR
+              md5-hash:$YAML_OUTPUT_LR
+              timestamp: ''$YAML_OUTPUT_LR
+$YAML_OUTPUT_LR"
         done
       done
     } > "$content_index_file"
@@ -538,7 +538,7 @@ content-index:
         if (( ! NO_DOWNLOAD_ENTRIES_AND_CREATE_EMPTY_INSTEAD )) && [[ -f "$index_dir/$index_file" ]]; then
           cp -T "$index_dir/$index_file" "$TEMP_DIR/content/$index_dir/$index_file"
         else
-          echo -n '' > "$TEMP_DIR/content/$index_dir/$index_file"
+          > "$TEMP_DIR/content/$index_dir/$index_file"
         fi
       fi
 
@@ -636,6 +636,9 @@ content-index:
         # print the invalid file
         if (( 65536 >= index_file_next_size )); then
           echo $'---\n'"$(<"$TEMP_DIR/content/$index_dir/$index_file")"$'\n---'
+        else
+          gh_print_warning_ln "$0: warning: too long index file, skipped to print: \`$index_dir/$index_file\`:
+  size=\`$index_file_next_size\` md5-hash=\`$index_file_next_md5_hash\`"
         fi
       elif (( no_download_entries )); then
         msg_prefix="File is skipped (no download)"
