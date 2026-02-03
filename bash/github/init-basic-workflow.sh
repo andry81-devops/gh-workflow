@@ -63,6 +63,8 @@ function init_basic_workflow()
 {
   ! tkl_is_call_registered gh init_basic_workflow || return 255
 
+  echo "${FUNCNAME[0]}:"
+
   # CAUTION:
   #   You must always load unconditionally all the `GITHUB_ENV` variables!
   #

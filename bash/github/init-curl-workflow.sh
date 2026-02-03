@@ -26,21 +26,16 @@ function curl_init()
 {
   ! tkl_is_call_registered gh curl_init || return 255
 
+  echo "${FUNCNAME[0]}:"
+
   # always print the path and version of all tools to compare it between pipeline runs
 
-  local curl_which="$(which curl 2> /dev/null)"
-
-  if [[ -z "$curl_which" ]]; then
+  if ! gh_call which curl; then
     echo "${FUNCNAME[0]}: \`curl\` is not found."
     return 255
   fi
 
-  echo "${FUNCNAME[0]}:"$'\n'"$curl_which"
-  echo
-
-  echo '>curl --version'
-  curl --version
-  echo '<'
+  gh_call curl --version
 
   return 0
 }

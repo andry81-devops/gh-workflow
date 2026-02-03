@@ -1,3 +1,7 @@
+2026.02.04:
+* changed: bash/github/*.sh: missed changes
+* changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes
+
 2026.02.02:
 * new: bash/github/init-yq-workflow.sh, accum-*.sh: `YAML_OUTPUT_LR` environment variable to explicitly control yaml output file line return format
 * changed: *.sh: exit on first error in `tkl_execute_calls` function
