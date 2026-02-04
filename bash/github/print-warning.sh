@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # NOTE:
 #   This is a composite script to use from a composite GitHub action.
