@@ -38,6 +38,8 @@
 #     * ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE=1   # enabled by default
 #     * ERROR_ON_EMPTY_CHANGES_WITHOUT_ERRORS=1
 #
+#     * CHANGELOG_FILE_LR                           # Changelog file line return (excluding last LF).
+#                                                   # Can be %-encoded (see `gh_decode_line_return_chars` function)
 
 # Script both for execution and inclusion.
 [[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
@@ -89,6 +91,8 @@ function init_basic_workflow()
   [[ -n "$ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME" ]] ||     gh_set_env_var ENABLE_COMMIT_MESSAGE_DATE_WITH_TIME 0
   [[ -n "$ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE" ]] ||  gh_set_env_var ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE 1
 
+  [[ -n "$CHANGELOG_FILE_LR" ]] ||                        gh_set_env_var CHANGELOG_FILE_LR '%0D'                    # Windows format by default
+
   if (( ENABLE_GENERATE_CHANGELOG_FILE )); then
     [[ -n "$CHANGELOG_FILE" ]] || gh_set_env_var CHANGELOG_FILE 'changelog.txt'
   fi
@@ -109,6 +113,12 @@ function init_basic_workflow()
       # associated array values as buffer content
       tkl_declare_array GHWF_CHANGELOG_BUF_VALUE_ARR
     fi
+  fi
+
+  # process external variables
+  if [[ -n "${CHANGELOG_FILE_LR+x}" ]]; then
+    gh_decode_line_return_chars "$CHANGELOG_FILE_LR"
+    CHANGELOG_FILE_LR="$RETURN_VALUE"
   fi
 
   return 0
@@ -171,11 +181,11 @@ function gh_prepend_changelog_file()
   fi
 
   for value in "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]}"; do
-    changelog_buf="$changelog_buf$value"$'\r\n'
+    changelog_buf="$changelog_buf$value$CHANGELOG_FILE_LR"$'\n'
   done
 
   if [[ -s "$CHANGELOG_FILE" ]]; then
-    changelog_buf="$changelog_buf"$'\r\n'"$(< "$CHANGELOG_FILE")"
+    changelog_buf="$changelog_buf$CHANGELOG_FILE_LR"$'\n'"$(< "$CHANGELOG_FILE")"
   fi
 
   echo -n "$changelog_buf" > "$CHANGELOG_FILE"

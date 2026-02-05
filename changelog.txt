@@ -1,3 +1,7 @@
+2026.02.05:
+* new: bash/github/init-basic-workflow.sh, bash/github/init-print-workflow.sh, print-*.sh: `CHANGELOG_FILE_LR` environment variable to explicitly control changelog output file line return format
+* changed: bash/github/init-yq-workflow.sh: minor improvement
+
 2026.02.04:
 * changed: *.sh: switched to portable version of shebang line
 * changed: _externals/tacklelib/bash/tacklelib: merge with the latest changes

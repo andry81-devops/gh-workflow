@@ -121,12 +121,26 @@ function gh_write_to_changelog_named_text_ln()
   local changelog_msg_name="$2"
   local changelog_msg="$3"
 
+  local buf
+  local line
+
+  local IFS
+
   if (( ENABLE_CHANGELOG_BUF_ARR_AUTO_SERIALIZE )); then
     tkl_deserialize_array "$GHWF_CHANGELOG_BUF_KEY_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_KEY_ARR
     tkl_deserialize_array "$GHWF_CHANGELOG_BUF_VALUE_SERIALIZED_ARR_STR" GHWF_CHANGELOG_BUF_VALUE_ARR
   fi
 
   gh_find_changelog_buf_arr_index_to_insert_from "$changelog_msg_name_to_insert_from"
+
+  # replace line returns
+  while IFS=$'\n' read -r line; do
+    gh_trim_trailing_line_return_chars "$line"
+
+    buf="$buf${buf:+$CHANGELOG_FILE_LR$'\n'}$RETURN_VALUE"
+  done <<< "$changelog_msg"
+
+  changelog_msg="$buf"
 
   GHWF_CHANGELOG_BUF_KEY_ARR=("${GHWF_CHANGELOG_BUF_KEY_ARR[@]:0:RETURN_VALUE}" "$changelog_msg_name" "${GHWF_CHANGELOG_BUF_KEY_ARR[@]:RETURN_VALUE}")
   GHWF_CHANGELOG_BUF_VALUE_ARR=("${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:0:RETURN_VALUE}" "$changelog_msg" "${GHWF_CHANGELOG_BUF_VALUE_ARR[@]:RETURN_VALUE}")

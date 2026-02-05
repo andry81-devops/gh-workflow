@@ -137,8 +137,10 @@ function yq_init()
   YQ_PATCH_DIFF_CMDLINE=(patch -Nt --merge)
 
   # process external variables
-  gh_decode_line_return_chars "$YAML_OUTPUT_LR"
-  YAML_OUTPUT_LR="$RETURN_VALUE"
+  if [[ -n "${YAML_OUTPUT_LR+x}" ]]; then
+    gh_decode_line_return_chars "$YAML_OUTPUT_LR"
+    YAML_OUTPUT_LR="$RETURN_VALUE"
+  fi
 
   return 0
 }
