@@ -299,7 +299,7 @@ function yq_diff()
 #   YQ implementation may not remove or can add some comments. So the function must correctly process these.
 #
 # Flags:
-#   -no-workarounds
+#   --no-workarounds
 #     Disable all workarounds.
 #
 function yq_restore_edited_uniform_diff()
@@ -314,7 +314,7 @@ function yq_restore_edited_uniform_diff()
   local flag
 
   for flag in "${flag_args[@]}"; do
-    [[ "${flag//-no-workarounds/}" == "$flag" ]] || flag_no_workarounds=1
+    [[ '--no-workarounds' != "$flag" ]] || flag_no_workarounds=1
   done
 
   local DiffChunkLines

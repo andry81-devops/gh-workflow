@@ -46,7 +46,7 @@ function gh_is_flag_true_in_flags_expr_string()
 
   local IFS
 
-  eval __flags=($__flags_expr_string)
+  eval declare __flags=($__flags_expr_string)
   for __arg in "${__flags[@]}"; do
     IFS=$'=\n' read -r -d '' __name __value <<< "$__arg"
     if [[ "$__name" == "$__flag_name" ]]; then
