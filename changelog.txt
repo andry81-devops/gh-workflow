@@ -1,4 +1,7 @@
 2026.08.25:
+* changed: userlog.md: user log update
+
+2026.08.25:
 * changed: bash: board/accum-stats.sh, inpage/accum-downloads.sh: warning over a bot crawler protection in the phpbb
 * changed: bash: *.sh: minor fixup
 
