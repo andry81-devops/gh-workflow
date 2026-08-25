@@ -4,6 +4,10 @@
 #   This is a composite script to use from a composite GitHub action.
 #
 
+# CAUTION:
+#   If a board site has a bot crawler protection, then the script may fail to retrieve values.
+#   The logging into the phpbb board using curl is not supported and still may not work.
+
 # Script both for execution and inclusion.
 [[ -n "$BASH" ]] || return 0 || exit 0 # exit to avoid continue if the return can not be called
 
@@ -108,7 +112,7 @@ function gh_accum_board_stats()
 
   echo '---'
 
-  # always print stderr unconditionally to a return code
+  # always print stderr unconditionally before return
   if [[ -s "$TEMP_DIR/response-stderr.txt" ]]; then
     echo "$(<"$TEMP_DIR/response-stderr.txt")"
     echo '---'
@@ -142,7 +146,9 @@ function gh_accum_board_stats()
     if [[ -z "${replies//[0-9]/}" ]]; then
       replies_malformed=0
     fi
-    if (( last_replies < replies )); then (( stats_prev_exec_replies_inc = replies - last_replies )); fi
+    if (( last_replies < replies )); then
+      (( stats_prev_exec_replies_inc = replies - last_replies ))
+    fi
   fi
   if [[ -n "$views" ]]; then
     if [[ -z "${views//[0-9]/}" ]]; then
@@ -211,7 +217,7 @@ function gh_accum_board_stats()
     if (( ! replies_malformed && ! views_malformed )); then
       gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: nothing is changed, no new board replies/views." "nothing is changed, no new board replies/views"
     else
-      gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: responce file is not valid, board replies/views value is malformed." "responce file is not valid, board replies/views value is malformed"
+      gh_print_warning_and_write_to_changelog_text_bullet_ln "$0: warning: response file is not valid, board replies/views value is malformed." "response file is not valid, board replies/views value is malformed"
     fi
 
     (( CONTINUE_ON_EMPTY_CHANGES )) || exit 255
